@@ -169,6 +169,7 @@ function LandingPage() {
     Nombre: "", //Nombre del centro de costos
     Observaciones: "",
     Estado_Perfil: "",
+    ID_Pais: "",
   });
 
   useEffect(()=> {
@@ -358,10 +359,10 @@ function LandingPage() {
     return (
       (filters.N_RSocial === "" ||
         row.N_RSocial.toLowerCase().includes(filters.N_RSocial.toLowerCase())) &&
-      (filters.N_Pais === "" ||
-        row.N_Pais
+      (filters.ID_Pais === "" ||
+        row.ID_Pais
           .toLowerCase()
-          .includes(filters.N_Pais.toLowerCase())) &&
+          .includes(filters.ID_Pais.toLowerCase())) &&
       (filters.N_Departamento === "" ||
         row.N_Departamento
           .toLowerCase()
@@ -396,22 +397,20 @@ function LandingPage() {
   const columns = [
     {
       name: "Pais",
-      selector: (row) => row.N_Pais,
+      selector: (row) => row.ID_Pais,
       sortable: true,
       minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-          <select value={editedRow.N_Pais} onChange={(e) => handleEditChange(e, "N_Pais")}>
-          {pais.map((N_Pais) => (
-            <option key= {N_Pais.id} value={N_Pais.N_Pais}>
-              {N_Pais.N_Pais}
-            </option>
-          ))}
-        </select>
-        ) : (
-          <div>{row.N_Pais}</div>
-        ),
+        cell: (row) =>
+          editMode && editedRow?.id === row.id ? (
+            <input
+              type="text"
+              value={editedRow.ID_Pais}
+              onChange={(e) => handleEditChange(e, "ID_Pais")}
+            />
+          ) : (
+            <div>{row.ID_Pais}</div>
+          ),
     },
     {
       name: "Razon Social",
@@ -704,8 +703,8 @@ function LandingPage() {
             />
             <FilterInput
               type="text"
-              value={filters.N_Pais}
-              onChange={(e) => handleFilterChange(e, "N_Pais")}
+              value={filters.ID_Pais}
+              onChange={(e) => handleFilterChange(e, "ID_Pais")}
               placeholder="Buscar por Pais"
             />
             <FilterInput
