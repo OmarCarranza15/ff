@@ -152,12 +152,13 @@ function LandingPage() {
   const [centrocosto, setCentrocostos] = useState([]);
   const [aplicacion, setAplicacion] = useState([]);
   const [ambiente, setAmbiente] = useState([]);
+  const [pais, setPais] = useState([]);
 
 
   const [filters, setFilters] = useState({
     N_RSocial: "",
     N_Departamento: "",
-    pais: "",
+    N_Pais: "",
     N_Puesto: "",
     Rol: "",
     N_Aplicaciones: "",
@@ -191,7 +192,7 @@ function LandingPage() {
               N_RSocial: rsocialResponse.data.N_RSocial,
               N_Division: divisionResponse.data.N_Division,
               N_Puesto: puestoResponse.data.N_Puesto,
-              pais: paisResponse.data.N_Pais,
+              N_Pais: paisResponse.data.N_Pais,
               N_Departamento: departamentoResponse.data.N_Departamento,
               Rol: perfil.Rol,
               N_Aplicaciones: aplicacionResponse.data.N_Aplicaciones,
@@ -202,6 +203,7 @@ function LandingPage() {
               Observaciones: perfil.Observaciones,
               Estado_Perfil: perfil.Estado_Perfil === 1 ? "Activo": "Inactivo",
               id: perfil.id,
+              ID_Pais: perfil.ID_Pais,
               Nombre: centrocostosResponse.data.Nombre,
 
             }
@@ -219,6 +221,15 @@ function LandingPage() {
           setPuestos(response.data);
       } catch (error) {
           console.error('Error al obtener la lista de puestos', error);
+      }
+  };
+
+    const fetchPais = async () =>{
+      try {
+          const response = await axios.get(`http://localhost:3000/pais/`);
+          setPais(response.data);
+      } catch (error) {
+          console.error('Error al obtener la lista de pais', error);
       }
   };
     const fetchRsocial = async () =>{
@@ -274,6 +285,7 @@ function LandingPage() {
   };
 
     fetchAmbiente();
+    fetchPais();
     fetchAplicacion();
     fetchCentrocostos();
     fetchDepartamento();
@@ -346,10 +358,10 @@ function LandingPage() {
     return (
       (filters.N_RSocial === "" ||
         row.N_RSocial.toLowerCase().includes(filters.N_RSocial.toLowerCase())) &&
-      (filters.pais === "" ||
-        row.pais
+      (filters.N_Pais === "" ||
+        row.N_Pais
           .toLowerCase()
-          .includes(filters.pais.toLowerCase())) &&
+          .includes(filters.N_Pais.toLowerCase())) &&
       (filters.N_Departamento === "" ||
         row.N_Departamento
           .toLowerCase()
@@ -384,19 +396,21 @@ function LandingPage() {
   const columns = [
     {
       name: "Pais",
-      selector: (row) => row.pais,
+      selector: (row) => row.N_Pais,
       sortable: true,
       minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
-          <input
-            type="text"
-            value={editedRow.pais}
-            onChange={(e) => handleEditChange(e, "pais")}
-          />
+          <select value={editedRow.N_Pais} onChange={(e) => handleEditChange(e, "N_Pais")}>
+          {pais.map((N_Pais) => (
+            <option key= {N_Pais.id} value={N_Pais.N_Pais}>
+              {N_Pais.N_Pais}
+            </option>
+          ))}
+        </select>
         ) : (
-          <div>{row.pais}</div>
+          <div>{row.N_Pais}</div>
         ),
     },
     {
@@ -690,8 +704,8 @@ function LandingPage() {
             />
             <FilterInput
               type="text"
-              value={filters.pais}
-              onChange={(e) => handleFilterChange(e, "pais")}
+              value={filters.N_Pais}
+              onChange={(e) => handleFilterChange(e, "N_Pais")}
               placeholder="Buscar por Pais"
             />
             <FilterInput
