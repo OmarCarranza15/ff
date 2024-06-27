@@ -1,0 +1,767 @@
+import React, { useState, useEffect } from "react";
+import DataTable from "react-data-table-component";
+import Sidebar from "./SideNavBar.jsx"; // Ajusta la ruta según la ubicación real de Sidebar.jsx
+import TopBar from "./TopBar.jsx"; // Ajusta la ruta según la ubicación real de TopBar.jsx
+import styled from "styled-components";
+import "../styles/DataTable.css"; // Importa el archivo CSS
+import axios from "axios";
+import { FaEdit, FaSave, FaTimes } from "react-icons/fa"; // Importa el ícono de edición
+import {useNavigate} from "react-router-dom";
+
+
+const MainContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+`;
+
+const ContentContainer = styled.div`
+  display: flex;
+  flex: 1;
+`;
+
+const HeaderContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1px 10px;
+`;
+
+const Title = styled.h2`
+  flex-grow: 1;
+  text-align: center;
+`;
+
+const FilterWrapper = styled.div`
+  position: relative; /* Cambiado de 'absolute' a 'relative' */
+  right: 9px;
+  padding: 10px;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  display: ${(props) => (props.show ? "flex" : "none")};
+  flex-wrap: wrap;
+`;
+
+const FilterInput = styled.input`
+  padding: 8px;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 14px;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 10px;
+`;
+
+//Estilos de Boton de Buscar y de Insertar un nuevo perfil
+const Button = styled.button`
+  background-color: ${(props) => (props.primary ? "#008cba" : "#4caf50")};
+  color: #ffffff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+`;
+
+//Estilos del Boton cancelar
+const ButtonCancelar = styled.button`
+  background-color: ${(props) =>
+    props.primary ? "#008cba" : props.cancel ? "#bf1515" : "#4caf50"};
+  color: #ffffff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+`;
+
+const DataTableContainer = styled.div`
+  flex: 1;
+  padding: 1px;
+  overflow: auto;
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 80px); /* Ajusta el tamaño del contenedor de la tabla */
+`;
+
+const StyledDataTable = styled(DataTable)`
+  border-collapse: collapse;
+  width: 100%;
+
+  th,
+  td {
+    border: 1px solid #ddd;
+    padding: 15px;
+    text-align: center; /* Centra el texto en las celdas */
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  th {
+    background-color: #f0f0f0;
+    text-align: center; /* Centra el texto en los encabezados */
+  }
+
+  td {
+    min-width: 200px;
+    max-width: 500px;
+  }
+
+  @media (max-width: 768px) {
+    th,
+    td {
+      padding: 8px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    th,
+    td {
+      padding: 6px;
+    }
+  }
+`;
+
+
+
+
+function LandingPage() {
+  const navigate = useNavigate();
+  const [records, setRecords] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editedRow, setEditedRow] = useState(null);
+  const [puestos, setPuestos] = useState([]);
+  const [rsocial, setRsocial] = useState([]);
+  const [division, setDivision] = useState([]);
+  const [departamento, setDepartamento] = useState([]);
+  const [centrocosto, setCentrocostos] = useState([]);
+  const [aplicacion, setAplicacion] = useState([]);
+  const [ambiente, setAmbiente] = useState([]);
+
+
+  const [filters, setFilters] = useState({
+    N_RSocial: "",
+    N_Departamento: "",
+    pais: "",
+    N_Puesto: "",
+    Rol: "",
+    N_Aplicaciones: "",
+    N_Ambiente: "",
+    Puesto_Jefe: "",
+    Ticket: "",
+    Fecha: "",
+    Nombre: "", //Nombre del centro de costos
+    Observaciones: "",
+    Estado_Perfil: "",
+  });
+
+  useEffect(()=> {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/perfil/`);
+        const data = response.data;
+        const mappedData = await Promise.all(
+          data.map(async (perfil)=> {
+            const puestoResponse = await axios.get(`http://localhost:3000/puesto/${perfil.ID_Puesto}`);
+            const aplicacionResponse = await axios.get(`http://localhost:3000/aplicacion/${perfil.ID_Aplicaciones}`);
+            const rsocialResponse = await axios.get(`http://localhost:3000/rsocial/${puestoResponse.data.ID_RSocial}`);
+            const divisionResponse = await axios.get(`http://localhost:3000/division/${puestoResponse.data.ID_Division}`);
+            const departamentoResponse = await axios.get(`http://localhost:3000/departamento/${puestoResponse.data.ID_Departamento}`);
+            const centrocostosResponse = await axios.get(`http://localhost:3000/centrocosto/${puestoResponse.data.ID_CentroCostos}`)
+            const paisResponse = await axios.get(`http://localhost:3000/pais/${perfil.ID_Pais}`); 
+            const ambienteResponse = await axios.get(`http://localhost:3000/ambiente/${aplicacionResponse.data.ID_Ambiente}`)
+            
+
+            return {
+              N_RSocial: rsocialResponse.data.N_RSocial,
+              N_Division: divisionResponse.data.N_Division,
+              N_Puesto: puestoResponse.data.N_Puesto,
+              pais: paisResponse.data.N_Pais,
+              N_Departamento: departamentoResponse.data.N_Departamento,
+              Rol: perfil.Rol,
+              N_Aplicaciones: aplicacionResponse.data.N_Aplicaciones,
+              N_Ambiente: ambienteResponse.data.N_Ambiente,
+              Puesto_Jefe: perfil.Puesto_Jefe,
+              Ticket: perfil.Ticket,
+              Fecha: perfil.Fecha,
+              Observaciones: perfil.Observaciones,
+              Estado_Perfil: perfil.Estado_Perfil === 1 ? "Activo": "Inactivo",
+              id: perfil.id,
+              Nombre: centrocostosResponse.data.Nombre,
+
+            }
+          })
+        )
+        setRecords(mappedData);
+      } catch (error) {
+        console.error ('Error al obtener los perfiles:', error);
+      }
+    };
+
+    const fetchPuestos = async () =>{
+      try {
+          const response = await axios.get(`http://localhost:3000/puesto/`);
+          setPuestos(response.data);
+      } catch (error) {
+          console.error('Error al obtener la lista de puestos', error);
+      }
+  };
+    const fetchRsocial = async () =>{
+     try {
+          const response = await axios.get(`http://localhost:3000/rsocial/`);
+          setRsocial(response.data);
+      } catch (error) {
+          console.error('Error al obtener la lista de razon social', error);
+      }
+  };
+
+    const fetchDivision = async () =>{
+      try {
+           const response = await axios.get(`http://localhost:3000/division/`);
+           setDivision(response.data);
+      } catch (error) {
+           console.error('Error al obtener la lista de division', error);
+      }
+  };
+    const fetchDepartamento = async () =>{
+      try {
+           const response = await axios.get(`http://localhost:3000/departamento/`);
+           setDepartamento(response.data);
+      } catch (error) {
+           console.error('Error al obtener la lista de departamentos', error);
+      }
+  };
+
+    const fetchCentrocostos = async () =>{
+      try {
+           const response = await axios.get(`http://localhost:3000/centrocosto/`);
+           setCentrocostos(response.data);
+      } catch (error) {
+           console.error('Error al obtener la lista de centro de costos', error);
+      }
+  };
+    const fetchAplicacion = async () =>{
+      try {
+           const response = await axios.get(`http://localhost:3000/aplicacion/`);
+           setAplicacion(response.data);
+      } catch (error) {
+           console.error('Error al obtener la lista de aplicaciones', error);
+      }
+  };
+
+    const fetchAmbiente = async () =>{
+      try {
+           const response = await axios.get(`http://localhost:3000/ambiente/`);
+           setAmbiente(response.data);
+      } catch (error) {
+           console.error('Error al obtener la lista de ambientes', error);
+      }
+  };
+
+    fetchAmbiente();
+    fetchAplicacion();
+    fetchCentrocostos();
+    fetchDepartamento();
+    fetchDivision();
+    fetchRsocial();
+    fetchPuestos();
+    fetchData();
+  }, []);
+
+ 
+
+  const handleFilterChange = (event, column) => {
+    const { value } = event.target;
+    setFilters((prevFilters) => ({ ...prevFilters, [column]: value }));
+  };
+
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
+
+  const handleInsert = () => {
+    navigate("/Insertar-Nuevo-Perfil");
+  };
+
+
+  const startEdit = (row) => {
+    setEditedRow({ ...row });
+    setEditMode(row.id);
+  };
+
+  const handleEditChange = (event, field) => {
+    const { value } = event.target;
+    setEditedRow((prevState) => ({
+      ...prevState,
+      [field]: value,
+    }));
+  };
+
+  const saveChanges = async(id) => {
+    try {
+      const updateRow = {
+        ...editedRow,
+        Estado_Perfil: editedRow.Estado_Perfil === "Activo" ? 1 : 2,
+      }
+      await axios.put(`http://localhost:3000/perfil/${id}`, updateRow);
+      puestos.map((N_Puesto) => (
+      axios.put(`http://localhost:3000/puesto/${N_Puesto.N_Puesto}`, updateRow)));
+      const appl = await axios.put(`http://localhost:3000/aplicacion/${id}`, updateRow)
+      await axios.put(`http://localhost:3000/ambiente/${appl.data.id}`, updateRow);
+        
+      const updatedRecords = records.map ((row) => 
+        row.id === id ? {...editedRow} : row
+      )
+      //setRecords(updatedRecordsPuesto);
+      setRecords(updatedRecords);
+      setEditedRow(null);
+      setEditMode(null); 
+    
+                                                                               
+      console.log("Cambios guardados correctamente");
+    } catch(error) {
+      console.error("Error al guardar los cambios", error)
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditedRow(null);
+    setEditMode(null);
+  };
+
+  const filteredData = records.filter((row) => {
+    return (
+      (filters.N_RSocial === "" ||
+        row.N_RSocial.toLowerCase().includes(filters.N_RSocial.toLowerCase())) &&
+      (filters.pais === "" ||
+        row.pais
+          .toLowerCase()
+          .includes(filters.pais.toLowerCase())) &&
+      (filters.N_Departamento === "" ||
+        row.N_Departamento
+          .toLowerCase()
+          .includes(filters.N_Departamento.toLowerCase())) &&
+      (filters.Rol === "" ||
+        row.Rol.toLowerCase().includes(filters.Rol.toLowerCase())) &&
+      (filters.Nombre === "" ||
+        row.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase())) &&
+      (filters.N_Puesto === "" ||
+        row.N_Puesto.toLowerCase().includes(filters.N_Puesto.toLowerCase())) &&
+      (filters.Observaciones === "" ||
+        row.Observaciones.toLowerCase().includes(filters.Observaciones.toLowerCase())) &&
+      (filters.N_Aplicaciones === "" ||
+        row.N_Aplicaciones
+          .toLowerCase()
+          .includes(filters.N_Aplicaciones.toLowerCase())) &&
+      (filters.N_Ambiente === "" ||
+        row.N_Ambiente.toLowerCase().includes(filters.N_Ambiente.toLowerCase())) &&
+      (filters.Puesto_Jefe === "" ||
+        row.Puesto_Jefe
+          .toLowerCase()
+          .includes(filters.Puesto_Jefe.toLowerCase())) &&
+      (filters.Estado_Perfil === "" ||
+        row.Estado_Perfil.toLowerCase().includes(filters.Estado_Perfil.toLowerCase())) &&
+      (filters.Ticket === "" ||
+        row.Ticket.toLowerCase().includes(filters.Ticket.toLowerCase())) &&
+      (filters.Fecha === "" ||
+        row.Fecha.toLowerCase().includes(filters.Fecha.toLowerCase()))
+    );
+  });
+
+  const columns = [
+    {
+      name: "Pais",
+      selector: (row) => row.pais,
+      sortable: true,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.pais}
+            onChange={(e) => handleEditChange(e, "pais")}
+          />
+        ) : (
+          <div>{row.pais}</div>
+        ),
+    },
+    {
+      name: "Razon Social",
+      selector: (row) => row.N_RSocial,
+      sortable: true,
+      minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <select value={editedRow.N_RSocial} onChange={(e) => handleEditChange(e, "N_RSocial")}>
+            {rsocial.map((N_RSocial) => (
+              <option key= {N_RSocial.id} value={N_RSocial.N_RSocial}>
+                {N_RSocial.N_RSocial}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div>{row.N_RSocial}</div>
+        ),
+    },
+    {
+      name: "División",
+      selector: (row) => row.N_Division,
+      sortable: true,
+      minWidth: "230px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <select value={editedRow.N_Division} onChange={(e) => handleEditChange(e, "N_DivisionN_Division")}>
+            {division.map((N_Division) => (
+              <option key= {N_Division.id} value={N_Division.N_Division}>
+                {N_Division.N_Division}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div>{row.N_Division}</div>
+        ),
+    },
+    {
+      name: "Departamento",
+      selector: (row) => row.N_Departamento,
+      sortable: true,
+      minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <select value={editedRow.N_Departamento} onChange={(e) => handleEditChange(e, "N_Departamento")}>
+          {departamento.map((N_Departamento) => (
+            <option key= {N_Departamento.id} value={N_Departamento.N_Departamento}>
+              {N_Departamento.N_Departamento}
+            </option>
+          ))}
+        </select>
+        ) : (
+          <div>{row.N_Departamento}</div>
+        ),
+    },
+    {
+      name: "Centro de Costos",
+      selector: (row) => row.Nombre,
+      sortable: true,
+      minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <select value={editedRow.Nombre} onChange={(e) => handleEditChange(e, "Nombre")}>
+          {centrocosto.map((Nombre) => (
+            <option key= {Nombre.id} value={Nombre.Nombre}>
+              {Nombre.Nombre}
+            </option>
+          ))}
+        </select>
+        ) : (
+          <div>{row.Nombre}</div>
+        ),
+    },
+    {
+      name: "Puesto",
+      selector: (row) => row.N_Puesto,
+      sortable: true,
+      minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <select value={editedRow.N_Puesto} onChange={(e) => handleEditChange(e, "N_Puesto")}>
+            {puestos.map((N_Puesto) => (
+              <option key= {N_Puesto.id} value={N_Puesto.N_Puesto}>
+                {N_Puesto.N_Puesto}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div>{row.N_Puesto}</div>
+      ),
+    },
+    {
+      name: "Rol",
+      selector: (row) => row.Rol,
+      sortable: true,
+      minWidth: "370px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.Rol}
+            onChange={(e) => handleEditChange(e, "Rol")}
+          />
+        ) : (
+          <div>{row.Rol}</div>
+      ),
+    },
+    {
+      name: "Aplicación",
+      selector: (row) => row.N_Aplicaciones,
+      sortable: true,
+      minWidth: "150px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "600px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <select value={editedRow.N_Aplicaciones} onChange={(e) => handleEditChange(e, "N_Aplicaciones")}>
+            {aplicacion.map((N_Aplicaciones) => (
+              <option key= {N_Aplicaciones.id} value={N_Aplicaciones.N_Aplicaciones}>
+                {N_Aplicaciones.N_Aplicaciones}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div>{row.N_Aplicaciones}</div>
+      ),
+    },
+    {
+      name: "Ambiente",
+      selector: (row) => row.N_Ambiente,
+      sortable: true,
+      minWidth: "150px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <select value={editedRow.N_Ambiente} onChange={(e) => handleEditChange(e, "N_Ambiente")}>
+          {ambiente.map((N_Ambiente) => (
+            <option key= {N_Ambiente.id} value={N_Ambiente.N_Ambiente}>
+              {N_Ambiente.N_Ambiente}
+            </option>
+          ))}
+        </select>
+        ) : (
+          <div>{row.N_Ambiente}</div>
+      ),
+    },
+    {
+      name: "Jefe Inmediato",
+      selector: (row) => row.Puesto_Jefe,
+      sortable: true,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.Puesto_Jefe}
+            onChange={(e) => handleEditChange(e, "Puesto_Jefe")}
+          />
+        ) : (
+          <div>{row.Puesto_Jefe}</div>
+      ),
+    },
+    {
+      name: "Ticket",
+      selector: (row) => row.Ticket,
+      sortable: true,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.Ticket}
+            onChange={(e) => handleEditChange(e, "Ticket")}
+          />
+        ) : (
+          <div>{row.Ticket}</div>
+      ),
+    },
+    {
+      name: "Fecha",
+      selector: (row) => row.Fecha,
+      sortable: true,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.Fecha}
+            onChange={(e) => handleEditChange(e, "Fecha")}
+          />
+        ) : (
+          <div>{row.Fecha}</div>
+      ),
+    },
+    {
+      name: "Observación",
+      selector: (row) => row.Observaciones,
+      sortable: true,
+      minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.Observaciones}
+            onChange={(e) => handleEditChange(e, "Observaciones")}
+          />
+        ) : (
+          <div>{row.Observaciones}</div>
+        ),
+    },
+    {
+      name: "Estado",
+      selector: (row) => editMode === row.id ?(
+        <select value={editedRow.Estado_Perfil} onChange={(e) => handleEditChange(e, "Estado_Perfil")}>
+          <option>
+            Activo
+          </option>
+          <option>
+            Inactivo
+          </option>
+        </select>
+      )
+        : (
+          row.Estado_Perfil
+        ),
+        sortable: true,
+    },
+    {
+      name: "Acciones",
+      cell: (row) =>
+        editMode === row.id ? (
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <Button onClick={() => saveChanges(row.id)}>
+              <FaSave />
+            </Button>
+            <ButtonCancelar cancel onClick={cancelEdit}>
+              <FaTimes />
+            </ButtonCancelar>
+          </div>
+        ) : (
+          <Button onClick={() => startEdit(row)}>
+            <FaEdit />
+          </Button>
+        ),
+    },
+  ];
+
+  return (
+    <MainContainer>
+      <TopBar />
+      <ContentContainer>
+        <Sidebar />
+        <DataTableContainer>
+          <HeaderContainer>
+            <Title>Matriz de perfiles País</Title>
+            <ButtonGroup>
+              <Button primary onClick={toggleFilters}>
+                {showFilters ? "Ocultar" : "Buscar"}
+              </Button>
+              <Button onClick={handleInsert}>Insertar Nuevo Perfil</Button>
+            </ButtonGroup>
+          </HeaderContainer>
+          <FilterWrapper show={showFilters}>
+            <FilterInput
+              type="text"
+              value={filters.N_RSocial}
+              onChange={(e) => handleFilterChange(e, "N_RSocial")}
+              placeholder=" Razón Social"
+            />
+            <FilterInput
+              type="text"
+              value={filters.N_Departamento}
+              onChange={(e) => handleFilterChange(e, "N_Departamento")}
+              placeholder="Buscar por Departamento"
+            />
+            <FilterInput
+              type="text"
+              value={filters.Nombre}
+              onChange={(e) => handleFilterChange(e, "Nombre")}
+              placeholder="Buscar por Centro de Costos"
+            />
+            <FilterInput
+              type="text"
+              value={filters.pais}
+              onChange={(e) => handleFilterChange(e, "pais")}
+              placeholder="Buscar por Pais"
+            />
+            <FilterInput
+              type="text"
+              value={filters.N_Puesto}
+              onChange={(e) => handleFilterChange(e, "N_Puesto")}
+              placeholder="Buscar por Puesto"
+            />
+            <FilterInput
+              type="text"
+              value={filters.Rol}
+              onChange={(e) => handleFilterChange(e, "Rol")}
+              placeholder="Buscar por Rol"
+            />
+            <FilterInput
+              type="text"
+              value={filters.N_Aplicaciones}
+              onChange={(e) => handleFilterChange(e, "N_Aplicaciones")}
+              placeholder="Buscar por Aplicación"
+            />
+            <FilterInput
+              type="text"
+              value={filters.N_Ambiente}
+              onChange={(e) => handleFilterChange(e, "ambiente")}
+              placeholder="Buscar por Ambiente"
+            />
+            <FilterInput
+              type="text"
+              value={filters.Puesto_Jefe}
+              onChange={(e) => handleFilterChange(e, "jefeInmediato")}
+              placeholder="Buscar por Jefe Inmediato"
+            />
+            <FilterInput
+              type="text"
+              value={filters.Ticket}
+              onChange={(e) => handleFilterChange(e, "Ticket")}
+              placeholder="Buscar por Ticket"
+            />
+            <FilterInput
+              type="text"
+              value={filters.Estado_Perfil}
+              onChange={(e) => handleFilterChange(e, "Estado_Perfil")}
+              placeholder="Buscar por Estado"
+            />
+            <FilterInput
+              type="text"
+              value={filters.Fecha}
+              onChange={(e) => handleFilterChange(e, "Fecha")}
+              placeholder="Buscar por Fecha"
+            />
+            <FilterInput
+              type="text"
+              value={filters.Observaciones}
+              onChange={(e) => handleFilterChange(e, "Observaciones")}
+              placeholder="Buscar por Observaciones"
+            />
+          </FilterWrapper>
+          <StyledDataTable
+            columns={columns}
+            data={filteredData}
+            pagination
+            paginationPerPage={30}
+            showFilters={showFilters}
+          />
+        </DataTableContainer>
+      </ContentContainer>
+    </MainContainer>
+  );
+}
+
+export default LandingPage;
