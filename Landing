@@ -319,77 +319,8 @@ function LandingPage() {
         Estado_Perfil: editedRow.Estado_Perfil === "Activo" ? 1 : 2,
       }
       
-      
       let response = await axios.put(`http://localhost:3000/perfil/${id}`,updateRow);
       console.log('perfil acuatlizado', response.data);
-
-      const puestoUpdatePromises = puestos.map(async (N_Puesto) => {
-        response = await axios.put(`http://localhost:3000/puesto/${N_Puesto.id}`, {
-          ...updateRow,
-          N_Puesto: N_Puesto.N_Puesto,
-        })
-        console.log('Puesto actualizao:', response.data);
-        return response;
-      })
-      await Promise.all(puestoUpdatePromises);
-
-
-
-      response = await axios.put(`http://localhost:3000/aplicacion/${editedRow.ID_Aplicaciones}`, {
-        ...updateRow,
-        N_Aplicaciones: editedRow.N_Aplicaciones,
-      })
-      console.log('aplicacion acualizada', response.data);
-
-
-
-      response = await axios.put(`http://localhost:3000/ambiente/${editedRow.ID_Ambiente}`, {
-        ...updateRow,
-        N_Ambiente: editedRow.N_Ambiente,
-      })
-      console.log('ambiente acualizada', response.data);
-
-
-
-      response = await axios.put(`http://localhost:3000/rsocial/${editedRow.ID_RSocial}`, {
-        ...updateRow,
-        N_RSocial: editedRow.N_RSocial,
-      })
-      console.log('Razon social acualizada', response.data);
-
-
-
-
-      response = await axios.put(`http://localhost:3000/division/${editedRow.ID_Division}`, {
-        ...updateRow,
-        N_Division: editedRow.N_Division,
-      })
-      console.log('Division acualizada', response.data);
-
-
-
-      response = await axios.put(`http://localhost:3000/departamento/${editedRow.ID_Departamento}`, {
-        ...updateRow,
-        N_Departamento: editedRow.N_Departamento,
-      })
-      console.log('Departamento acualizado', response.data);
-
-
-
-
-      response = await axios.put(`http://localhost:3000/centrocostos/${editedRow.ID_CentroCostos}`, {
-        ...updateRow,
-        Nombre: editedRow.Nombre,
-      })
-      console.log('Centro de costos  acualizado', response.data);
-
-
-      response = await axios.put(`http://localhost:3000/departamento/${editedRow.ID_Departamento}`, {
-        ...updateRow,
-        N_Departamento: editedRow.N_Departamento,
-      })
-      console.log('Departamento acualizado', response.data);
-
 
       const updatedRecords = records.map ((row) => 
         row.id === id ? {...editedRow} : row
