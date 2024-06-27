@@ -363,6 +363,10 @@ function LandingPage() {
         row.ID_Pais
           .toLowerCase()
           .includes(filters.ID_Pais.toLowerCase())) &&
+      (filters.N_Pais === "" ||
+        row.N_Pais
+          .toLowerCase()
+          .includes(filters.N_Pais.toLowerCase())) &&
       (filters.N_Departamento === "" ||
         row.N_Departamento
           .toLowerCase()
@@ -397,19 +401,22 @@ function LandingPage() {
   const columns = [
     {
       name: "Pais",
-      selector: (row) => row.ID_Pais,
+      selector: (row) => row.N_Pais,
       sortable: true,
       minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
         cell: (row) =>
           editMode && editedRow?.id === row.id ? (
-            <input
-              type="text"
-              value={editedRow.ID_Pais}
-              onChange={(e) => handleEditChange(e, "ID_Pais")}
-            />
+            <select value={(editedRow.ID_Pais)} onChange={(e) => handleEditChange(e, "ID_Pais")}>
+              {pais.map((pais) =>(
+                <option key={pais.id} value={pais.id}>
+                  {pais.N_Pais}
+                </option>
+              ))}
+            </select>
+
           ) : (
-            <div>{row.ID_Pais}</div>
+            <div>{row.N_Pais}</div>
           ),
     },
     {
@@ -420,10 +427,10 @@ function LandingPage() {
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
-          <select value={editedRow.N_RSocial} onChange={(e) => handleEditChange(e, "N_RSocial")}>
-            {rsocial.map((N_RSocial) => (
-              <option key= {N_RSocial.id} value={N_RSocial.N_RSocial}>
-                {N_RSocial.N_RSocial}
+          <select value={editedRow.ID_RSocial} onChange={(e) => handleEditChange(e, "N_RSocial")}>
+            {rsocial.map((rsocial) => (
+              <option key= {rsocial.id} value={rsocial.id}>
+                {rsocial.N_RSocial}
               </option>
             ))}
           </select>
