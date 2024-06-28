@@ -170,6 +170,9 @@ function LandingPage() {
     Observaciones: "",
     Estado_Perfil: "",
     ID_Pais: "",
+    ID_Aplicaciones: "",
+    ID_Puesto:"",
+    ID_Ambiente:"",
   });
 
   useEffect(()=> {
@@ -205,6 +208,13 @@ function LandingPage() {
               Estado_Perfil: perfil.Estado_Perfil === 1 ? "Activo": "Inactivo",
               id: perfil.id,
               ID_Pais: perfil.ID_Pais,
+              ID_Aplicaciones: perfil.ID_Aplicaciones,
+              ID_Puesto: perfil.ID_Puesto,
+              ID_Ambiente: aplicacionResponse.data.ID_Ambiente,
+              ID_RSocial: puestoResponse.data.ID_RSocial,
+              ID_Division: puestoResponse.data.ID_Division,
+              ID_Departamento: puestoResponse.data.ID_Departamento,
+              ID_CentroCostos: puestoResponse.data.ID_CentroCostos,
               Nombre: centrocostosResponse.data.Nombre,
 
             }
@@ -322,22 +332,64 @@ function LandingPage() {
     setEditedRow((prevState) => ({
       ...prevState,
       [field]: value,
-    }));
+      ...(field === "ID_Pais" && { N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais }),
+      ...(field === "ID_Aplicaciones" && { N_Aplicaciones: aplicacion.find((p) => p.id === parseInt(value)).N_Aplicaciones }),
+      ...(field === "ID_Puesto" && { N_Puesto: puestos.find((p) => p.id === parseInt(value)).N_Puesto }),
+      ...(field === "ID_Ambiente" && { N_Ambiente: ambiente.find((p) => p.id === parseInt(value)).N_Ambiente }),
+      ...(field === "ID_RSocial" && { N_RSocial: rsocial.find((p) => p.id === parseInt(value)).N_RSocial }),
+      ...(field === "ID_Division" && { N_Division: division.find((p) => p.id === parseInt(value)).N_Division }),
+      ...(field === "ID_Departamento" && { N_Departamento: departamento.find((p) => p.id === parseInt(value)).N_Departamento }),
+      ...(field === "ID_CentroCostos" && { Nombre: centrocosto.find((p) => p.id === parseInt(value)).Nombre }),
+    } 
+    ));
   };
+  
 
   const saveChanges = async(id) => {
     try {
+
       const updateRow = {
         ...editedRow,
         Estado_Perfil: editedRow.Estado_Perfil === "Activo" ? 1 : 2,
       }
       
-      let response = await axios.put(`http://localhost:3000/perfil/${id}`,updateRow);
-      console.log('perfil acuatlizado', response.data);
+      await axios.put(`http://localhost:3000/perfil/${id}`,updateRow);   
+
+      if (editedRow.ID_Ambiente !== records.find(row => row.id === id).ID_Ambiente){
+        await axios.put(`http://localhost:3000/aplicacion/${editedRow.ID_Aplicaciones}`,{
+          ID_Ambiente: editedRow.ID_Ambiente
+        });
+      } 
+      
+      if (editedRow.ID_RSocial !== records.find(row => row.id === id).ID_RSocial){
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`,{
+          ID_RSocial: editedRow.ID_RSocial
+        });
+      }  
+
+      if (editedRow.ID_Division !== records.find(row => row.id === id).ID_Division){
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`,{
+          ID_Division: editedRow.ID_Division
+        });
+      }  
+
+      if (editedRow.ID_Departamento !== records.find(row => row.id === id).ID_Departamento){
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`,{
+          ID_Departamento: editedRow.ID_Departamento
+        });
+      } 
+
+      if (editedRow.ID_CentroCostos !== records.find(row => row.id === id).ID_CentroCostos){
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`,{
+          ID_CentroCostos: editedRow.ID_CentroCostos
+        });
+      } 
+      
 
       const updatedRecords = records.map ((row) => 
         row.id === id ? {...editedRow} : row
       )
+      
       //setRecords(updatedRecordsPuesto);
       setRecords(updatedRecords);
       setEditedRow(null);
@@ -356,13 +408,9 @@ function LandingPage() {
   };
 
   const filteredData = records.filter((row) => {
-    return (
+   return(
       (filters.N_RSocial === "" ||
         row.N_RSocial.toLowerCase().includes(filters.N_RSocial.toLowerCase())) &&
-      (filters.ID_Pais === "" ||
-        row.ID_Pais
-          .toLowerCase()
-          .includes(filters.ID_Pais.toLowerCase())) &&
       (filters.N_Pais === "" ||
         row.N_Pais
           .toLowerCase()
@@ -389,8 +437,9 @@ function LandingPage() {
         row.Puesto_Jefe
           .toLowerCase()
           .includes(filters.Puesto_Jefe.toLowerCase())) &&
-      (filters.Estado_Perfil === "" ||
-        row.Estado_Perfil.toLowerCase().includes(filters.Estado_Perfil.toLowerCase())) &&
+      (filters.Estado_Perfil === "" || 
+        row.Estado_Perfil.toLowerCase().includes(filters.Estado_Perfil.toLowerCase()))   &&
+        
       (filters.Ticket === "" ||
         row.Ticket.toLowerCase().includes(filters.Ticket.toLowerCase())) &&
       (filters.Fecha === "" ||
@@ -405,19 +454,18 @@ function LandingPage() {
       sortable: true,
       minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
-        cell: (row) =>
-          editMode && editedRow?.id === row.id ? (
-            <select value={(editedRow.ID_Pais)} onChange={(e) => handleEditChange(e, "ID_Pais")}>
-              {pais.map((pais) =>(
-                <option key={pais.id} value={pais.id}>
-                  {pais.N_Pais}
-                </option>
-              ))}
-            </select>
-
-          ) : (
-            <div>{row.N_Pais}</div>
-          ),
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <select value={editedRow.ID_Pais} onChange={(e) => handleEditChange(e, "ID_Pais")}>
+            {pais.map((pais) => (
+              <option key={pais.id} value={pais.id}>
+                {pais.N_Pais}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div>{row.N_Pais}</div>
+        ),
     },
     {
       name: "Razon Social",
@@ -427,7 +475,7 @@ function LandingPage() {
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
-          <select value={editedRow.ID_RSocial} onChange={(e) => handleEditChange(e, "N_RSocial")}>
+          <select value={editedRow.ID_RSocial} onChange={(e) => handleEditChange(e, "ID_RSocial")}>
             {rsocial.map((rsocial) => (
               <option key= {rsocial.id} value={rsocial.id}>
                 {rsocial.N_RSocial}
@@ -446,10 +494,10 @@ function LandingPage() {
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) => 
         editMode && editedRow?.id === row.id ? (
-          <select value={editedRow.N_Division} onChange={(e) => handleEditChange(e, "N_Division")}>
-            {division.map((N_Division) => (
-              <option key= {N_Division.id} value={N_Division.N_Division}>
-                {N_Division.N_Division}
+          <select value={editedRow.ID_Division} onChange={(e) => handleEditChange(e, "ID_Division")}>
+            {division.map((division) => (
+              <option key= {division.id} value={division.id}>
+                {division.N_Division}
               </option>
             ))}
           </select>
@@ -465,10 +513,10 @@ function LandingPage() {
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
-          <select value={editedRow.N_Departamento} onChange={(e) => handleEditChange(e, "N_Departamento")}>
-          {departamento.map((N_Departamento) => (
-            <option key= {N_Departamento.id} value={N_Departamento.N_Departamento}>
-              {N_Departamento.N_Departamento}
+          <select value={editedRow.ID_Departamento} onChange={(e) => handleEditChange(e, "ID_Departamento")}>
+          {departamento.map((departamento) => (
+            <option key= {departamento.id} value={departamento.id}>
+              {departamento.N_Departamento}
             </option>
           ))}
         </select>
@@ -484,10 +532,10 @@ function LandingPage() {
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
-          <select value={editedRow.Nombre} onChange={(e) => handleEditChange(e, "Nombre")}>
-          {centrocosto.map((Nombre) => (
-            <option key= {Nombre.id} value={Nombre.Nombre}>
-              {Nombre.Nombre}
+          <select value={editedRow.ID_CentroCostos} onChange={(e) => handleEditChange(e, "ID_CentroCostos")}>
+          {centrocosto.map((centrocosto) => (
+            <option key= {centrocosto.id} value={centrocosto.id}>
+              {centrocosto.Nombre}
             </option>
           ))}
         </select>
@@ -503,10 +551,10 @@ function LandingPage() {
       maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) => 
         editMode && editedRow?.id === row.id ? (
-          <select value={editedRow.N_Puesto} onChange={(e) => handleEditChange(e, "N_Puesto")}>
-            {puestos.map((N_Puesto) => (
-              <option key= {N_Puesto.id} value={N_Puesto.N_Puesto}>
-                {N_Puesto.N_Puesto}
+          <select value={editedRow.ID_Puesto} onChange={(e) => handleEditChange(e, "ID_Puesto")}>
+            {puestos.map((puestos) => (
+              <option key={puestos.id} value={puestos.id}>
+                {puestos.N_Puesto}
               </option>
             ))}
           </select>
@@ -539,13 +587,13 @@ function LandingPage() {
       maxWidth: "600px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) => 
         editMode && editedRow?.id === row.id ? (
-          <select value={editedRow.N_Aplicaciones} onChange={(e) => handleEditChange(e, "N_Aplicaciones")}>
-            {aplicacion.map((N_Aplicaciones) => (
-              <option key= {N_Aplicaciones.id} value={N_Aplicaciones.N_Aplicaciones}>
-                {N_Aplicaciones.N_Aplicaciones}
-              </option>
-            ))}
-          </select>
+          <select value={editedRow.ID_Aplicaciones} onChange={(e) => handleEditChange(e, "ID_Aplicaciones")}>
+          {aplicacion.map((aplicacion) => (
+            <option key={aplicacion.id} value={aplicacion.id}>
+              {aplicacion.N_Aplicaciones}
+            </option>
+          ))}
+        </select>
         ) : (
           <div>{row.N_Aplicaciones}</div>
       ),
@@ -558,13 +606,13 @@ function LandingPage() {
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) => 
         editMode && editedRow?.id === row.id ? (
-          <select value={editedRow.N_Ambiente} onChange={(e) => handleEditChange(e, "N_Ambiente")}>
-          {ambiente.map((N_Ambiente) => (
-            <option key= {N_Ambiente.id} value={N_Ambiente.N_Ambiente}>
-              {N_Ambiente.N_Ambiente}
-            </option>
-          ))}
-        </select>
+          <select value={editedRow.ID_Ambiente} onChange={(e) => handleEditChange(e, "ID_Ambiente")}>
+            {ambiente.map((ambiente) => (
+              <option key={ambiente.id} value={ambiente.id}>
+                {ambiente.N_Ambiente}
+              </option>
+            ))}
+          </select>
         ) : (
           <div>{row.N_Ambiente}</div>
       ),
@@ -641,16 +689,16 @@ function LandingPage() {
       name: "Estado",
       selector: (row) => editMode === row.id ?(
         <select value={editedRow.Estado_Perfil} onChange={(e) => handleEditChange(e, "Estado_Perfil")}>
-          <option>
+          <option value={"Activo"}>
             Activo
           </option>
-          <option>
+          <option value={"Inactivo"}>
             Inactivo
           </option>
         </select>
       )
         : (
-          row.Estado_Perfil
+          <div>{row.Estado_Perfil}</div>
         ),
         sortable: true,
     },
@@ -710,8 +758,8 @@ function LandingPage() {
             />
             <FilterInput
               type="text"
-              value={filters.ID_Pais}
-              onChange={(e) => handleFilterChange(e, "ID_Pais")}
+              value={filters.N_Pais}
+              onChange={(e) => handleFilterChange(e, "N_Pais")}
               placeholder="Buscar por Pais"
             />
             <FilterInput
@@ -735,7 +783,7 @@ function LandingPage() {
             <FilterInput
               type="text"
               value={filters.N_Ambiente}
-              onChange={(e) => handleFilterChange(e, "ambiente")}
+              onChange={(e) => handleFilterChange(e, "N_Ambiente")}
               placeholder="Buscar por Ambiente"
             />
             <FilterInput
