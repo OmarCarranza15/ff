@@ -99,7 +99,11 @@ const DataTableContainer = styled.div`
 
 const StyledDataTable = styled(DataTable)`
   border-collapse: collapse;
-  width: 100%;
+  width: 30%;
+  position: relative;
+  margin: center;
+  margin-left: 35%;
+  
 
   th,
   td {
@@ -119,6 +123,7 @@ const StyledDataTable = styled(DataTable)`
   td {
     min-width: 200px;
     max-width: 500px;
+    text-align: center;
   }
 
   @media (max-width: 768px) {
@@ -249,7 +254,7 @@ function Paises() {
       selector: (row) => row.N_Pais,
       sortable: true,
       minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      maxWidth: "50px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
             <input
