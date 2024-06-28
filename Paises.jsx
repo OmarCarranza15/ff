@@ -102,7 +102,7 @@ const StyledDataTable = styled(DataTable)`
   width: 30%;
   position: relative;
   margin: center;
-  margin-left: 35%;
+  margin: 1% 30%;
   
 
   th,
