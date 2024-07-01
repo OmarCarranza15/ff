@@ -1,13 +1,38 @@
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { FaSave, FaEdit, FaTimes } from "react-icons/fa";
+import {
+  MainContainer,
+  TopBar,
+  ContentContainer,
+  Sidebar,
+  DataTableContainer,
+  HeaderContainer,
+  Title,
+  ButtonGroup,
+  Button,
+  FilterWrapper,
+  FilterInput,
+  StyledDataTable,
+  ModalBackground,
+  ModalWrapper,
+  ModalTitle,
+  ModalInput,
+  ErrorMessage,
+  ModalButtonGroup,
+  GuardarButton,
+  ModalButton,
+} from "./StyledComponents"; // Asegúrate de que las rutas son correctas
+
 function Paises() {
   const [pais] = useState([]);
   const [records, setRecords] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editedRow, setEditedRow] = useState(null);
-  const [errors, setErrors] = useState({ pais: "" }); //validaciones para insertar una nuevo pais
+  const [errors, setErrors] = useState({ pais: "" }); // validaciones para insertar un nuevo país
   const [modalValues, setModalValues] = useState({ pais: "" });
   const [showModal, setShowModal] = useState(false); // Estado para mostrar/ocultar el modal
-
 
   const [filters, setFilters] = useState({
     N_Pais: "",
@@ -18,17 +43,13 @@ function Paises() {
       try {
         const response = await axios.get(`http://localhost:3000/pais/`);
         const data = response.data;
-        const mappedData = await Promise.all(
-          data.map(async (pais) => {
-            return {
-              id: pais.id,
-              N_Pais: pais.N_Pais,
-            };
-          })
-        );
+        const mappedData = data.map((pais) => ({
+          id: pais.id,
+          N_Pais: pais.N_Pais,
+        }));
         setRecords(mappedData);
       } catch (error) {
-        console.error('Error al obtener los Paises:', error);
+        console.error("Error al obtener los Paises:", error);
       }
     };
 
@@ -72,7 +93,9 @@ function Paises() {
     if (Object.values(newErrors).every((error) => error === "")) {
       try {
         // Verificar si el país ya existe en la base de datos
-        const response = await axios.get(`http://localhost:3000/pais?N_Pais=${modalValues.pais}`);
+        const response = await axios.get(
+          `http://localhost:3000/pais?N_Pais=${modalValues.pais}`
+        );
         if (response.data.length > 0) {
           setErrors({ pais: "El país ya existe" });
           return;
@@ -80,16 +103,21 @@ function Paises() {
 
         // Insertar un nuevo país
         const newPais = { N_Pais: modalValues.pais };
-        await axios.post(`http://localhost:3000/pais`, newPais);
+        const insertResponse = await axios.post(
+          `http://localhost:3000/pais`,
+          newPais
+        );
+
+        // Actualizar la lista de países con el nuevo país
         const updatedRecords = [
           ...records,
-          { id: records.length + 1, N_Pais: modalValues.pais },
+          { id: insertResponse.data.id, N_Pais: modalValues.pais },
         ];
         setRecords(updatedRecords);
         setShowModal(false); // Ocultar el modal después de guardar
         setModalValues({ pais: "" }); // Limpiar los valores del modal
       } catch (error) {
-        console.error('Error al insertar el nuevo País:', error);
+        console.error("Error al insertar el nuevo País:", error);
       }
     }
   };
@@ -104,9 +132,11 @@ function Paises() {
     setEditedRow((prevState) => ({
       ...prevState,
       [field]: value,
-      ...(field === "ID_Pais" && { N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais })
+      ...(field === "ID_Pais" && {
+        N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais,
+      }),
     }));
-    validateInput(field, value); //Validación de los campos a editar
+    validateInput(field, value); // Validación de los campos a editar
   };
 
   const validateInput = (field, value) => {
@@ -135,7 +165,6 @@ function Paises() {
         row.id === id ? { ...editedRow } : row
       );
 
-      //setRecords(updatedRecordsPuesto);
       setRecords(updatedRecords);
       setEditedRow(null);
       setEditMode(null);
@@ -151,7 +180,6 @@ function Paises() {
       } else {
         alert("Error: Verifique que los campos estén llenos correctamente");
       }
-
     } catch (error) {
       console.error("Error al guardar los cambios", error);
     }
@@ -164,8 +192,8 @@ function Paises() {
 
   const filteredData = records.filter((row) => {
     return (
-      (filters.N_Pais === "" ||
-        row.N_Pais.toLowerCase().includes(filters.N_Pais.toLowerCase()))
+      filters.N_Pais === "" ||
+      row.N_Pais.toLowerCase().includes(filters.N_Pais.toLowerCase())
     );
   });
 
@@ -195,9 +223,9 @@ function Paises() {
             <Button onClick={() => saveChanges(row.id)}>
               <FaSave />
             </Button>
-            <ButtonCancelar cancel onClick={cancelEdit}>
+            <ModalButton cancel onClick={cancelEdit}>
               <FaTimes />
-            </ButtonCancelar>
+            </ModalButton>
           </div>
         ) : (
           <Button onClick={() => startEdit(row)}>
@@ -214,7 +242,9 @@ function Paises() {
         <Sidebar />
         <DataTableContainer>
           <HeaderContainer>
-            <Title><h2 className="Title">Paises</h2></Title>
+            <Title>
+              <h2 className="Title">Paises</h2>
+            </Title>
             <ButtonGroup>
               <Button primary onClick={toggleFilters}>
                 {showFilters ? "Ocultar" : "Buscar"}
@@ -252,21 +282,4 @@ function Paises() {
               error={errors.pais}
               pattern="[a-zA-Z\s]+"
               required
-            />
-            {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
-            <ModalButtonGroup>
-              <GuardarButton primary onClick={SaveModal}>
-                <FaSave /> Guardar
-              </GuardarButton>
-              <ModalButton cancel onClick={handleCloseModal}>
-                <FaTimes /> Cancelar
-              </ModalButton>
-            </ModalButtonGroup>
-          </ModalWrapper>
-        </ModalBackground>
-      )}
-    </MainContainer>
-  );
-}
-
-export default Paises;
+           
