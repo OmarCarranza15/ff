@@ -1,0 +1,272 @@
+function Paises() {
+  const [pais] = useState([]);
+  const [records, setRecords] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editedRow, setEditedRow] = useState(null);
+  const [errors, setErrors] = useState({ pais: "" }); //validaciones para insertar una nuevo pais
+  const [modalValues, setModalValues] = useState({ pais: "" });
+  const [showModal, setShowModal] = useState(false); // Estado para mostrar/ocultar el modal
+
+
+  const [filters, setFilters] = useState({
+    N_Pais: "",
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/pais/`);
+        const data = response.data;
+        const mappedData = await Promise.all(
+          data.map(async (pais) => {
+            return {
+              id: pais.id,
+              N_Pais: pais.N_Pais,
+            };
+          })
+        );
+        setRecords(mappedData);
+      } catch (error) {
+        console.error('Error al obtener los Paises:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleFilterChange = (event, column) => {
+    const { value } = event.target;
+    setFilters((prevFilters) => ({ ...prevFilters, [column]: value }));
+  };
+
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
+
+  const handleInsert = () => {
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalValues({ pais: "" });
+    setErrors({ pais: "" });
+  };
+
+  const handleModalChange = (event, field) => {
+    const { value } = event.target;
+    setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
+  };
+
+  const SaveModal = async () => {
+    const newErrors = { pais: "" };
+
+    if (!modalValues.pais.trim()) {
+      newErrors.pais = "El campo País es obligatorio";
+    } else if (!/^[a-zA-Z\s]+$/.test(modalValues.pais)) {
+      newErrors.pais = "El campo País solo acepta letras y espacios en blanco";
+    }
+    setErrors(newErrors);
+
+    if (Object.values(newErrors).every((error) => error === "")) {
+      try {
+        // Verificar si el país ya existe en la base de datos
+        const response = await axios.get(`http://localhost:3000/pais?N_Pais=${modalValues.pais}`);
+        if (response.data.length > 0) {
+          setErrors({ pais: "El país ya existe" });
+          return;
+        }
+
+        // Insertar un nuevo país
+        const newPais = { N_Pais: modalValues.pais };
+        await axios.post(`http://localhost:3000/pais`, newPais);
+        const updatedRecords = [
+          ...records,
+          { id: records.length + 1, N_Pais: modalValues.pais },
+        ];
+        setRecords(updatedRecords);
+        setShowModal(false); // Ocultar el modal después de guardar
+        setModalValues({ pais: "" }); // Limpiar los valores del modal
+      } catch (error) {
+        console.error('Error al insertar el nuevo País:', error);
+      }
+    }
+  };
+
+  const startEdit = (row) => {
+    setEditedRow({ ...row });
+    setEditMode(row.id);
+  };
+
+  const handleEditChange = (event, field) => {
+    const { value } = event.target;
+    setEditedRow((prevState) => ({
+      ...prevState,
+      [field]: value,
+      ...(field === "ID_Pais" && { N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais })
+    }));
+    validateInput(field, value); //Validación de los campos a editar
+  };
+
+  const validateInput = (field, value) => {
+    let newErrors = { ...errors };
+    if (field === "pais") {
+      if (!value.trim()) {
+        newErrors.pais = "El campo País es obligatorio";
+      } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+        newErrors.pais = "El campo País solo acepta letras y espacios en blanco";
+      } else {
+        newErrors.pais = "";
+      }
+    }
+    setErrors(newErrors);
+  };
+
+  const saveChanges = async (id) => {
+    try {
+      const updateRow = {
+        ...editedRow,
+      };
+
+      await axios.put(`http://localhost:3000/pais/${id}`, updateRow);
+
+      const updatedRecords = records.map((row) =>
+        row.id === id ? { ...editedRow } : row
+      );
+
+      //setRecords(updatedRecordsPuesto);
+      setRecords(updatedRecords);
+      setEditedRow(null);
+      setEditMode(null);
+
+      console.log("Cambios guardados correctamente");
+
+      if (Object.values(errors).every((error) => error === "")) {
+        const updatedRecords = records.map((row) =>
+          row.id === id ? { ...editedRow } : row
+        );
+        setRecords(updatedRecords); // Actualizar los registros
+        setEditedRow(null); // Limpiar la fila en edición
+      } else {
+        alert("Error: Verifique que los campos estén llenos correctamente");
+      }
+
+    } catch (error) {
+      console.error("Error al guardar los cambios", error);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditedRow(null);
+    setEditMode(null);
+  };
+
+  const filteredData = records.filter((row) => {
+    return (
+      (filters.N_Pais === "" ||
+        row.N_Pais.toLowerCase().includes(filters.N_Pais.toLowerCase()))
+    );
+  });
+
+  const columns = [
+    {
+      name: "Pais",
+      selector: (row) => row.N_Pais,
+      sortable: true,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "50px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.N_Pais}
+            onChange={(e) => handleEditChange(e, "N_Pais")}
+          />
+        ) : (
+          <div>{row.N_Pais}</div>
+        ),
+    },
+    {
+      name: "Acciones",
+      cell: (row) =>
+        editMode === row.id ? (
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <Button onClick={() => saveChanges(row.id)}>
+              <FaSave />
+            </Button>
+            <ButtonCancelar cancel onClick={cancelEdit}>
+              <FaTimes />
+            </ButtonCancelar>
+          </div>
+        ) : (
+          <Button onClick={() => startEdit(row)}>
+            <FaEdit />
+          </Button>
+        ),
+    },
+  ];
+
+  return (
+    <MainContainer>
+      <TopBar />
+      <ContentContainer>
+        <Sidebar />
+        <DataTableContainer>
+          <HeaderContainer>
+            <Title><h2 className="Title">Paises</h2></Title>
+            <ButtonGroup>
+              <Button primary onClick={toggleFilters}>
+                {showFilters ? "Ocultar" : "Buscar"}
+              </Button>
+              <Button onClick={handleInsert}>Nuevo Pais</Button>
+            </ButtonGroup>
+          </HeaderContainer>
+          <FilterWrapper show={showFilters}>
+            <FilterInput
+              type="text"
+              value={filters.N_Pais}
+              onChange={(e) => handleFilterChange(e, "N_Pais")}
+              placeholder="Buscar por Pais"
+            />
+          </FilterWrapper>
+          <StyledDataTable
+            columns={columns}
+            data={filteredData}
+            pagination
+            paginationPerPage={30}
+            showFilters={showFilters}
+          />
+        </DataTableContainer>
+      </ContentContainer>
+      {/* Modal para insertar nuevo país */}
+      {showModal && (
+        <ModalBackground>
+          <ModalWrapper>
+            <ModalTitle>Insertar Nuevo País</ModalTitle>
+            <ModalInput
+              type="text"
+              value={modalValues.pais}
+              onChange={(e) => handleModalChange(e, "pais")}
+              placeholder="País"
+              error={errors.pais}
+              pattern="[a-zA-Z\s]+"
+              required
+            />
+            {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
+            <ModalButtonGroup>
+              <GuardarButton primary onClick={SaveModal}>
+                <FaSave /> Guardar
+              </GuardarButton>
+              <ModalButton cancel onClick={handleCloseModal}>
+                <FaTimes /> Cancelar
+              </ModalButton>
+            </ModalButtonGroup>
+          </ModalWrapper>
+        </ModalBackground>
+      )}
+    </MainContainer>
+  );
+}
+
+export default Paises;
