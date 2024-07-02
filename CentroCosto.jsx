@@ -6,7 +6,6 @@ import styled from "styled-components";
 import "../styles/DataTable.css"; // Importa el archivo CSS
 import axios from "axios";
 import { FaEdit, FaSave, FaTimes } from "react-icons/fa"; // Importa el ícono de edición
-import {useNavigate} from "react-router-dom";
 
 
 const MainContainer = styled.div`
@@ -145,16 +144,120 @@ const StyledDataTable = styled(DataTable)`
 `;
 
 
+const ModalBackground = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalWrapper = styled.div`
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  z-index: 1100;
+  animation: fadeIn 0.3s ease-out;
+  max-width: 400px;
+  width: 100%;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
+const ModalTitle = styled.h3`
+  margin-bottom: 15px;
+  text-align: center;
+`;
+
+const ModalInput = styled.input`
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid ${(props) => (props.error ? "red" : "#ccc")};
+  border-radius: 5px;
+  font-size: 16px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+
+  &:focus {
+    border-color: #008cba;
+    box-shadow: 0 0 5px rgba(0, 140, 186, 0.5);
+  }
+`;
+
+const ErrorMessage = styled.p`
+  color: red;
+  font-size: 12px;
+  margin-bottom: 10px;
+`;
+
+const ModalButtonGroup = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+`;
+
+const ModalButton = styled.button`
+  background-color: ${(props) =>
+    props.primary ? "#4caf50" : props.cancel ? "#bf1515" : "#4caf50"};
+  color: #ffffff;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: ${(props) =>
+      props.primary ? "#45a049" : props.cancel ? "#ad1111" : "#45a049"};
+  }
+`;
+
+const SelectPais = styled.select`
+  width: 100%;
+  padding: 7px;
+  margin-bottom: 9px;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  ${(props) => props.error && `border: 1px solid red;`}
+`;
+
+const GuardarButton = styled(ModalButton)`
+  background-color: #4caf50;
+`;
+
 
 
 function RazonSocial() {
-  const navigate = useNavigate();
   const [centrocosto] = useState([]);
   const [records, setRecords] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editedRow, setEditedRow] = useState(null);
   const [pais, setPais] = useState([]);
+  const [errors, setErrors] = useState({ pais: "", division: "" }); //validaciones para insertar una nueva razon social
+  const [modalValues, setModalValues] = useState({ ID_Pais: "", division: "" });
+  const [showModal, setShowModal] = useState(false); // Estado para mostrar/ocultar el modal
 
 
   const [filters, setFilters] = useState({
@@ -211,7 +314,82 @@ function RazonSocial() {
   };
 
   const handleInsert = () => {
-    navigate("/Insertar-Nuevo-");
+    setShowModal(true);
+  };
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalValues({ pais: "", centrocosto: "" });
+    setErrors({ pais: "", centrocosto: "" });
+  };
+
+  const handleModalChange = (event, field) => {
+    const { value } = event.target;
+    setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
+  };
+
+  const SaveModal = async () => {
+    const newErrors = { pais: "", centrocosto: "" };
+
+    if (!modalValues.ID_Pais) {
+      newErrors.pais = "El campo Pais es obligatorio";
+    }
+
+    if (!modalValues.Codigo.trim()) {
+      newErrors.centrocosto = "El campo codigo es obligatorio";
+    }
+
+    if (!modalValues.Nombre.trim()) {
+      newErrors.centrocosto = "El campo Nombre es obligatorio";
+    } else if (!/^[a-zA-Z\s]+$/.test(modalValues.Nombre)) {
+      newErrors.centrocosto =
+        "El Nombre centro de costes solo acepta letras y espacios en blanco";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.values(newErrors).every((error) => error === "")) {
+      try {
+        // Verificar si el centro costo ya existe en la base de datos
+        const response = await axios.get(`http://localhost:3000/centrocosto`);
+        const centrocostoExists = response.data.some(
+          (centrocosto) => centrocosto.Nombre.toLowerCase() === modalValues.divicentrocostoion.toLowerCase(),
+          (centrocosto) => centrocosto.Codigo.toLowerCase() === modalValues.divicentrocostoion.toLowerCase()
+        );
+
+        if (centrocostoExists) {
+          setErrors({ centrocosto: "EL Centro de Costos ya existe" });
+          return;
+        }
+
+        // Insertar una nuevo Centro de Costos 
+        const newCentrocosto = {
+          Nombre: modalValues.centrocosto,
+          Codigo: modalValues.centrocosto,
+          ID_Pais: modalValues.ID_Pais,
+        };
+        const insertResponse = await axios.post(`http://localhost:3000/centrocosto`, newCentrocosto);
+
+        // Actualizar la lista de Centro de Costos con la nueva Centro de Costos
+        const paisResponse = await axios.get(`http://localhost:3000/pais/${modalValues.ID_Pais}`);
+
+        const updatedRecords = [
+          ...records,
+          {
+            id: insertResponse.data.id,
+            Nombre: modalValues.centrocosto,
+            Codigo: modalValues.centrocosto,
+            ID_Pais: modalValues.ID_Pais,
+            N_Pais: paisResponse.data.N_Pais,
+            
+          },
+        ];
+        setRecords(updatedRecords);
+        setShowModal(false); // Ocultar el modal después de guardar
+        setModalValues({ ID_Pais: "", centrocosto: "" }); // Limpiar los valores del modal
+      } catch (error) {
+        console.error("Error al insertar un nuevo Centro de Costos:", error);
+      }
+    }
   };
 
 
@@ -229,6 +407,36 @@ function RazonSocial() {
       ...(field === "ID_CentroCostos" && { Codigo: centrocosto.find((p) => p.id === parseInt(value)).Codigo }),
       ...(field === "ID_Pais" && { N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais }),
   }));
+  validateInput(field, value);
+  };
+
+  const validateInput = (field, value) => {
+    let newErrors = { ...errors };
+    if (field === "pais") {
+      if (!value.trim()) {
+        newErrors.pais = "El campo Pais es obligatorio";
+      } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+        newErrors.pais = "El campo Pais solo acepta letras y espacios en blanco";
+      } else {
+        newErrors.pais = "";
+      }
+    }else if (field === "Codigo") {
+      if (!value.trim()) {
+        newErrors.centrocosto = "El campo codigo centro de coste es obligatorio";
+      } else {
+        newErrors.centrocosto = "";
+      }
+    } else if (field === "Nombre") {
+      if (!value.trim()) {
+        newErrors.centrocosto = "El campo Centro de Coste es obligatorio";
+      } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+        newErrors.centrocosto =
+          "El campo Centro de Coste solo acepta letras y espacios en blanco";
+      } else {
+        newErrors.centrocosto = "";
+      }
+    }
+    setErrors(newErrors);
   };
   
 
@@ -393,6 +601,58 @@ function RazonSocial() {
           />
         </DataTableContainer>
       </ContentContainer>
+      {/* Modal para insertar una nueva departamento */}
+      {showModal && (
+        <ModalBackground>
+          <ModalWrapper>
+            <ModalTitle>Nuevo Centro de Coste</ModalTitle>
+            <SelectPais
+              value={modalValues.ID_Pais}
+              onChange={(e) => handleModalChange(e, "ID_Pais")}
+              error={errors.pais}
+              required
+            >
+              <option value="">Seleccione un país</option>
+              {pais.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.N_Pais}
+                </option>
+              ))}
+            </SelectPais>
+            {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
+            <ModalInput
+              type="text"
+              value={modalValues.Codigo}
+              onChange={(e) => handleModalChange(e, "Codigo")}
+              placeholder="Código Centro de Coste"
+              error={errors.Codigo}
+              required
+            />
+            {errors.Codigo && (
+              <ErrorMessage>{errors.Codigo}</ErrorMessage>
+            )}
+            <ModalInput
+              type="text"
+              value={modalValues.Nombre}
+              onChange={(e) => handleModalChange(e, "centrNombreocoste")}
+              placeholder="Centro de Coste"
+              error={errors.Nombre}
+              required
+            />
+            {errors.Nombre && (
+              <ErrorMessage>{errors.Nombre}</ErrorMessage>
+            )}
+            <ModalButtonGroup>
+              <GuardarButton onClick={SaveModal}>
+                <FaSave /> Guardar
+              </GuardarButton>
+              <ModalButton cancel onClick={handleCloseModal}>
+                <FaTimes /> Cancelar
+              </ModalButton>
+            </ModalButtonGroup>
+          </ModalWrapper>
+        </ModalBackground>
+      )}
     </MainContainer>
   );
 }
