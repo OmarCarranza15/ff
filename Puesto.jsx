@@ -6,7 +6,6 @@ import styled from "styled-components";
 import "../styles/DataTable.css"; // Importa el archivo CSS
 import axios from "axios";
 import { FaEdit, FaSave, FaTimes } from "react-icons/fa"; // Importa el ícono de edición
-import {useNavigate} from "react-router-dom";
 
 
 
@@ -143,8 +142,6 @@ const StyledDataTable = styled(DataTable)`
   }
 `;
 
-
-
 const ModalBackground = styled.div`
   position: fixed;
   top: 0;
@@ -204,8 +201,8 @@ const ModalInput = styled.input`
 
 const ErrorMessage = styled.p`
   color: red;
-  font-size: 12px;
-  margin-bottom: 10px;
+  font-size: 14px;
+  margin-bottom: 8px;
 `;
 
 const ModalButtonGroup = styled.div`
@@ -233,7 +230,7 @@ const ModalButton = styled.button`
   }
 `;
 
-const SelectPais = styled.select`
+const Select = styled.select`
   width: 100%;
   padding: 7px;
   margin-bottom: 9px;
@@ -249,7 +246,6 @@ const GuardarButton = styled(ModalButton)`
 
 
 function Puesto() {
-  const navigate = useNavigate();
   const [puesto] = useState([]);
   const [records, setRecords] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
@@ -260,8 +256,8 @@ function Puesto() {
   const [division, setDivision] = useState([]);
   const [departamento, setDepartamento] = useState([]);
   const [centrocosto, setCentrocostos] = useState([]);
-  const [errors, setErrors] = useState({ ID_Pais: "", Codigo: "", Nombre: "" });
-  const [modalValues, setModalValues] = useState({ ID_Pais: "", Codigo: "", Nombre: "" });
+  const [errors, setErrors] = useState({ ID_Pais: "", Codigo: "", N_Puesto: "", ID_RSocial: "", ID_Division: "", ID_Departamento: "", ID_CentroCostos: "" });
+  const [modalValues, setModalValues] = useState({ ID_Pais: "", Codigo: "", N_Puesto: "", ID_RSocial: "", ID_Division: "", ID_Departamento: "", ID_CentroCostos: "" });
   const [showModal, setShowModal] = useState(false);
 
 
@@ -372,7 +368,113 @@ function Puesto() {
   };
 
   const handleInsert = () => {
-    navigate("/Insertar-Nuevo-");
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalValues({ ID_Pais: "", Codigo: "", N_Puesto: "", ID_RSocial: "", ID_Division: "", ID_Departamento: "", ID_CentroCostos: "" });
+    setErrors({ ID_Pais: "", Codigo: "", N_Puesto: "", ID_RSocial: "", ID_Division: "", ID_Departamento: "", ID_CentroCostos: "" });
+  };
+
+  const handleModalChange = (event, field) => {
+    const { value } = event.target;
+    setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
+  };
+
+  const SaveModal = async () => {
+    const newErrors = { ID_Pais: "", Codigo: "", N_Puesto: "", ID_RSocial: "", ID_Division: "", ID_Departamento: "", ID_CentroCostos: "" };
+
+    if (!modalValues.ID_Pais) {
+      newErrors.pais = "El campo País es obligatorio";
+    }
+    if (!modalValues.ID_RSocial) {
+      newErrors.rsocial = "El campo Razon Social es obligatorio";
+    }
+    if (!modalValues.ID_Division) {
+      newErrors.division = "El campo Division es obligatorio";
+    }
+    if (!modalValues.ID_Departamento) {
+      newErrors.departamento = "El campo Departamento es obligatorio";
+    }
+    if (!modalValues.ID_CentroCostos) {
+      newErrors.centrocosto = "El campo País es obligatorio";
+    }
+
+    if (!modalValues.Codigo.trim()) {
+      newErrors.Codigo = "El campo Código es obligatorio";
+    }else if (/^\d*s/.test(modalValues.Codigo)){
+      newErrors.Codigo = "Solo se aceptan Digitos"
+    }
+
+    if (!modalValues.N_Puesto.trim()) {
+      newErrors.N_Puesto = "El campo Nombre es obligatorio";
+    } else if (!/^[a-zA-Z\s]+$/.test(modalValues.N_Puesto)) {
+      newErrors.N_Puesto = "El campo Nombre solo acepta letras y espacios en blanco";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.values(newErrors).every((error) => error === "")) {
+      try {
+        // Verificar si el centro costo ya existe en la base de datos
+        const response = await axios.get(`http://localhost:3000/puesto`);
+        const puestoExists = response.data.some(
+          (puesto) =>
+            puesto.N_Puesto.toLowerCase() === modalValues.N_Puesto.toLowerCase() ||
+            puesto.Codigo.toLowerCase() === modalValues.Codigo.toLowerCase()
+        );
+
+        if (puestoExists) {
+          setErrors({ ...newErrors, N_Puesto: "El Nombre o Codigo del Centro de cosntos ya existe" });
+          return;
+        }
+
+        // Insertar un nuevo Centro de Costos
+        const newPuesto = {
+          N_Puesto: modalValues.N_Puesto,
+          Codigo: modalValues.Codigo,
+          ID_Pais: modalValues.ID_Pais,
+          ID_Division: modalValues.ID_Division,
+          ID_Departamento: modalValues.ID_Departamento,
+          ID_CentroCostos: modalValues.ID_CentroCostos,
+          ID_RSocial: modalValues.ID_RSocial, 
+        };
+        const insertResponse = await axios.post(`http://localhost:3000/puesto`, newPuesto);
+
+        // Actualizar la lista de Centro de Costos con el nuevo Centro de Costos
+        const paisResponse = await axios.get(`http://localhost:3000/pais/${modalValues.ID_Pais}`);
+        const divisionResponse = await axios.get(`http://localhost:3000/division/${modalValues.ID_Division}`);
+        const departamentoResponse = await axios.get(`http://localhost:3000/departamento/${modalValues.ID_Departamento}`);
+        const centrocostoResponse = await axios.get(`http://localhost:3000/centrocosto/${modalValues.ID_CentroCostos}`);
+        const rsocialResponse = await axios.get(`http://localhost:3000/rsocial/${modalValues.ID_RSocial}`);
+
+        const updatedRecords = [
+          ...records,
+          {
+            id: insertResponse.data.id,
+            N_Puesto: modalValues.N_Puesto,
+            Codigo: modalValues.Codigo,
+            ID_Pais: modalValues.ID_Pais,
+            N_Pais: paisResponse.data.N_Pais,
+            ID_Division: modalValues.ID_Division,
+            N_Division: divisionResponse.data.N_Division,
+            ID_Departamento: modalValues.ID_Departamento,
+            N_Departamento: departamentoResponse.data.N_Departamento,
+            ID_CentroCostos: modalValues.ID_CentroCostos,
+            Nombre: centrocostoResponse.data.Nombre,
+            ID_RSocial: modalValues.ID_RSocial,
+            N_RSocial: rsocialResponse.data.N_RSocial,
+
+          },
+        ];
+        setRecords(updatedRecords);
+        setShowModal(false); // Ocultar el modal después de guardar
+        setModalValues({ ID_Pais: "", Codigo: "", N_Puesto: "", ID_RSocial: "", ID_Division: "", ID_Departamento: "", ID_CentroCostos: ""}); // Limpiar los valores del modal
+      } catch (error) {
+        console.error("Error al insertar un nuevo Puesto:", error);
+      }
+    }
   };
 
 
@@ -394,6 +496,57 @@ function Puesto() {
       ...(field === "ID_Departamento" && { N_Departamento: departamento.find((p) => p.id === parseInt(value)).N_Departamento }),
       ...(field === "ID_CentroCostos" && { Nombre: centrocosto.find((p) => p.id === parseInt(value)).Nombre }),
   }));
+    validateInput(field, value);
+  };
+
+  const validateInput = (field, value) => {
+    let newErrors = { ...errors };
+    if (field === "ID_Pais") {
+      if (!value.trim()) {
+        newErrors.ID_Pais = "El campo País es obligatorio";
+      } else {
+        newErrors.ID_Pais = "";
+      }
+    }else if (field === "ID_RSocial") {
+      if (!value.trim()) {
+        newErrors.ID_RSocial = "El campo Razin social es obligatorio";
+      } else {
+        newErrors.ID_RSocial = "";
+      }
+    }else if (field === "ID_Division") {
+      if (!value.trim()) {
+        newErrors.ID_Division = "El campo Division es obligatorio";
+      } else {
+        newErrors.ID_Division = "";
+      }
+    }else if (field === "ID_Departamento") {
+      if (!value.trim()) {
+        newErrors.ID_Departamento = "El campo Departamento es obligatorio";
+      } else {
+        newErrors.ID_Departamento = "";
+      }
+    }else if (field === "ID_CentroCostos") {
+      if (!value.trim()) {
+        newErrors.ID_CentroCostos = "El campo Centro de Costos es obligatorio";
+      } else {
+        newErrors.ID_CentroCostos = "";
+      }
+    }else if (field === "Codigo") {
+      if (!value.trim()) {
+        newErrors.Codigo = "El campo Código es obligatorio";
+      } else if (/^\d*s/.test(modalValues.Codigo)){
+        newErrors.Codigo = "Solo se aceptan Digitos"
+      }
+    } else if (field === "Nombre") {
+      if (!value.trim()) {
+        newErrors.Nombre = "El campo Nombre es obligatorio";
+      } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+        newErrors.Nombre = "El campo Nombre solo acepta letras y espacios en blanco";
+      } else {
+        newErrors.Nombre = "";
+      }
+    }
+    setErrors(newErrors);
   };
   
 
@@ -444,7 +597,7 @@ function Puesto() {
     (filters.N_Division === "" ||
         row.N_Division.toLowerCase().includes(filters.N_Division.toLowerCase())) &&
     (filters.Codigo === "" ||
-        row.Codigo.toString.toLowerCase().includes(filters.Codigo.toLowerCase())) &&
+        row.Codigo.toString().toLowerCase().includes(filters.Codigo.toLowerCase())) &&
     (filters.N_Puesto === "" ||
         row.N_Puesto.toLowerCase().includes(filters.N_Puesto.toLowerCase())) 
     
@@ -456,8 +609,8 @@ function Puesto() {
         name: "Pais",
         selector: (row) => row.N_Pais,
         sortable: true,
-        minWidth: "100px", // Ajusta el tamaño mínimo según sea necesario
-        maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+        minWidth: "10px", // Ajusta el tamaño mínimo según sea necesario
+        maxWidth: "100px", // Ajusta el tamaño máximo según sea necesario
         cell: (row) =>
           editMode && editedRow?.id === row.id ? (
             <select value={editedRow.ID_Pais} onChange={(e) => handleEditChange(e, "ID_Pais")}>
@@ -476,8 +629,8 @@ function Puesto() {
         name: "Razon Social",
         selector: (row) => row.N_RSocial,
         sortable: true,
-        minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
-        maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+        minWidth: "240px", // Ajusta el tamaño mínimo según sea necesario
+        maxWidth: "300px", // Ajusta el tamaño máximo según sea necesario
         cell: (row) =>
           editMode && editedRow?.id === row.id ? (
             <select value={editedRow.ID_RSocial} onChange={(e) => handleEditChange(e, "ID_RSocial")}>
@@ -495,7 +648,7 @@ function Puesto() {
         name: "Division",
         selector: (row) => row.N_Division,
         sortable: true,
-        minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
+        minWidth: "220px", // Ajusta el tamaño mínimo según sea necesario
         maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
         cell: (row) =>
           editMode && editedRow?.id === row.id ? (
@@ -514,7 +667,7 @@ function Puesto() {
         name: "Departamento",
         selector: (row) => row.N_Departamento,
         sortable: true,
-        minWidth: "270px", // Ajusta el tamaño mínimo según sea necesario
+        minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
         maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
         cell: (row) =>
           editMode && editedRow?.id === row.id ? (
@@ -533,7 +686,7 @@ function Puesto() {
         name: "Centro de Costos",
         selector: (row) => row.Nombre,
         sortable: true,
-        minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
+        minWidth: "300px", // Ajusta el tamaño mínimo según sea necesario
         maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
         cell: (row) =>
           editMode && editedRow?.id === row.id ? (
@@ -552,8 +705,8 @@ function Puesto() {
         name: "Codigo",
         selector: (row) => row.Codigo,
         sortable: true,
-        minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
-        maxWidth: "50px", // Ajusta el tamaño máximo según sea necesario
+        minWidth: "10px", // Ajusta el tamaño mínimo según sea necesario
+        maxWidth: "2000px", // Ajusta el tamaño máximo según sea necesario
         cell: (row) =>
           editMode && editedRow?.id === row.id ? (
               <input
@@ -569,8 +722,8 @@ function Puesto() {
       name: "Puesto",
       selector: (row) => row.N_Puesto,
       sortable: true,
-      minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "50px", // Ajusta el tamaño máximo según sea necesario
+      minWidth: "300px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
             <input
@@ -671,6 +824,123 @@ function Puesto() {
           />
         </DataTableContainer>
       </ContentContainer>
+      {/* Modal para insertar una nuevo departamento */}
+      {showModal && (
+        <ModalBackground>
+          <ModalWrapper>
+            <ModalTitle>Nuevo Puesto</ModalTitle>
+            <ModalInput
+              type="text"
+              value={modalValues.Codigo}
+              onChange={(e) => handleModalChange(e, "Codigo")}
+              placeholder="Codigo del Puesto"
+              error={errors.Codigo}
+              required
+            />
+            {errors.Codigo && (
+              <ErrorMessage>{errors.Codigo}</ErrorMessage>
+            )}
+            <ModalInput
+              type="text"
+              value={modalValues.N_Puesto}
+              onChange={(e) => handleModalChange(e, "N_Puesto")}
+              placeholder="Nombre del Puesto"
+              error={errors.N_Puesto}
+              required
+            />
+            {errors.N_Puesto && (
+              <ErrorMessage>{errors.N_Puesto}</ErrorMessage>
+            )}
+            <Select
+              value={modalValues.ID_Pais}
+              onChange={(e) => handleModalChange(e, "ID_Pais")}
+              error={errors.pais}
+              required
+            >
+              <option value="">Seleccione un país</option>
+              {pais.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.N_Pais}
+                </option>
+              ))}
+            </Select>
+            {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
+
+            <Select
+              value={modalValues.ID_RSocial}
+              onChange={(e) => handleModalChange(e, "ID_RSocial")}
+              error={errors.rsocial}
+              required
+            >
+              <option value="">Seleccione una Razon Social</option>
+              {rsocial.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.N_RSocial}
+                </option>
+              ))}
+            </Select>
+            {errors.rsocial && <ErrorMessage>{errors.rsocial}</ErrorMessage>}
+
+            <Select
+              value={modalValues.ID_Division}
+              onChange={(e) => handleModalChange(e, "ID_Division")}
+              error={errors.division}
+              required
+            >
+              <option value="">Seleccione una Division</option>
+              {division.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.N_Division}
+                </option>
+              ))}
+            </Select>
+            {errors.division && <ErrorMessage>{errors.division}</ErrorMessage>}
+
+            <Select
+              value={modalValues.ID_Departamento}
+              onChange={(e) => handleModalChange(e, "ID_Departamento")}
+              error={errors.departamento}
+              required
+            >
+              <option value="">Seleccione una Departamento</option>
+              {departamento.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.N_Departamento}
+                </option>
+              ))}
+            </Select>
+            {errors.departamento && (
+              <ErrorMessage>{errors.departamento}</ErrorMessage>
+            )}
+
+            <Select
+              value={modalValues.ID_CentroCostos}
+              onChange={(e) => handleModalChange(e, "ID_CentroCostos")}
+              error={errors.centrocosto}
+              required
+            >
+              <option value="">Seleccione un Centro de Costos</option>
+              {centrocosto.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.Nombre}
+                </option>
+              ))}
+            </Select>
+            {errors.centrocoste && (
+              <ErrorMessage>{errors.centrocoste}</ErrorMessage>
+            )}
+
+            <ModalButtonGroup>
+              <GuardarButton onClick={SaveModal}>
+                <FaSave /> Guardar
+              </GuardarButton>
+              <ModalButton cancel onClick={handleCloseModal}>
+                <FaTimes /> Cancelar
+              </ModalButton>
+            </ModalButtonGroup>
+          </ModalWrapper>
+        </ModalBackground>
+      )}
     </MainContainer>
   );
 }
