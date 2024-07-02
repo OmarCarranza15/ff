@@ -144,8 +144,110 @@ const StyledDataTable = styled(DataTable)`
 
 
 
+const ModalBackground = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
 
-function RazonSocial() {
+const ModalWrapper = styled.div`
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  z-index: 1100;
+  animation: fadeIn 0.3s ease-out;
+  max-width: 400px;
+  width: 100%;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
+const ModalTitle = styled.h3`
+  margin-bottom: 15px;
+  text-align: center;
+`;
+
+const ModalInput = styled.input`
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid ${(props) => (props.error ? "red" : "#ccc")};
+  border-radius: 5px;
+  font-size: 16px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+
+  &:focus {
+    border-color: #008cba;
+    box-shadow: 0 0 5px rgba(0, 140, 186, 0.5);
+  }
+`;
+
+const ErrorMessage = styled.p`
+  color: red;
+  font-size: 12px;
+  margin-bottom: 10px;
+`;
+
+const ModalButtonGroup = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+`;
+
+const ModalButton = styled.button`
+  background-color: ${(props) =>
+    props.primary ? "#4caf50" : props.cancel ? "#bf1515" : "#4caf50"};
+  color: #ffffff;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: ${(props) =>
+      props.primary ? "#45a049" : props.cancel ? "#ad1111" : "#45a049"};
+  }
+`;
+
+const SelectPais = styled.select`
+  width: 100%;
+  padding: 7px;
+  margin-bottom: 9px;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  ${(props) => props.error && `border: 1px solid red;`}
+`;
+
+const GuardarButton = styled(ModalButton)`
+  background-color: #4caf50;
+`;
+
+
+function Puesto() {
   const navigate = useNavigate();
   const [puesto] = useState([]);
   const [records, setRecords] = useState([]);
@@ -157,10 +259,14 @@ function RazonSocial() {
   const [division, setDivision] = useState([]);
   const [departamento, setDepartamento] = useState([]);
   const [centrocosto, setCentrocostos] = useState([]);
+  const [errors, setErrors] = useState({ ID_Pais: "", Codigo: "", Nombre: "" });
+  const [modalValues, setModalValues] = useState({ ID_Pais: "", Codigo: "", Nombre: "" });
+  const [showModal, setShowModal] = useState(false);
 
 
   const [filters, setFilters] = useState({
     N_Puesto: "",
+    Codigo: "",
     N_Pais: "",
     N_RSocial: "",
     N_Division: "",
@@ -184,8 +290,8 @@ function RazonSocial() {
             return {
               id: puesto.id,   
               N_Puesto: puesto.N_Puesto,
-              ID_Pais: puesto.ID_Pais,
               Codigo: puesto.Codigo,
+              ID_Pais: puesto.ID_Pais,
               N_Pais: paisResponse.data.N_Pais,
               ID_RSocial: puesto.ID_RSocial,
               N_RSocial: rsocialResponse.data.N_RSocial,
@@ -200,7 +306,7 @@ function RazonSocial() {
         )
         setRecords(mappedData);
       } catch (error) {
-        console.error ('Error al obtener los Ambientes:', error);
+        console.error ('Error al obtener los Puestos:', error);
       }
     };
     const fetchPais = async () =>{
@@ -335,6 +441,8 @@ function RazonSocial() {
         row.N_RSocial.toLowerCase().includes(filters.N_RSocial.toLowerCase())) &&
     (filters.N_Division === "" ||
         row.N_Division.toLowerCase().includes(filters.N_Division.toLowerCase())) &&
+    (filters.Codigo === "" ||
+        row.Codigo.toLowerCase().includes(filters.Codigo.toLowerCase())) &&
     (filters.N_Puesto === "" ||
         row.N_Puesto.toLowerCase().includes(filters.N_Puesto.toLowerCase())) 
     
@@ -346,7 +454,7 @@ function RazonSocial() {
         name: "Pais",
         selector: (row) => row.N_Pais,
         sortable: true,
-        minWidth: "50px", // Ajusta el tamaño mínimo según sea necesario
+        minWidth: "100px", // Ajusta el tamaño mínimo según sea necesario
         maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
         cell: (row) =>
           editMode && editedRow?.id === row.id ? (
@@ -438,9 +546,26 @@ function RazonSocial() {
             <div>{row.Nombre}</div>
           ),
       },
+      {
+        name: "Codigo",
+        selector: (row) => row.Codigo,
+        sortable: true,
+        minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
+        maxWidth: "50px", // Ajusta el tamaño máximo según sea necesario
+        cell: (row) =>
+          editMode && editedRow?.id === row.id ? (
+              <input
+              type= "text"
+              value={editedRow.Codigo}
+              onChange={(e) => handleEditChange(e, "Codigo")}
+            />
+          ) : (
+            <div>{row.Codigo}</div>
+          ),
+      },
     {
       name: "Puesto",
-      selector: (row) => row.N_Aplicaciones,
+      selector: (row) => row.N_Puesto,
       sortable: true,
       minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "50px", // Ajusta el tamaño máximo según sea necesario
@@ -523,6 +648,12 @@ function RazonSocial() {
             />
             <FilterInput
               type="text"
+              value={filters.Codigo}
+              onChange={(e) => handleFilterChange(e, "Codigo")}
+              placeholder="Buscar por Codigo"
+            />
+            <FilterInput
+              type="text"
               value={filters.N_Puesto}
               onChange={(e) => handleFilterChange(e, "N_Puesto")}
               placeholder="Buscar por Puesto"
@@ -542,4 +673,4 @@ function RazonSocial() {
   );
 }
 
-export default RazonSocial;
+export default Puesto;
