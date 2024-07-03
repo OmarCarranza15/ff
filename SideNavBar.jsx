@@ -28,6 +28,7 @@ const SideNavBar = () => {
             subNav: paises.map( pais=> ({
                 title: pais.N_Pais,
                 icon: <GrFlag/>, // Icono de bandera
+                path:"/landingPage"
             }
             ))
             
