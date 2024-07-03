@@ -100,13 +100,14 @@ const SaveModal = async () => {
       }
 
       // Datos del nuevo puesto
+      const defaultDate = new Date().toISOString().slice(0, 10); // Fecha actual como predeterminada (formato YYYY-MM-DD)
       const newPerfil = {
         Estado_Perfil: modalValues.Estado_Perfil ? parseInt(modalValues.Estado_Perfil, 10) : 1,
         ID_Pais: parseInt(modalValues.ID_Pais, 10),
         ID_Aplicaciones: parseInt(modalValues.ID_Aplicaciones, 10),
         ID_Puesto: parseInt(modalValues.ID_Puesto, 10),
         Rol: modalValues.Rol,
-        Fecha: modalValues.Fecha,
+        Fecha: modalValues.Fecha || defaultDate, // Usar la fecha proporcionada o la fecha por defecto
         Ticket: parseInt(modalValues.Ticket, 10),
         Observaciones: modalValues.Observaciones,
         Puesto_Jefe: modalValues.Puesto_Jefe,
@@ -145,7 +146,7 @@ const SaveModal = async () => {
           Rol: modalValues.Rol,
           Observaciones: modalValues.Observaciones,
           Puesto_Jefe: modalValues.Puesto_Jefe,
-          Fecha: modalValues.Fecha,
+          Fecha: modalValues.Fecha || defaultDate,
           Ticket: parseInt(modalValues.Ticket, 10),
           Estado_Perfil: parseInt(modalValues.Estado_Perfil, 10),
           ID_Pais: modalValues.ID_Pais,
