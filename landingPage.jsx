@@ -6,7 +6,6 @@ import styled from "styled-components";
 import "../styles/DataTable.css"; // Importa el archivo CSS
 import axios from "axios";
 import { FaEdit, FaSave, FaTimes } from "react-icons/fa"; // Importa el ícono de edición
-import {useNavigate} from "react-router-dom";
 
 
 const MainContainer = styled.div`
@@ -137,11 +136,111 @@ const StyledDataTable = styled(DataTable)`
   }
 `;
 
+/////////////MODAL////////////////
+const ModalBackground = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
 
+const ModalWrapper = styled.div`
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  z-index: 1100;
+  animation: fadeIn 0.3s ease-out;
+  max-width: 400px;
+  width: 100%;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
+const ModalTitle = styled.h3`
+  margin-bottom: 15px;
+  text-align: center;
+`;
+
+const ModalInput = styled.input`
+  width: 100%;
+  padding: 7px;
+  margin-bottom: 9px;
+  border: 1px solid ${(props) => (props.error ? "red" : "#ccc")};
+  border-radius: 1px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+
+  &:focus {
+    border-color: #008cba;
+    box-shadow: 0 0 5px rgba(0, 140, 186, 0.5);
+  }
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 7px;
+  margin-bottom: 9px;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  ${(props) => props.error && `border: 1px solid red;`}
+`;
+
+const ErrorMessage = styled.p`
+  color: red;
+  font-size: 14px;
+  margin-bottom: 2px;
+`;
+
+const ModalButtonGroup = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+`;
+
+const ModalButton = styled.button`
+  background-color: ${(props) =>
+    props.primary ? "#4caf50" : props.cancel ? "#bf1515" : "#4caf50"};
+  color: #ffffff;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: ${(props) =>
+      props.primary ? "#45a049" : props.cancel ? "#ad1111" : "#45a049"};
+  }
+`;
+const GuardarButton = styled(ModalButton)`
+  background-color: #4caf50;
+`;
+////////////////////////////////////////////////////////////////////////////////
 
 
 function LandingPage() {
-  const navigate = useNavigate();
   const [records, setRecords] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -154,6 +253,9 @@ function LandingPage() {
   const [aplicacion, setAplicacion] = useState([]);
   const [ambiente, setAmbiente] = useState([]);
   const [pais, setPais] = useState([]);
+  const [errors, setErrors] = useState({ ID_Pais: "", Rol: "", Fecha: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
+  const [modalValues, setModalValues] = useState({ ID_Pais: "", Rol: "", Fecha: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
+  const [showModal, setShowModal] = useState(false);
 
 
   const [filters, setFilters] = useState({
@@ -319,7 +421,161 @@ function LandingPage() {
   };
 
   const handleInsert = () => {
-    navigate("/Insertar-Nuevo-Perfil");
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalValues({ ID_Pais: "", Rol: "", Fecha: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
+    setErrors({ ID_Pais: "", Rol: "", Fecha: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
+  };
+
+  const handleModalChange = (event, field) => {
+    const { value } = event.target;
+    setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
+  };
+
+  const SaveModal = async () => {
+    const newErrors = { ID_Pais: "", Rol: "", Fecha: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" };
+  
+    // Validación de campos
+    if (!modalValues.ID_Pais) {
+      newErrors.pais = "El campo País es obligatorio";
+    }
+    if (!modalValues.ID_Puesto) {
+      newErrors.puesto = "El campo Puesto es obligatorio";
+    }
+    if (!modalValues.ID_Aplicaciones) {
+      newErrors.aplicacion = "El campo Aplicacion es obligatorio";
+    }
+  
+    if (!modalValues.Estado_Perfil) {
+      newErrors.Estado_Perfil = "El campo Estado es obligatorio";
+    }
+    if (!modalValues.Rol.trim()) {
+      newErrors.Rol = "El rol es obligatorio";
+    }
+
+    if (!modalValues.Puesto_Jefe.trim()) {
+      newErrors.Puesto_Jefe =
+        "El nombre del puesto del jefe inmediato es obligatorio.";
+    } else if (!/^[a-zA-Z\s]+$/.test(modalValues.Puesto_Jefe)) {
+      newErrors.Puesto_Jefe =
+        "El campo del jefe inmediato solo acepta letras y espacios en blanco.";
+    }
+  
+    setErrors(newErrors);
+  
+    // Si no hay errores, proceder a insertar el nuevo puesto
+    if (Object.values(newErrors).every((error) => error === "")) {
+      try {
+        // Verificar si el puesto ya existe en la base de datos
+        console.log("Verificando si el puesto ya existe...");
+        const response = await axios.get(`http://localhost:3000/perfil`);
+        console.log("Datos recibidos del servidor:", response.data);
+
+        const perfiles = response.data;
+
+        const paisExistente = perfiles.some(
+          (puesto) => puesto.ID_Pais.toString() === modalValues.ID_Pais
+        );
+        const aplicacionExistente = perfiles.some(
+          (puesto) => puesto.ID_Aplicaciones.toString() === modalValues.ID_Aplicaciones
+        );
+        const puestoExistente = perfiles.some(
+          (puesto) => puesto.ID_Puesto.toString() === modalValues.ID_Puesto
+        );
+        const rolExistente = perfiles.some(
+          (puesto) => puesto.Rol.toLowerCase() === modalValues.Rol.toLowerCase()
+        );
+        const puestojefeExistente = perfiles.some(
+          (puesto) => puesto.Puesto_Jefe.toLowerCase() === modalValues.Puesto_Jefe.toLowerCase()
+        );
+
+
+        if (paisExistente && aplicacionExistente && puestoExistente && rolExistente && puestojefeExistente){
+          const errorMessages = {};
+          if (paisExistente){
+            errorMessages.ID_Pais = "El pais ya existe";
+          }
+          if (aplicacionExistente){
+            errorMessages.ID_Aplicaciones = "El codigo del puesto ya existe";
+          }
+          if (puestoExistente){
+            errorMessages.ID_Puesto = "El codigo del puesto ya existe";
+          }
+          if (rolExistente){
+            errorMessages.Rol = "El codigo del puesto ya existe";
+          }
+          if (puestojefeExistente){
+            errorMessages.Puesto_Jefe = "El codigo del puesto ya existe";
+          } else if (!/^[a-zA-Z\s]+$/.test(modalValues.Puesto_Jefe)) {
+            newErrors.Puesto_Jefe =
+              "El campo del jefe inmediato solo acepta letras y espacios en blanco.";
+          }
+          setErrors({...newErrors, ...errorMessages});
+          return;
+        }
+
+
+  
+        // Datos del nuevo puesto
+        const newPerfil = {
+          Estado_Perfil: parseInt(modalValues.Estado_Perfil, 10),
+          ID_Pais: parseInt(modalValues.ID_Pais,10),
+          ID_Aplicaciones: parseInt(modalValues.ID_Aplicaciones, 10),
+          ID_Puesto: parseInt(modalValues.ID_Puesto, 10),
+          Rol: modalValues.Rol,
+          Fecha: modalValues.Fecha, 
+          Ticket: parseInt(modalValues.Ticket, 10),
+          Observaciones: modalValues.Observaciones,
+          Puesto_Jefe: modalValues.Puesto_Jefe, 
+        };
+  
+        console.log("Enviando datos:", newPerfil);
+  
+        // Enviar solicitud POST para insertar el nuevo puesto
+        const insertResponse = await axios.post(`http://localhost:3000/perfil`, newPerfil);
+        console.log("Respuesta de inserción:", insertResponse.data);
+  
+        // Actualizar la lista de puestos con el nuevo puesto
+        const paisResponse = await axios.get(`http://localhost:3000/pais/${modalValues.ID_Pais}`);
+        const aplicacionResponse = await axios.get(`http://localhost:3000/aplicacion/${modalValues.ID_Aplicaciones}`);
+        const puestoResponse = await axios.get(`http://localhost:3000/puesto/${modalValues.ID_Puesto}`);
+    
+        console.log("Datos de respuesta para actualizar la UI:", {
+          paisResponse: paisResponse.data,
+          aplicacionResponse: aplicacionResponse.data,
+          puestoResponse: puestoResponse.data,
+        });
+  
+        const updatedRecords = [
+          ...records,
+          {
+            id: insertResponse.data.id,
+            Rol: modalValues.Rol,
+            Observaciones: modalValues.Observaciones,
+            Puesto_Jefe: modalValues.Puesto_Jefe,
+            Fecha: modalValues.Fecha,
+            Ticket: parseInt(modalValues.Ticket, 10),
+            Estado_Perfil: parseInt(modalValues.Estado_Perfil,10 ),
+            ID_Pais: modalValues.ID_Pais,
+            N_Pais: paisResponse.data.N_Pais,
+            ID_Aplicaciones: modalValues.ID_Aplicaciones,
+            N_Aplicaciones: aplicacionResponse.data.N_Aplicaciones,
+            ID_Puesto: modalValues.ID_Puesto,
+            N_Puesto: puestoResponse.data.N_Puesto,
+           
+          },
+        ];
+  
+        setRecords(updatedRecords);
+        setShowModal(false); // Ocultar el modal después de guardar
+        setModalValues({ ID_Pais: "", Rol: "", Fecha: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:""}); // Limpiar los valores del modal
+      } catch (error) {
+        console.error("Error al insertar un nuevo Puesto:", error);
+      }
+    }
   };
 
 
@@ -343,8 +599,45 @@ function LandingPage() {
       ...(field === "ID_CentroCostos" && { Nombre: centrocosto.find((p) => p.id === parseInt(value)).Nombre }),
     } 
     ));
+    validateInput(field, value);
   };
-  
+  const validateInput = (field, value) => {
+    let newErrors = { ...errors };
+    if (field === "ID_Pais") {
+      if (!value.trim()) {
+        newErrors.ID_Pais = "El campo País es obligatorio";
+      } else {
+        newErrors.ID_Pais = "";
+      }
+    }else if (field === "ID_Aplicaciones") {
+      if (!value.trim()) {
+        newErrors.ID_Aplicaciones = "El campo Aplicacion es obligatorio";
+      } else {
+        newErrors.ID_Aplicaciones = "";
+      }
+    }else if (field === "ID_Puesto") {
+      if (!value.trim()) {
+        newErrors.ID_Puesto = "El campo Puesto es obligatorio";
+      } else {
+        newErrors.ID_Puesto = "";
+      }
+    }else if (field === "Rol") {
+      if (!value.trim()) {
+        newErrors.Rol = "El campo Rol es obligatorio";
+      } else {
+        newErrors.Rol = "";
+      }
+    }else if (field === "Puesto_Jefe"){
+      if (!value.trim()) {
+        newErrors.Puesto_Jefe= "EL campo puesto es obligatorio"
+      }else if (!/^[a-zA-Z\s]+$/.test(value)){
+        newErrors.Puesto_Jefe = "El campo del jefe inmediato solo acepta letras y espacios en blanco.";
+      }else {
+        newErrors.Puesto_Jefe = "";
+      }
+    }
+    setErrors(newErrors);
+  };
 
   const saveChanges = async(id) => {
     try {
@@ -475,7 +768,7 @@ function LandingPage() {
       minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
+        /*editMode && editedRow?.id === row.id ? (
           <select value={editedRow.ID_RSocial} onChange={(e) => handleEditChange(e, "ID_RSocial")}>
             {rsocial.map((rsocial) => (
               <option key= {rsocial.id} value={rsocial.id}>
@@ -485,7 +778,13 @@ function LandingPage() {
           </select>
         ) : (
           <div>{row.N_RSocial}</div>
-        ),
+        ),*/
+        
+        editMode && editedRow?.id === row.id ? (
+          <div style={{color: "red"}}>{row.N_RSocial}</div>
+        ):(
+            <div>{row.N_RSocial}</div>
+          )
     },
     {
       name: "División",
@@ -494,7 +793,7 @@ function LandingPage() {
       minWidth: "230px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) => 
-        editMode && editedRow?.id === row.id ? (
+        /*editMode && editedRow?.id === row.id ? (
           <select value={editedRow.ID_Division} onChange={(e) => handleEditChange(e, "ID_Division")}>
             {division.map((division) => (
               <option key= {division.id} value={division.id}>
@@ -504,7 +803,13 @@ function LandingPage() {
           </select>
         ) : (
           <div>{row.N_Division}</div>
-        ),
+        ),*/
+
+        editMode && editedRow?.id === row.id ? (
+          <div style={{color: "red"}}>{row.N_Division}</div>
+        ):(
+            <div>{row.N_Division}</div>
+          )
     },
     {
       name: "Departamento",
@@ -513,7 +818,7 @@ function LandingPage() {
       minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
+        /*editMode && editedRow?.id === row.id ? (
           <select value={editedRow.ID_Departamento} onChange={(e) => handleEditChange(e, "ID_Departamento")}>
           {departamento.map((departamento) => (
             <option key= {departamento.id} value={departamento.id}>
@@ -523,7 +828,12 @@ function LandingPage() {
         </select>
         ) : (
           <div>{row.N_Departamento}</div>
-        ),
+        ),*/
+        editMode && editedRow?.id === row.id ? (
+          <div style={{color: "red"}}>{row.N_Departamento}</div>
+        ):(
+            <div>{row.N_Departamento}</div>
+          )
     },
     {
       name: "Centro de Costos",
@@ -532,7 +842,7 @@ function LandingPage() {
       minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
+        /*editMode && editedRow?.id === row.id ? (
           <select value={editedRow.ID_CentroCostos} onChange={(e) => handleEditChange(e, "ID_CentroCostos")}>
           {centrocosto.map((centrocosto) => (
             <option key= {centrocosto.id} value={centrocosto.id}>
@@ -542,7 +852,12 @@ function LandingPage() {
         </select>
         ) : (
           <div>{row.Nombre}</div>
-        ),
+        ),*/
+        editMode && editedRow?.id === row.id ? (
+        <div style={{color: "red"}}>{row.Nombre}</div>
+      ):(
+          <div>{row.Nombre}</div>
+        )
     },
     {
       name: "Puesto",
@@ -606,7 +921,7 @@ function LandingPage() {
       minWidth: "150px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) => 
-        editMode && editedRow?.id === row.id ? (
+        /*editMode && editedRow?.id === row.id ? (
           <select value={editedRow.ID_Ambiente} onChange={(e) => handleEditChange(e, "ID_Ambiente")}>
             {ambiente.map((ambiente) => (
               <option key={ambiente.id} value={ambiente.id}>
@@ -616,7 +931,12 @@ function LandingPage() {
           </select>
         ) : (
           <div>{row.N_Ambiente}</div>
-      ),
+      ),*/
+      editMode && editedRow?.id === row.id ? (
+        <div style={{color: "red"}}>{row.N_Ambiente}</div>
+      ):(
+          <div>{row.N_Ambiente}</div>
+        )
     },
     {
       name: "Jefe Inmediato",
@@ -665,9 +985,9 @@ function LandingPage() {
             value={editedRow.Fecha}
             onChange={(e) => handleEditChange(e, "Fecha")}
           />
-        ) : (
+        ) : (            
           <div>{row.Fecha}</div>
-      ),
+        )
     },
     {
       name: "Observación",
@@ -827,6 +1147,109 @@ function LandingPage() {
           />
         </DataTableContainer>
       </ContentContainer>
+
+       {/* Modal para insertar una nuevo departamento */}
+       {showModal && (
+        <ModalBackground>
+          <ModalWrapper>
+            <ModalTitle>Nuevo Perfil</ModalTitle>
+
+            <Select
+              value={modalValues.ID_Pais}
+              onChange={(e) => handleModalChange(e, "ID_Pais")}
+              error={errors.pais}
+              required
+            >
+              <option value="">Seleccione un país</option>
+              {pais.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.N_Pais}
+                </option>
+              ))}
+            </Select>
+            {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
+
+            <Select
+              value={modalValues.ID_Puesto}
+              onChange={(e) => handleModalChange(e, "ID_Puesto")}
+              error={errors.puesto}
+              required
+            >
+              <option value="">Seleccione un puesto</option>
+              {puestos.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.N_Puesto}
+                </option>
+              ))}
+            </Select>
+            {errors.puesto && <ErrorMessage>{errors.puesto}</ErrorMessage>}
+
+            <Select
+              value={modalValues.ID_Aplicaciones}
+              onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
+              error={errors.aplicacion}
+              required
+            >
+              <option value="">Seleccione una aplicacion</option>
+              {aplicacion.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.N_Aplicaciones}
+                </option>
+              ))}
+            </Select>
+            {errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
+
+            <ModalInput
+              type="text"
+              value={modalValues.Rol}
+              onChange={(e) => handleModalChange(e, "Rol")}
+              placeholder="Rol en la Aplicación"
+              error={errors.Rol}
+              required
+            />
+            {errors.Rol && <ErrorMessage>{errors.Rol}</ErrorMessage>}
+
+            <ModalInput
+              type="text"
+              value={modalValues.Puesto_Jefe}
+              onChange={(e) => handleModalChange(e, "Puesto_Jefe")}
+              placeholder="Jefe Inmediato"
+              error={errors.Puesto_Jefe}
+              required
+            />
+            {errors.Puesto_Jefe && <ErrorMessage>{errors.Puesto_Jefe}</ErrorMessage>}
+
+            <ModalInput
+              type="text"
+              value={modalValues.Ticket}
+              onChange={(e) => handleModalChange(e, "Ticket")}
+              placeholder="Ticket"
+              error={errors.Ticket}
+              required
+            />
+            {errors.Ticket && <ErrorMessage>{errors.Ticket}</ErrorMessage>}
+
+            <ModalInput
+              type="text"
+              value={modalValues.Observaciones}
+              onChange={(e) => handleModalChange(e, "Observaciones")}
+              placeholder="Observaciones"
+              error={errors.Observaciones}
+              required
+            />
+            {errors.Observaciones && <ErrorMessage>{errors.Observaciones}</ErrorMessage>}
+
+            <ModalButtonGroup>
+              <GuardarButton onClick={SaveModal}>
+                <FaSave /> Guardar
+              </GuardarButton>
+              <ModalButton cancel onClick={handleCloseModal}>
+                <FaTimes /> Cancelar
+              </ModalButton>
+            </ModalButtonGroup>
+          </ModalWrapper>
+        </ModalBackground>
+      )}
     </MainContainer>
   );
 }
