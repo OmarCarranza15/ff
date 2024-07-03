@@ -101,7 +101,7 @@ const SaveModal = async () => {
 
       // Datos del nuevo puesto
       const newPerfil = {
-        Estado_Perfil: parseInt(modalValues.Estado_Perfil, 10),
+        Estado_Perfil: modalValues.Estado_Perfil ? parseInt(modalValues.Estado_Perfil, 10) : 1,
         ID_Pais: parseInt(modalValues.ID_Pais, 10),
         ID_Aplicaciones: parseInt(modalValues.ID_Aplicaciones, 10),
         ID_Puesto: parseInt(modalValues.ID_Puesto, 10),
