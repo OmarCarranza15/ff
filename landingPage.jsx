@@ -1,178 +1,977 @@
-const SaveModal = async () => {
-  const newErrors = {
-    ID_Pais: "",
-    ID_Puesto: "",
-    ID_Aplicaciones: "",
-    Estado_Perfil: "",
+function LandingPage() {
+  const [records, setRecords] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editedRow, setEditedRow] = useState(null);
+  const [puestos, setPuestos] = useState([]);
+  const [rsocial, setRsocial] = useState([]);
+  const [division, setDivision] = useState([]);
+  const [departamento, setDepartamento] = useState([]);
+  const [centrocosto, setCentrocostos] = useState([]);
+  const [aplicacion, setAplicacion] = useState([]);
+  const [ambiente, setAmbiente] = useState([]);
+  const [pais, setPais] = useState([]);
+  const [errors, setErrors] = useState({ ID_Pais: "", Rol: "", Fecha: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
+  const [modalValues, setModalValues] = useState({ ID_Pais: "", Rol: "", Fecha: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
+  const [showModal, setShowModal] = useState(false);
+
+  const [filters, setFilters] = useState({
+    N_RSocial: "",
+    N_Departamento: "",
+    N_Pais: "",
+    N_Puesto: "",
     Rol: "",
+    N_Aplicaciones: "",
+    N_Ambiente: "",
     Puesto_Jefe: "",
-    Observaciones: "",
-    Fecha: "",
     Ticket: "",
+    Fecha: "",
+    Nombre: "", //Nombre del centro de costos
+    Observaciones: "",
+    Estado_Perfil: "",
+    ID_Pais: "",
+    ID_Aplicaciones: "",
+    ID_Puesto:"",
+    ID_Ambiente:"",
+  });
+
+  useEffect(()=> {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/perfil/`);
+        const data = response.data;
+        const mappedData = await Promise.all(
+          data.map(async (perfil)=> {
+            const puestoResponse = await axios.get(`http://localhost:3000/puesto/${perfil.ID_Puesto}`);
+            const aplicacionResponse = await axios.get(`http://localhost:3000/aplicacion/${perfil.ID_Aplicaciones}`);
+            const rsocialResponse = await axios.get(`http://localhost:3000/rsocial/${puestoResponse.data.ID_RSocial}`);
+            const divisionResponse = await axios.get(`http://localhost:3000/division/${puestoResponse.data.ID_Division}`);
+            const departamentoResponse = await axios.get(`http://localhost:3000/departamento/${puestoResponse.data.ID_Departamento}`);
+            const centrocostosResponse = await axios.get(`http://localhost:3000/centrocosto/${puestoResponse.data.ID_CentroCostos}`)
+            const paisResponse = await axios.get(`http://localhost:3000/pais/${perfil.ID_Pais}`); 
+            const ambienteResponse = await axios.get(`http://localhost:3000/ambiente/${aplicacionResponse.data.ID_Ambiente}`)
+
+            return {
+              N_RSocial: rsocialResponse.data.N_RSocial,
+              N_Division: divisionResponse.data.N_Division,
+              N_Puesto: puestoResponse.data.N_Puesto,
+              N_Pais: paisResponse.data.N_Pais,
+              N_Departamento: departamentoResponse.data.N_Departamento,
+              Rol: perfil.Rol,
+              N_Aplicaciones: aplicacionResponse.data.N_Aplicaciones,
+              N_Ambiente: ambienteResponse.data.N_Ambiente,
+              Puesto_Jefe: perfil.Puesto_Jefe,
+              Ticket: perfil.Ticket,
+              Fecha: perfil.Fecha,
+              Observaciones: perfil.Observaciones,
+              Estado_Perfil: perfil.Estado_Perfil === 1 ? "Activo": "Inactivo",
+              id: perfil.id,
+              ID_Pais: perfil.ID_Pais,
+              ID_Aplicaciones: perfil.ID_Aplicaciones,
+              ID_Puesto: perfil.ID_Puesto,
+              ID_Ambiente: aplicacionResponse.data.ID_Ambiente,
+              ID_RSocial: puestoResponse.data.ID_RSocial,
+              ID_Division: puestoResponse.data.ID_Division,
+              ID_Departamento: puestoResponse.data.ID_Departamento,
+              ID_CentroCostos: puestoResponse.data.ID_CentroCostos,
+              Nombre: centrocostosResponse.data.Nombre,
+            }
+          })
+        )
+        setRecords(mappedData);
+      } catch (error) {
+        console.error ('Error al obtener los perfiles:', error);
+      }
+    };
+
+    const fetchPuestos = async () =>{
+      try {
+          const response = await axios.get(`http://localhost:3000/puesto/`);
+          setPuestos(response.data);
+      } catch (error) {
+          console.error('Error al obtener la lista de puestos', error);
+      }
+  };
+    const fetchPais = async () =>{
+      try {
+          const response = await axios.get(`http://localhost:3000/pais/`);
+          setPais(response.data);
+      } catch (error) {
+          console.error('Error al obtener la lista de pais', error);
+      }
+  };
+    const fetchRsocial = async () =>{
+     try {
+          const response = await axios.get(`http://localhost:3000/rsocial/`);
+          setRsocial(response.data);
+      } catch (error) {
+          console.error('Error al obtener la lista de razon social', error);
+      }
+  };
+    const fetchDivision = async () =>{
+      try {
+           const response = await axios.get(`http://localhost:3000/division/`);
+           setDivision(response.data);
+      } catch (error) {
+           console.error('Error al obtener la lista de division', error);
+      }
+  };
+    const fetchDepartamento = async () =>{
+      try {
+           const response = await axios.get(`http://localhost:3000/departamento/`);
+           setDepartamento(response.data);
+      } catch (error) {
+           console.error('Error al obtener la lista de departamentos', error);
+      }
+  };
+    const fetchCentrocostos = async () =>{
+      try {
+           const response = await axios.get(`http://localhost:3000/centrocosto/`);
+           setCentrocostos(response.data);
+      } catch (error) {
+           console.error('Error al obtener la lista de centro de costos', error);
+      }
+  };
+    const fetchAplicacion = async () =>{
+      try {
+           const response = await axios.get(`http://localhost:3000/aplicacion/`);
+           setAplicacion(response.data);
+      } catch (error) {
+           console.error('Error al obtener la lista de aplicaciones', error);
+      }
+  };
+    const fetchAmbiente = async () =>{
+      try {
+           const response = await axios.get(`http://localhost:3000/ambiente/`);
+           setAmbiente(response.data);
+      } catch (error) {
+           console.error('Error al obtener la lista de ambientes', error);
+      }
+  };
+    fetchAmbiente();
+    fetchPais();
+    fetchAplicacion();
+    fetchCentrocostos();
+    fetchDepartamento();
+    fetchDivision();
+    fetchRsocial();
+    fetchPuestos();
+    fetchData();
+  }, []);
+
+  const handleFilterChange = (event, column) => {
+    const { value } = event.target;
+    setFilters((prevFilters) => ({ ...prevFilters, [column]: value }));
   };
 
-  // Validación de campos
-  if (!modalValues.ID_Pais) {
-    newErrors.ID_Pais = "El campo País es obligatorio";
-  }
-  if (!modalValues.ID_Puesto) {
-    newErrors.ID_Puesto = "El campo Puesto es obligatorio";
-  }
-  if (!modalValues.ID_Aplicaciones) {
-    newErrors.ID_Aplicaciones = "El campo Aplicación es obligatorio";
-  }
-  if (!modalValues.Estado_Perfil) {
-    newErrors.Estado_Perfil = "El campo Estado es obligatorio";
-  }
-  if (!modalValues.Rol.trim()) {
-    newErrors.Rol = "El rol es obligatorio";
-  }
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
 
-  if (!modalValues.Puesto_Jefe.trim()) {
-    newErrors.Puesto_Jefe =
-      "El nombre del puesto del jefe inmediato es obligatorio.";
-  } else if (!/^[a-zA-Z\s]+$/.test(modalValues.Puesto_Jefe)) {
-    newErrors.Puesto_Jefe =
-      "El campo del jefe inmediato solo acepta letras y espacios en blanco.";
-  }
+  const handleInsert = () => {
+    setShowModal(true);
+  };
 
-  setErrors(newErrors);
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalValues({ ID_Pais: "", Rol: "", Fecha: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
+    setErrors({ ID_Pais: "", Rol: "", Fecha: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
+  };
 
-  // Si no hay errores, proceder a insertar el nuevo puesto
-  if (Object.values(newErrors).every((error) => error === "")) {
-    try {
-      // Verificar si el puesto ya existe en la base de datos
-      console.log("Verificando si el puesto ya existe...");
-      const response = await axios.get(`http://localhost:3000/perfil`);
-      console.log("Datos recibidos del servidor:", response.data);
+  const handleModalChange = (event, field) => {
+    const { value } = event.target;
+    setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
+  };
 
-      const perfiles = response.data;
-
-      const paisExistente = perfiles.some(
-        (puesto) => puesto.ID_Pais.toString() === modalValues.ID_Pais
-      );
-      const aplicacionExistente = perfiles.some(
-        (puesto) =>
-          puesto.ID_Aplicaciones.toString() === modalValues.ID_Aplicaciones
-      );
-      const puestoExistente = perfiles.some(
-        (puesto) => puesto.ID_Puesto.toString() === modalValues.ID_Puesto
-      );
-      const rolExistente = perfiles.some(
-        (puesto) =>
-          puesto.Rol.toLowerCase() === modalValues.Rol.toLowerCase()
-      );
-      const puestojefeExistente = perfiles.some(
-        (puesto) =>
-          puesto.Puesto_Jefe.toLowerCase() ===
-          modalValues.Puesto_Jefe.toLowerCase()
-      );
-
-      if (
-        paisExistente ||
-        aplicacionExistente ||
-        puestoExistente ||
-        rolExistente ||
-        puestojefeExistente
-      ) {
-        const errorMessages = {};
-        if (paisExistente) {
-          errorMessages.ID_Pais = "El país ya existe";
+  const SaveModal = async () => {
+    const newErrors = {
+      ID_Pais: "",
+      ID_Puesto: "",
+      ID_Aplicaciones: "",
+      Estado_Perfil: "",
+      Rol: "",
+      Puesto_Jefe: "",
+      Observaciones: "",
+      Fecha: "",
+      Ticket: "",
+    };
+  
+    // Validación de campos
+    if (!modalValues.ID_Pais) {
+      newErrors.ID_Pais = "El campo País es obligatorio";
+    }
+    if (!modalValues.ID_Puesto) {
+      newErrors.ID_Puesto = "El campo Puesto es obligatorio";
+    }
+    if (!modalValues.ID_Aplicaciones) {
+      newErrors.ID_Aplicaciones = "El campo Aplicación es obligatorio";
+    }
+    if (!modalValues.Estado_Perfil) {
+      newErrors.Estado_Perfil = "El campo Estado es obligatorio";
+    }
+    if (!modalValues.Rol.trim()) {
+      newErrors.Rol = "El rol es obligatorio";
+    }
+  
+    if (!modalValues.Puesto_Jefe.trim()) {
+      newErrors.Puesto_Jefe =
+        "El nombre del puesto del jefe inmediato es obligatorio.";
+    } else if (!/^[a-zA-Z\s]+$/.test(modalValues.Puesto_Jefe)) {
+      newErrors.Puesto_Jefe =
+        "El campo del jefe inmediato solo acepta letras y espacios en blanco.";
+    }
+  
+    setErrors(newErrors);
+  
+    // Si no hay errores, proceder a insertar el nuevo puesto
+    if (Object.values(newErrors).every((error) => error === "")) {
+      try {
+        // Verificar si el puesto ya existe en la base de datos
+        console.log("Verificando si el puesto ya existe...");
+        const response = await axios.get(`http://localhost:3000/perfil`);
+        console.log("Datos recibidos del servidor:", response.data);
+  
+        const perfiles = response.data;
+  
+        const paisExistente = perfiles.some(
+          (puesto) => puesto.ID_Pais.toString() === modalValues.ID_Pais
+        );
+        const aplicacionExistente = perfiles.some(
+          (puesto) =>
+            puesto.ID_Aplicaciones.toString() === modalValues.ID_Aplicaciones
+        );
+        const puestoExistente = perfiles.some(
+          (puesto) => puesto.ID_Puesto.toString() === modalValues.ID_Puesto
+        );
+        const rolExistente = perfiles.some(
+          (puesto) =>
+            puesto.Rol.toLowerCase() === modalValues.Rol.toLowerCase()
+        );
+        const puestojefeExistente = perfiles.some(
+          (puesto) =>
+            puesto.Puesto_Jefe.toLowerCase() ===
+            modalValues.Puesto_Jefe.toLowerCase()
+        );
+        if (
+          paisExistente ||
+          aplicacionExistente ||
+          puestoExistente ||
+          rolExistente ||
+          puestojefeExistente
+        ) {
+          const errorMessages = {};
+          if (paisExistente) {
+            errorMessages.ID_Pais = "El país ya existe";
+          }
+          if (aplicacionExistente) {
+            errorMessages.ID_Aplicaciones =
+              "El código del puesto ya existe";
+          }
+          if (puestoExistente) {
+            errorMessages.ID_Puesto = "El código del puesto ya existe";
+          }
+          if (rolExistente) {
+            errorMessages.Rol = "El código del puesto ya existe";
+          }
+          if (puestojefeExistente) {
+            errorMessages.Puesto_Jefe = "El código del puesto ya existe";
+          } else if (!/^[a-zA-Z\s]+$/.test(modalValues.Puesto_Jefe)) {
+            errorMessages.Puesto_Jefe =
+              "El campo del jefe inmediato solo acepta letras y espacios en blanco.";
+          }
+          setErrors({ ...newErrors, ...errorMessages });
+          return;
         }
-        if (aplicacionExistente) {
-          errorMessages.ID_Aplicaciones =
-            "El código del puesto ya existe";
-        }
-        if (puestoExistente) {
-          errorMessages.ID_Puesto = "El código del puesto ya existe";
-        }
-        if (rolExistente) {
-          errorMessages.Rol = "El código del puesto ya existe";
-        }
-        if (puestojefeExistente) {
-          errorMessages.Puesto_Jefe = "El código del puesto ya existe";
-        } else if (!/^[a-zA-Z\s]+$/.test(modalValues.Puesto_Jefe)) {
-          errorMessages.Puesto_Jefe =
-            "El campo del jefe inmediato solo acepta letras y espacios en blanco.";
-        }
-        setErrors({ ...newErrors, ...errorMessages });
-        return;
-      }
-
-      // Datos del nuevo puesto
-      const defaultDate = new Date().toISOString().slice(0, 10); // Fecha actual como predeterminada (formato YYYY-MM-DD)
-      const newPerfil = {
-        Estado_Perfil: modalValues.Estado_Perfil ? parseInt(modalValues.Estado_Perfil, 10) : 1,
-        ID_Pais: parseInt(modalValues.ID_Pais, 10),
-        ID_Aplicaciones: parseInt(modalValues.ID_Aplicaciones, 10),
-        ID_Puesto: parseInt(modalValues.ID_Puesto, 10),
-        Rol: modalValues.Rol,
-        Fecha: modalValues.Fecha || defaultDate, // Usar la fecha proporcionada o la fecha por defecto
-        Ticket: parseInt(modalValues.Ticket, 10),
-        Observaciones: modalValues.Observaciones,
-        Puesto_Jefe: modalValues.Puesto_Jefe,
-      };
-
-      console.log("Enviando datos:", newPerfil);
-
-      // Enviar solicitud POST para insertar el nuevo puesto
-      const insertResponse = await axios.post(
-        `http://localhost:3000/perfil`,
-        newPerfil
-      );
-      console.log("Respuesta de inserción:", insertResponse.data);
-
-      // Actualizar la lista de puestos con el nuevo puesto
-      const paisResponse = await axios.get(
-        `http://localhost:3000/pais/${modalValues.ID_Pais}`
-      );
-      const aplicacionResponse = await axios.get(
-        `http://localhost:3000/aplicacion/${modalValues.ID_Aplicaciones}`
-      );
-      const puestoResponse = await axios.get(
-        `http://localhost:3000/puesto/${modalValues.ID_Puesto}`
-      );
-
-      console.log("Datos de respuesta para actualizar la UI:", {
-        paisResponse: paisResponse.data,
-        aplicacionResponse: aplicacionResponse.data,
-        puestoResponse: puestoResponse.data,
-      });
-
-      const updatedRecords = [
-        ...records,
-        {
-          id: insertResponse.data.id,
+        // Datos del nuevo puesto
+        const newPerfil = {
+          Estado_Perfil: modalValues.Estado_Perfil ? parseInt(modalValues.Estado_Perfil, 10) : 1,
+          ID_Pais: parseInt(modalValues.ID_Pais, 10),
+          ID_Aplicaciones: parseInt(modalValues.ID_Aplicaciones, 10),
+          ID_Puesto: parseInt(modalValues.ID_Puesto, 10),
           Rol: modalValues.Rol,
+          Fecha: modalValues.Fecha, // Usar la fecha proporcionada o la fecha por defecto
+          Ticket: parseInt(modalValues.Ticket, 10),
           Observaciones: modalValues.Observaciones,
           Puesto_Jefe: modalValues.Puesto_Jefe,
-          Fecha: modalValues.Fecha || defaultDate,
-          Ticket: parseInt(modalValues.Ticket, 10),
-          Estado_Perfil: parseInt(modalValues.Estado_Perfil, 10),
-          ID_Pais: modalValues.ID_Pais,
-          N_Pais: paisResponse.data.N_Pais,
-          ID_Aplicaciones: modalValues.ID_Aplicaciones,
-          N_Aplicaciones: aplicacionResponse.data.N_Aplicaciones,
-          ID_Puesto: modalValues.ID_Puesto,
-          N_Puesto: puestoResponse.data.N_Puesto,
-        },
-      ];
-
-      setRecords(updatedRecords);
-      setShowModal(false); // Ocultar el modal después de guardar
-      setModalValues({
-        ID_Pais: "",
-        Rol: "",
-        Fecha: "",
-        Ticket: "",
-        Observaciones: "",
-        Puesto_Jefe: "",
-        Estado_Perfil: "",
-        ID_Puesto: "",
-        ID_Aplicaciones: "",
-      }); // Limpiar los valores del modal
-    } catch (error) {
-      console.error("Error al insertar un nuevo Puesto:", error);
+        };
+        console.log("Enviando datos:", newPerfil);
+  
+        // Enviar solicitud POST para insertar el nuevo puesto
+        const insertResponse = await axios.post(
+          `http://localhost:3000/perfil`,
+          newPerfil
+        );
+        console.log("Respuesta de inserción:", insertResponse.data);
+  
+        // Actualizar la lista de puestos con el nuevo puesto
+        const paisResponse = await axios.get(
+          `http://localhost:3000/pais/${modalValues.ID_Pais}`
+        );
+        const aplicacionResponse = await axios.get(
+          `http://localhost:3000/aplicacion/${modalValues.ID_Aplicaciones}`
+        );
+        const puestoResponse = await axios.get(
+          `http://localhost:3000/puesto/${modalValues.ID_Puesto}`
+        );
+  
+        console.log("Datos de respuesta para actualizar la UI:", {
+          paisResponse: paisResponse.data,
+          aplicacionResponse: aplicacionResponse.data,
+          puestoResponse: puestoResponse.data,
+        });
+  
+        const updatedRecords = [
+          ...records,
+          {
+            id: insertResponse.data.id,
+            Rol: modalValues.Rol,
+            Observaciones: modalValues.Observaciones,
+            Puesto_Jefe: modalValues.Puesto_Jefe,
+            Fecha: modalValues.Fecha || defaultDate,
+            Ticket: parseInt(modalValues.Ticket, 10),
+            Estado_Perfil: parseInt(modalValues.Estado_Perfil, 10),
+            ID_Pais: modalValues.ID_Pais,
+            N_Pais: paisResponse.data.N_Pais,
+            ID_Aplicaciones: modalValues.ID_Aplicaciones,
+            N_Aplicaciones: aplicacionResponse.data.N_Aplicaciones,
+            ID_Puesto: modalValues.ID_Puesto,
+            N_Puesto: puestoResponse.data.N_Puesto,
+          },
+        ];
+  
+        setRecords(updatedRecords);
+        setShowModal(false); // Ocultar el modal después de guardar
+        setModalValues({
+          ID_Pais: "",
+          Rol: "",
+          Fecha: "",
+          Ticket: "",
+          Observaciones: "",
+          Puesto_Jefe: "",
+          Estado_Perfil: "",
+          ID_Puesto: "",
+          ID_Aplicaciones: "",
+        }); // Limpiar los valores del modal
+      } catch (error) {
+        console.error("Error al insertar un nuevo Puesto:", error);
+      }
     }
-  }
-};
+  };
+  const startEdit = (row) => {
+    setEditedRow({ ...row });
+    setEditMode(row.id);
+  };
+
+  const handleEditChange = (event, field) => {
+    const { value } = event.target;
+    setEditedRow((prevState) => ({
+      ...prevState,
+      [field]: value,
+      ...(field === "ID_Pais" && { N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais }),
+      ...(field === "ID_Aplicaciones" && { N_Aplicaciones: aplicacion.find((p) => p.id === parseInt(value)).N_Aplicaciones }),
+      ...(field === "ID_Puesto" && { N_Puesto: puestos.find((p) => p.id === parseInt(value)).N_Puesto }),
+      ...(field === "ID_Ambiente" && { N_Ambiente: ambiente.find((p) => p.id === parseInt(value)).N_Ambiente }),
+      ...(field === "ID_RSocial" && { N_RSocial: rsocial.find((p) => p.id === parseInt(value)).N_RSocial }),
+      ...(field === "ID_Division" && { N_Division: division.find((p) => p.id === parseInt(value)).N_Division }),
+      ...(field === "ID_Departamento" && { N_Departamento: departamento.find((p) => p.id === parseInt(value)).N_Departamento }),
+      ...(field === "ID_CentroCostos" && { Nombre: centrocosto.find((p) => p.id === parseInt(value)).Nombre }),
+    } 
+    ));
+    validateInput(field, value);
+  };
+  const validateInput = (field, value) => {
+    let newErrors = { ...errors };
+    if (field === "ID_Pais") {
+      if (!value.trim()) {
+        newErrors.ID_Pais = "El campo País es obligatorio";
+      } else {
+        newErrors.ID_Pais = "";
+      }
+    }else if (field === "ID_Aplicaciones") {
+      if (!value.trim()) {
+        newErrors.ID_Aplicaciones = "El campo Aplicacion es obligatorio";
+      } else {
+        newErrors.ID_Aplicaciones = "";
+      }
+    }else if (field === "ID_Puesto") {
+      if (!value.trim()) {
+        newErrors.ID_Puesto = "El campo Puesto es obligatorio";
+      } else {
+        newErrors.ID_Puesto = "";
+      }
+    }else if (field === "Rol") {
+      if (!value.trim()) {
+        newErrors.Rol = "El campo Rol es obligatorio";
+      } else {
+        newErrors.Rol = "";
+      }
+    }else if (field === "Puesto_Jefe"){
+      if (!value.trim()) {
+        newErrors.Puesto_Jefe= "EL campo puesto es obligatorio"
+      }else if (!/^[a-zA-Z\s]+$/.test(value)){
+        newErrors.Puesto_Jefe = "El campo del jefe inmediato solo acepta letras y espacios en blanco.";
+      }else {
+        newErrors.Puesto_Jefe = "";
+      }
+    }
+    setErrors(newErrors);
+  };
+
+  const saveChanges = async(id) => {
+    try {
+
+      const updateRow = {
+        ...editedRow,
+        Estado_Perfil: editedRow.Estado_Perfil === "Activo" ? 1 : 2,
+      }
+      
+      await axios.put(`http://localhost:3000/perfil/${id}`,updateRow);   
+
+      if (editedRow.ID_Ambiente !== records.find(row => row.id === id).ID_Ambiente){
+        await axios.put(`http://localhost:3000/aplicacion/${editedRow.ID_Aplicaciones}`,{
+          ID_Ambiente: editedRow.ID_Ambiente
+        });
+      } 
+      
+      if (editedRow.ID_RSocial !== records.find(row => row.id === id).ID_RSocial){
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`,{
+          ID_RSocial: editedRow.ID_RSocial
+        });
+      }  
+
+      if (editedRow.ID_Division !== records.find(row => row.id === id).ID_Division){
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`,{
+          ID_Division: editedRow.ID_Division
+        });
+      }  
+
+      if (editedRow.ID_Departamento !== records.find(row => row.id === id).ID_Departamento){
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`,{
+          ID_Departamento: editedRow.ID_Departamento
+        });
+      } 
+
+      if (editedRow.ID_CentroCostos !== records.find(row => row.id === id).ID_CentroCostos){
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`,{
+          ID_CentroCostos: editedRow.ID_CentroCostos
+        });
+      } 
+      
+
+      const updatedRecords = records.map ((row) => 
+        row.id === id ? {...editedRow} : row
+      )
+      //setRecords(updatedRecordsPuesto);
+      setRecords(updatedRecords);
+      setEditedRow(null);
+      setEditMode(null); 
+    
+                                                                               
+      console.log("Cambios guardados correctamente");
+    } catch(error) {
+      console.error("Error al guardar los cambios", error)
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditedRow(null);
+    setEditMode(null);
+  };
+
+  const filteredData = records.filter((row) => {
+   return(
+      (filters.N_RSocial === "" ||
+        row.N_RSocial.toLowerCase().includes(filters.N_RSocial.toLowerCase())) &&
+      (filters.N_Pais === "" ||
+        row.N_Pais
+          .toLowerCase()
+          .includes(filters.N_Pais.toLowerCase())) &&
+      (filters.N_Departamento === "" ||
+        row.N_Departamento
+          .toLowerCase()
+          .includes(filters.N_Departamento.toLowerCase())) &&
+      (filters.Rol === "" ||
+        row.Rol.toLowerCase().includes(filters.Rol.toLowerCase())) &&
+      (filters.Nombre === "" ||
+        row.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase())) &&
+      (filters.N_Puesto === "" ||
+        row.N_Puesto.toLowerCase().includes(filters.N_Puesto.toLowerCase())) &&
+      (filters.Observaciones === "" ||
+        row.Observaciones.toLowerCase().includes(filters.Observaciones.toLowerCase())) &&
+      (filters.N_Aplicaciones === "" ||
+        row.N_Aplicaciones
+          .toLowerCase()
+          .includes(filters.N_Aplicaciones.toLowerCase())) &&
+      (filters.N_Ambiente === "" ||
+        row.N_Ambiente.toLowerCase().includes(filters.N_Ambiente.toLowerCase())) &&
+      (filters.Puesto_Jefe === "" ||
+        row.Puesto_Jefe
+          .toLowerCase()
+          .includes(filters.Puesto_Jefe.toLowerCase())) &&
+      (filters.Estado_Perfil === "" || 
+        row.Estado_Perfil.toLowerCase().includes(filters.Estado_Perfil.toLowerCase()))   &&
+        
+      (filters.Ticket === "" ||
+        row.Ticket.toLowerCase().includes(filters.Ticket.toLowerCase())) &&
+      (filters.Fecha === "" ||
+        row.Fecha.toLowerCase().includes(filters.Fecha.toLowerCase()))
+    );
+  });
+
+  const columns = [
+    {
+      name: "Pais",
+      selector: (row) => row.N_Pais,
+      sortable: true,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <select value={editedRow.ID_Pais} onChange={(e) => handleEditChange(e, "ID_Pais")}>
+            {pais.map((pais) => (
+              <option key={pais.id} value={pais.id}>
+                {pais.N_Pais}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div>{row.N_Pais}</div>
+        ),
+    },
+    {
+      name: "Razon Social",
+      selector: (row) => row.N_RSocial,
+      sortable: true,
+      minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <div style={{color: "red"}}>{row.N_RSocial}</div>
+        ):(
+            <div>{row.N_RSocial}</div>
+          )
+    },
+    {
+      name: "División",
+      selector: (row) => row.N_Division,
+      sortable: true,
+      minWidth: "230px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <div style={{color: "red"}}>{row.N_Division}</div>
+        ):(
+            <div>{row.N_Division}</div>
+          )
+    },
+    {
+      name: "Departamento",
+      selector: (row) => row.N_Departamento,
+      sortable: true,
+      minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <div style={{color: "red"}}>{row.N_Departamento}</div>
+        ):(
+            <div>{row.N_Departamento}</div>
+          )
+    },
+    {
+      name: "Centro de Costos",
+      selector: (row) => row.Nombre,
+      sortable: true,
+      minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+        <div style={{color: "red"}}>{row.Nombre}</div>
+      ):(
+          <div>{row.Nombre}</div>
+        )
+    },
+    {
+      name: "Puesto",
+      selector: (row) => row.N_Puesto,
+      sortable: true,
+      minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <select value={editedRow.ID_Puesto} onChange={(e) => handleEditChange(e, "ID_Puesto")}>
+            {puestos.map((puestos) => (
+              <option key={puestos.id} value={puestos.id}>
+                {puestos.N_Puesto}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div>{row.N_Puesto}</div>
+      ),
+    },
+    {
+      name: "Rol",
+      selector: (row) => row.Rol,
+      sortable: true,
+      minWidth: "370px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.Rol}
+            onChange={(e) => handleEditChange(e, "Rol")}
+          />
+        ) : (
+          <div>{row.Rol}</div>
+      ),
+    },
+    {
+      name: "Aplicación",
+      selector: (row) => row.N_Aplicaciones,
+      sortable: true,
+      minWidth: "150px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "600px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <select value={editedRow.ID_Aplicaciones} onChange={(e) => handleEditChange(e, "ID_Aplicaciones")}>
+          {aplicacion.map((aplicacion) => (
+            <option key={aplicacion.id} value={aplicacion.id}>
+              {aplicacion.N_Aplicaciones}
+            </option>
+          ))}
+        </select>
+        ) : (
+          <div>{row.N_Aplicaciones}</div>
+      ),
+    },
+    {
+      name: "Ambiente",
+      selector: (row) => row.N_Ambiente,
+      sortable: true,
+      minWidth: "150px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+      editMode && editedRow?.id === row.id ? (
+        <div style={{color: "red"}}>{row.N_Ambiente}</div>
+      ):(
+          <div>{row.N_Ambiente}</div>
+        )
+    },
+    {
+      name: "Jefe Inmediato",
+      selector: (row) => row.Puesto_Jefe,
+      sortable: true,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.Puesto_Jefe}
+            onChange={(e) => handleEditChange(e, "Puesto_Jefe")}
+          />
+        ) : (
+          <div>{row.Puesto_Jefe}</div>
+      ),
+    },
+    {
+      name: "Ticket",
+      selector: (row) => row.Ticket,
+      sortable: true,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.Ticket}
+            onChange={(e) => handleEditChange(e, "Ticket")}
+          />
+        ) : (
+          <div>{row.Ticket}</div>
+      ),
+    },
+    {
+      name: "Fecha",
+      selector: (row) => row.Fecha,
+      sortable: true,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.Fecha}
+            onChange={(e) => handleEditChange(e, "Fecha")}
+          />
+        ) : (            
+          <div>{row.Fecha}</div>
+        )
+    },
+    {
+      name: "Observación",
+      selector: (row) => row.Observaciones,
+      sortable: true,
+      minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.Observaciones}
+            onChange={(e) => handleEditChange(e, "Observaciones")}
+          />
+        ) : (
+          <div>{row.Observaciones}</div>
+        ),
+    },
+    {
+      name: "Estado",
+      selector: (row) => editMode === row.id ?(
+        <select value={editedRow.Estado_Perfil} onChange={(e) => handleEditChange(e, "Estado_Perfil")}>
+          <option value={"Activo"}>
+            Activo
+          </option>
+          <option value={"Inactivo"}>
+            Inactivo
+          </option>
+        </select>
+      )
+        : (
+          <div>{row.Estado_Perfil}</div>
+        ),
+        sortable: true,
+    },
+    {
+      name: "Acciones",
+      cell: (row) =>
+        editMode === row.id ? (
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <Button onClick={() => saveChanges(row.id)}>
+              <FaSave />
+            </Button>
+            <ButtonCancelar cancel onClick={cancelEdit}>
+              <FaTimes />
+            </ButtonCancelar>
+          </div>
+        ) : (
+          <Button onClick={() => startEdit(row)}>
+            <FaEdit />
+          </Button>
+        ),
+    },
+  ];
+
+  return (
+    <MainContainer>
+      <TopBar />
+      <ContentContainer>
+        <Sidebar />
+        <DataTableContainer>
+          <HeaderContainer>
+            <Title><h2 className="Title">Matriz de perfiles</h2></Title>
+            <ButtonGroup>
+              <Button primary onClick={toggleFilters}>
+                {showFilters ? "Ocultar" : "Buscar"}
+              </Button>
+              <Button onClick={handleInsert}>Insertar Nuevo Perfil</Button>
+            </ButtonGroup>
+          </HeaderContainer>
+          <FilterWrapper show={showFilters}>
+            <FilterInput
+              type="text"
+              value={filters.N_RSocial}
+              onChange={(e) => handleFilterChange(e, "N_RSocial")}
+              placeholder=" Razón Social"
+            />
+            <FilterInput
+              type="text"
+              value={filters.N_Departamento}
+              onChange={(e) => handleFilterChange(e, "N_Departamento")}
+              placeholder="Buscar por Departamento"
+            />
+            <FilterInput
+              type="text"
+              value={filters.Nombre}
+              onChange={(e) => handleFilterChange(e, "Nombre")}
+              placeholder="Buscar por Centro de Costos"
+            />
+            <FilterInput
+              type="text"
+              value={filters.N_Pais}
+              onChange={(e) => handleFilterChange(e, "N_Pais")}
+              placeholder="Buscar por Pais"
+            />
+            <FilterInput
+              type="text"
+              value={filters.N_Puesto}
+              onChange={(e) => handleFilterChange(e, "N_Puesto")}
+              placeholder="Buscar por Puesto"
+            />
+            <FilterInput
+              type="text"
+              value={filters.Rol}
+              onChange={(e) => handleFilterChange(e, "Rol")}
+              placeholder="Buscar por Rol"
+            />
+            <FilterInput
+              type="text"
+              value={filters.N_Aplicaciones}
+              onChange={(e) => handleFilterChange(e, "N_Aplicaciones")}
+              placeholder="Buscar por Aplicación"
+            />
+            <FilterInput
+              type="text"
+              value={filters.N_Ambiente}
+              onChange={(e) => handleFilterChange(e, "N_Ambiente")}
+              placeholder="Buscar por Ambiente"
+            />
+            <FilterInput
+              type="text"
+              value={filters.Puesto_Jefe}
+              onChange={(e) => handleFilterChange(e, "jefeInmediato")}
+              placeholder="Buscar por Jefe Inmediato"
+            />
+            <FilterInput
+              type="text"
+              value={filters.Ticket}
+              onChange={(e) => handleFilterChange(e, "Ticket")}
+              placeholder="Buscar por Ticket"
+            />
+            <FilterInput
+              type="text"
+              value={filters.Estado_Perfil}
+              onChange={(e) => handleFilterChange(e, "Estado_Perfil")}
+              placeholder="Buscar por Estado"
+            />
+            <FilterInput
+              type="text"
+              value={filters.Fecha}
+              onChange={(e) => handleFilterChange(e, "Fecha")}
+              placeholder="Buscar por Fecha"
+            />
+            <FilterInput
+              type="text"
+              value={filters.Observaciones}
+              onChange={(e) => handleFilterChange(e, "Observaciones")}
+              placeholder="Buscar por Observaciones"
+            />
+          </FilterWrapper>
+          <StyledDataTable
+            columns={columns}
+            data={filteredData}
+            pagination
+            paginationPerPage={30}
+            showFilters={showFilters}
+          />
+        </DataTableContainer>
+      </ContentContainer>
+
+       {/* Modal para insertar una nuevo departamento */}
+       {showModal && (
+        <ModalBackground>
+          <ModalWrapper>
+            <ModalTitle>Nuevo Perfil</ModalTitle>
+
+            <Select
+              value={modalValues.ID_Pais}
+              onChange={(e) => handleModalChange(e, "ID_Pais")}
+              error={errors.pais}
+              required
+            >
+              <option value="">Seleccione un país</option>
+              {pais.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.N_Pais}
+                </option>
+              ))}
+            </Select>
+            {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
+
+            <Select
+              value={modalValues.ID_Puesto}
+              onChange={(e) => handleModalChange(e, "ID_Puesto")}
+              error={errors.puesto}
+              required
+            >
+              <option value="">Seleccione un puesto</option>
+              {puestos.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.N_Puesto}
+                </option>
+              ))}
+            </Select>
+            {errors.puesto && <ErrorMessage>{errors.puesto}</ErrorMessage>}
+
+            <Select
+              value={modalValues.ID_Aplicaciones}
+              onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
+              error={errors.aplicacion}
+              required
+            >
+              <option value="">Seleccione una aplicacion</option>
+              {aplicacion.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.N_Aplicaciones}
+                </option>
+              ))}
+            </Select>
+            {errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
+
+            <ModalInput
+              type="text"
+              value={modalValues.Rol}
+              onChange={(e) => handleModalChange(e, "Rol")}
+              placeholder="Rol en la Aplicación"
+              error={errors.Rol}
+              required
+            />
+            {errors.Rol && <ErrorMessage>{errors.Rol}</ErrorMessage>}
+
+            <ModalInput
+              type="text"
+              value={modalValues.Puesto_Jefe}
+              onChange={(e) => handleModalChange(e, "Puesto_Jefe")}
+              placeholder="Jefe Inmediato"
+              error={errors.Puesto_Jefe}
+              required
+            />
+            {errors.Puesto_Jefe && <ErrorMessage>{errors.Puesto_Jefe}</ErrorMessage>}
+
+            <ModalInput
+              type="text"
+              value={modalValues.Ticket}
+              onChange={(e) => handleModalChange(e, "Ticket")}
+              placeholder="Ticket"
+              error={errors.Ticket}
+              required
+            />
+            {errors.Ticket && <ErrorMessage>{errors.Ticket}</ErrorMessage>}
+
+            <ModalInput
+              type="text"
+              value={modalValues.Observaciones}
+              onChange={(e) => handleModalChange(e, "Observaciones")}
+              placeholder="Observaciones"
+              error={errors.Observaciones}
+              required
+            />
+            {errors.Observaciones && <ErrorMessage>{errors.Observaciones}</ErrorMessage>}
+
+            <ModalButtonGroup>
+              <GuardarButton onClick={SaveModal}>
+                <FaSave /> Guardar
+              </GuardarButton>
+              <ModalButton cancel onClick={handleCloseModal}>
+                <FaTimes /> Cancelar
+              </ModalButton>
+            </ModalButtonGroup>
+          </ModalWrapper>
+        </ModalBackground>
+      )}
+    </MainContainer>
+  );
+}
+
+export default LandingPage;
