@@ -9,6 +9,7 @@ import { FaEdit, FaSave, FaTimes } from "react-icons/fa"; // Importa el ícono d
 import { useLocation } from "react-router-dom";
 
 
+
 const MainContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -242,7 +243,7 @@ const GuardarButton = styled(ModalButton)`
 
 
 function LandingPage() {
-  const location = useLocation();
+  
   const [records, setRecords] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -258,6 +259,8 @@ function LandingPage() {
   const [errors, setErrors] = useState({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
   const [modalValues, setModalValues] = useState({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
   const [showModal, setShowModal] = useState(false);
+  const location = useLocation();
+  const [selectedCountry, setSelectedCountry] = useState("");
 
   const [filters, setFilters] = useState({
     N_RSocial: "",
@@ -279,6 +282,10 @@ function LandingPage() {
   });
 
   useEffect(()=> {
+    const searchParams = new URLSearchParams(location.search);
+        const paisParam = searchParams.get("pais");
+        setSelectedCountry(paisParam || "");
+
     const fetchData = async () => {
       try {
         const response = await axios.get(`http://localhost:3000/perfil/`);
@@ -333,7 +340,7 @@ function LandingPage() {
       } catch (error) {
           console.error('Error al obtener la lista de puestos', error);
       }
-  };
+  }
     const fetchPais = async () =>{
       try {
           const response = await axios.get(`http://localhost:3000/pais/`);
@@ -399,7 +406,7 @@ function LandingPage() {
     fetchRsocial();
     fetchPuestos();
     fetchData();
-  }, []);
+  }, [location.search]);
 
   const handleFilterChange = (event, column) => {
     const { value } = event.target;
@@ -497,22 +504,6 @@ function LandingPage() {
           return;
         }
   
-        /*const perfilExistente = perfiles.some(
-          (perfil) =>
-            perfil.ID_Pais.toString() === modalValues.ID_Pais &&
-            perfil.ID_Aplicaciones.toString() === modalValues.ID_Aplicaciones &&
-            perfil.ID_Puesto.toString() === modalValues.ID_Puesto &&
-            perfil.Rol.toLowerCase() === modalValues.Rol.toLowerCase() &&
-            perfil.Puesto_Jefe.toLowerCase() === modalValues.Puesto_Jefe.toLowerCase()
-        );
-  
-        if (perfilExistente) {
-          setErrors({
-            ...newErrors,
-            Puesto_Jefe: "El perfil ya existe con los valores proporcionados",
-          });
-          return;
-        }*/
   
         // Datos del nuevo perfil
         const newPerfil = {
@@ -721,10 +712,11 @@ function LandingPage() {
    return(
       (filters.N_RSocial === "" ||
         row.N_RSocial.toLowerCase().includes(filters.N_RSocial.toLowerCase())) &&
-      (filters.N_Pais === "" ||
+        (selectedCountry === "" || row.N_Pais.toLowerCase().includes(selectedCountry.toLowerCase())) &&
+      /*(filters.N_Pais === "" ||
         row.N_Pais
           .toLowerCase()
-          .includes(filters.N_Pais.toLowerCase())) &&
+          .includes(filters.N_Pais.toLowerCase())) &&*/
       (filters.N_Departamento === "" ||
         row.N_Departamento
           .toLowerCase()
@@ -741,17 +733,20 @@ function LandingPage() {
         row.N_Aplicaciones
           .toLowerCase()
           .includes(filters.N_Aplicaciones.toLowerCase())) &&
-      (filters.N_Ambiente === "" ||
-        row.N_Ambiente.toLowerCase().includes(filters.N_Ambiente.toLowerCase())) &&
+      /*(filters.N_Ambiente === "" ||
+        row.N_Ambiente.toLowerCase().includes(filters.N_Ambiente.toLowerCase())) &&*/
       (filters.Puesto_Jefe === "" ||
         row.Puesto_Jefe
           .toLowerCase()
           .includes(filters.Puesto_Jefe.toLowerCase())) &&
-      (filters.Estado_Perfil === "" || 
-        row.Estado_Perfil.toLowerCase().includes(filters.Estado_Perfil.toLowerCase()))   &&
       (filters.Ticket === "" ||
-        row.Ticket.toLowerCase().includes(filters.Ticket.toLowerCase())) 
+        row.Ticket.toString().toLowerCase().includes(filters.Ticket.toLowerCase())) &&
+      (filters.Estado_Perfil === "" || 
+        row.Estado_Perfil.toLowerCase().includes(filters.Estado_Perfil.toLowerCase()))   
+        
     );
+    
+
   });
 
   const columns = [
@@ -787,7 +782,7 @@ function LandingPage() {
             <div>{row.N_RSocial}</div>
           )
     },
-    {
+    /*{
       name: "División",
       selector: (row) => row.N_Division,
       sortable: true,
@@ -799,7 +794,7 @@ function LandingPage() {
         ):(
             <div>{row.N_Division}</div>
           )
-    },
+    },*/
     {
       name: "Departamento",
       selector: (row) => row.N_Departamento,
@@ -881,7 +876,7 @@ function LandingPage() {
           <div>{row.N_Aplicaciones}</div>
       ),
     },
-    {
+    /*{
       name: "Ambiente",
       selector: (row) => row.N_Ambiente,
       sortable: true,
@@ -893,7 +888,7 @@ function LandingPage() {
       ):(
           <div>{row.N_Ambiente}</div>
         )
-    },
+    },*/
     {
       name: "Jefe Inmediato",
       selector: (row) => row.Puesto_Jefe,
@@ -1016,12 +1011,12 @@ function LandingPage() {
               onChange={(e) => handleFilterChange(e, "Nombre")}
               placeholder="Buscar por Centro de Costos"
             />
-            <FilterInput
+            {/*<FilterInput
               type="text"
               value={filters.N_Pais}
               onChange={(e) => handleFilterChange(e, "N_Pais")}
               placeholder="Buscar por Pais"
-            />
+            />*/}
             <FilterInput
               type="text"
               value={filters.N_Puesto}
@@ -1040,16 +1035,16 @@ function LandingPage() {
               onChange={(e) => handleFilterChange(e, "N_Aplicaciones")}
               placeholder="Buscar por Aplicación"
             />
-            <FilterInput
+            {/*<FilterInput
               type="text"
               value={filters.N_Ambiente}
               onChange={(e) => handleFilterChange(e, "N_Ambiente")}
               placeholder="Buscar por Ambiente"
-            />
+            />*/}
             <FilterInput
               type="text"
               value={filters.Puesto_Jefe}
-              onChange={(e) => handleFilterChange(e, "jefeInmediato")}
+              onChange={(e) => handleFilterChange(e, "Puesto_Jefe")}
               placeholder="Buscar por Jefe Inmediato"
             />
             <FilterInput
