@@ -1,0 +1,235 @@
+/* Variables de color */
+:root {
+  --dark: #083cac  ; /* Azul oscuro */
+  --light: #ffffff; /* Blanco */
+  --primary: #005baa; /* Azul claro */
+  --gray: #aaaaaa; /* Gris claro */
+  --light-gray: #e0e0e0; /* Gris muy claro */
+  --selected: #072d7e; /* Color para elementos seleccionados */
+}
+
+/* NX = not expanded */
+
+.side-nav-container {
+  background-color: var(--dark);
+  width: 300px;
+  height: 100vh;
+  position:relative;
+  color: var(--light);
+  transition: 0.4s;
+}
+
+.side-nav-container-NX {
+  width: 85px;
+  margin-top: 0.2px;
+}
+
+.nav-upper,
+.nav-heading,
+.nav-menu,
+.menu-item,
+.nav-footer {
+  display: grid;
+}
+
+.nav-heading {
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr;
+  height: 75px;
+}
+
+.nav-brand img {
+  width: 40px;
+  padding: 0 10px;
+}
+
+.hamburger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin: auto;
+}
+
+.hamburger span {
+  display: block;
+  margin-top: 5px;
+  background-color: var(--light);
+  border-radius: 15px;
+  height: 5px;
+  width: 35px;
+  transition: 0.4s;
+}
+
+.hamburger-in:hover span:nth-child(1) {
+  width: 25px;
+  transform: translateY(4px) rotate(-25deg);
+}
+
+.hamburger-in:hover span:nth-child(2) {
+  width: 40px;
+}
+
+.hamburger-in:hover span:nth-child(3) {
+  width: 25px;
+  transform: translateY(-4px) rotate(25deg);
+}
+
+.hamburger-out {
+  margin-left: 24px;
+}
+
+.hamburger-out:hover span:nth-child(1) {
+  width: 25px;
+  transform: translate(14px, 4px) rotate(-155deg);
+}
+
+.hamburger-out:hover span:nth-child(2) {
+  width: 40px;
+}
+
+.hamburger-out:hover span:nth-child(3) {
+  width: 25px;
+  transform: translate(14px, -4px) rotate(155deg);
+}
+
+.nav-menu {
+  grid-template-rows: auto;
+  margin-top: 20px;
+}
+
+.menu-item {
+  height: 60px; /* Ajustado para dar más espacio a los iconos y texto */
+  display: flex;
+  color: var(--light);
+  text-decoration: none;
+  text-transform: none; /* Quitamos la transformación de texto en mayúsculas */
+  margin: auto 20px;
+  border-radius: 10px;
+  align-items: center;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1em; /* Tamaño de letra ajustado */
+  transition: background-color 0.3s ease; /* Transición suave para el color de fondo */
+}
+
+.menu-item-NX {
+  margin: auto;
+}
+
+.menu-item .menu-item-icon {
+  width: 35px; /* Tamaño del icono ajustado */
+  height: 35px; /* Tamaño del icono ajustado */
+  padding: 0 20px;
+  color: var(--light);
+  font-size: 1.5em; /* Tamaño del icono ajustado */
+}
+
+.menu-item.active {
+  background-color: var(--selected); /* Color de fondo para elemento activo */
+}
+
+.menu-item:hover .menu-item-icon {
+  color: var(--light-gray);
+}
+
+.sub-menu-item {
+  height: 50px;
+  display: flex;
+  color: var(--light);
+  text-decoration: none;
+  text-transform: none; /* Quitamos la transformación de texto en mayúsculas */
+  margin: auto 40px;
+  border-radius: 10px;
+  align-items: center;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.3s ease; /* Transición suave para el color de fondo */
+}
+
+.sub-menu-item .sub-menu-item-icon {
+  width: 30px;
+  height: 30px;
+  padding: 0 15px;
+  color: var(--light);
+  font-size: 1.3em;
+}
+
+.sub-menu-item.active {
+  background-color: var(--selected); /* Color de fondo para elemento activo */
+}
+
+.sub-menu-item:hover .sub-menu-item-icon {
+  color: var(--light-gray);
+}
+
+.nav-footer {
+  width: 100%;
+  height: 87px;
+  position: absolute;
+  bottom: 0;
+  grid-template-rows: 1fr;
+  grid-template-columns: 2fr 1fr;
+}
+
+.nav-details {
+  display: flex;
+  align-items: center;
+}
+
+.nav-details img {
+  width: 50px;
+  padding: 0 20px;
+}
+
+.nav-footer-user-name {
+  font-size: 1.2em; /* Tamaño de letra ajustado */
+  font-weight: 900;
+}
+
+.nav-footer-user-position {
+  margin-top: -15px;
+  color: var(--gray);
+  font-size: 0.9em; /* Tamaño de letra ajustado */
+}
+
+.logout-icon {
+  width: 35px; /* Tamaño del icono ajustado */
+  height: 35px; /* Tamaño del icono ajustado */
+  margin: auto;
+  border-radius: 90px;
+  padding: 20px;
+  margin-left: 5px;
+  color: var(--light);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5em; /* Tamaño del icono ajustado */
+}
+
+.menu-item:hover {
+  background-color: var(--selected);
+  width: 260px;
+}
+
+.menu-item:hover .menu-item-icon {
+  color: var(--light-gray);
+  transform: scale(1.1); /* Escalar el icono al hacer hover */
+}
+
+.sub-menu-item:hover {
+  background-color: var(--selected);
+}
+
+.sub-menu-item:hover .sub-menu-item-icon {
+  color: var(--light-gray);
+  transform: scale(1.1); /* Escalar el icono al hacer hover */
+}
+
+.logout-icon:hover {
+  background-color: var(--primary);
+  color: var(--light-gray);
+  transform: scale(1.1); /* Escalar el icono al hacer hover */
+}

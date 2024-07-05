@@ -263,6 +263,8 @@ function LandingPage() {
   const [showModal, setShowModal] = useState(false);
   const location = useLocation();
   const [selectedCountry, setSelectedCountry] = useState("");
+  const [showColumns, setShowColumns] = useState(false);
+  const [showALLColumns, setShowALLColumns] = useState("");
 
   const [filters, setFilters] = useState({
     N_RSocial: "",
@@ -283,10 +285,25 @@ function LandingPage() {
     ID_Ambiente:"",
   });
 
+  /*const handleShowAllData = () => {
+    setShowAllData(true);
+  }*/
+ 
+  
+  const handleToggleColumns = () =>{
+    setShowColumns(!showColumns);
+  } 
+  const handleToggleALLColumns = () =>{
+    setShowALLColumns(true);
+  } 
+  
+
   useEffect(()=> {
     const searchParams = new URLSearchParams(location.search);
-        const paisParam = searchParams.get("pais");
-        setSelectedCountry(paisParam || "");
+        const paisParam =  searchParams.get("pais") || setShowALLColumns(true);
+        setSelectedCountry(paisParam || "" );
+
+        
 
     const fetchData = async () => {
       try {
@@ -582,7 +599,9 @@ function LandingPage() {
       }
     }
   };
+  
 
+  
 
   const startEdit = (row) => {
     setEditedRow({ ...row });
@@ -712,6 +731,7 @@ function LandingPage() {
 
   const filteredData = records.filter((row) => {
     const isActive = filters.Estado_Perfil.toLowerCase() === "activo";
+
    return(
       (filters.N_RSocial === "" ||
         row.N_RSocial.toLowerCase().includes(filters.N_RSocial.toLowerCase())) &&
@@ -754,6 +774,8 @@ function LandingPage() {
     {
       name: "Pais",
       selector: (row) => row.N_Pais,
+      //omit: !showColumns,
+      
       sortable: true,
       minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
@@ -767,20 +789,21 @@ function LandingPage() {
             ))}
           </select>
         ) : (
-          <div>{row.N_Pais}</div>
+          <div>{showALLColumns ? row.N_Pais: ""}</div>
         ),
     },
     {
       name: "Razon Social",
       selector: (row) => row.N_RSocial,
       sortable: true,
+      omit: !showColumns,
       minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
           <div style={{color: "red"}}>{row.N_RSocial}</div>
         ):(
-            <div>{row.N_RSocial}</div>
+            <div>{showALLColumns ? row.N_RSocial: ""}</div>
           )
     },
     /*{
@@ -800,26 +823,28 @@ function LandingPage() {
       name: "Departamento",
       selector: (row) => row.N_Departamento,
       sortable: true,
+      omit: !showColumns,
       minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
           <div style={{color: "red"}}>{row.N_Departamento}</div>
         ):(
-            <div>{row.N_Departamento}</div>
+            <div>{showALLColumns ? row.N_Departamento: ""}</div>
           )
     },
     {
       name: "Centro de Costos",
       selector: (row) => row.Nombre,
       sortable: true,
+      omit: !showColumns,
       minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
         <div style={{color: "red"}}>{row.Nombre}</div>
       ):(
-          <div>{row.Nombre}</div>
+          <div>{showALLColumns ? row.Nombre: ""}</div>
         )
     },
     {
@@ -838,7 +863,7 @@ function LandingPage() {
             ))}
           </select>
         ) : (
-          <div>{row.N_Puesto}</div>
+          <div>{showALLColumns ? row.N_Puesto: ""}</div>
       ),
     },
     {
@@ -855,7 +880,7 @@ function LandingPage() {
             onChange={(e) => handleEditChange(e, "Rol")}
           />
         ) : (
-          <div>{row.Rol}</div>
+          <div>{showALLColumns ? row.Rol:""}</div>
       ),
     },
     {
@@ -874,7 +899,7 @@ function LandingPage() {
           ))}
         </select>
         ) : (
-          <div>{row.N_Aplicaciones}</div>
+          <div>{showALLColumns ? row.N_Aplicaciones: ""}</div>
       ),
     },
     /*{
@@ -904,13 +929,14 @@ function LandingPage() {
             onChange={(e) => handleEditChange(e, "Puesto_Jefe")}
           />
         ) : (
-          <div>{row.Puesto_Jefe}</div>
+          <div>{showALLColumns ? row.Puesto_Jefe: ""}</div>
       ),
     },
     {
       name: "Ticket",
       selector: (row) => row.Ticket,
       sortable: true,
+      omit: !showColumns,
       minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) => 
@@ -921,13 +947,14 @@ function LandingPage() {
             onChange={(e) => handleEditChange(e, "Ticket")}
           />
         ) : (
-          <div>{row.Ticket}</div>
+          <div>{showALLColumns ? row.Ticket: ""}</div>
       ),
     },
     {
       name: "Observación",
       selector: (row) => row.Observaciones,
       sortable: true,
+      omit: !showColumns,
       minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
@@ -938,11 +965,12 @@ function LandingPage() {
             onChange={(e) => handleEditChange(e, "Observaciones")}
           />
         ) : (
-          <div>{row.Observaciones}</div>
+          <div>{showALLColumns ? row.Observaciones: ""}</div>
         ),
     },
     {
       name: "Estado",
+      omit: !showColumns,
       selector: (row) => editMode === row.id ?(
         <select value={editedRow.Estado_Perfil} onChange={(e) => handleEditChange(e, "Estado_Perfil")}>
           <option value={"Activo"}>
@@ -954,12 +982,14 @@ function LandingPage() {
         </select>
       )
         : (
-          <div>{row.Estado_Perfil}</div>
+          <div>{showALLColumns ? row.Estado_Perfil: ""}</div>
         ),
         sortable: true,
     },
     {
       name: "Acciones",
+      //omit: !showColumns,
+      omit: !showALLColumns,
       cell: (row) =>
         editMode === row.id ? (
           <div style={{ display: "flex", justifyContent: "center" }}>
@@ -977,6 +1007,24 @@ function LandingPage() {
         ),
     },
   ];
+
+  /*const columnDefinitions = [
+    {name: "Razon Solcial", selector: "N_RSocial"},
+    {name: "Departamento", selector: "N_Departamento"},
+    {name: "Nombre", selector: "Nombre"},
+    {name: "Puesto", selector: "N_Puesto"},
+    {name: "Rol", selector: "Rol"},
+    {name: "Aplicacions", selector: "N_Aplicaciones"},
+    {name: "Ambientes", selector: "N_Ambientes"},
+    {name: "Puesto Jefe", selector: "Puesto_Jefe"},
+    {name: "Estados", selector: "Estado_Perfil"},
+    {name: "Ticket", selector: "Ticket"},
+    {name: "Obsevaciones", selector: "Observaciones"},
+  ]*/
+
+
+  
+
 
   return (
     <MainContainer>
@@ -1066,7 +1114,9 @@ function LandingPage() {
               onChange={(e) => handleFilterChange(e, "Observaciones")}
               placeholder="Buscar por Observaciones"
             />
+            <Button onClick={handleToggleALLColumns}>Buscar</Button>
           </FilterWrapper>
+          <Button onClick={handleToggleColumns} style={{marginLeft: "auto", position: "relative", marginRight: 10, backgroundColor: "white", color:"blue"}}>{showColumns ? 'Ver Menos Detalles' : 'Ver Mas Detalles'}</Button>
           <StyledDataTable
             columns={columns}
             data={filteredData}

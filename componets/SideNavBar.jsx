@@ -28,6 +28,7 @@ const SideNavBar = () => {
                 title: pais.N_Pais,
                 icon: <GrFlag/>, // Icono de bandera
                 path: `/landingPage?pais=${encodeURIComponent(pais.N_Pais)}`
+                
                 //path:`/landingPage?pais=${pais.N_Pais}`
             }
             ))
