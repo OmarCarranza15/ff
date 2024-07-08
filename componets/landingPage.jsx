@@ -247,7 +247,7 @@ const GuardarButton = styled(ModalButton)`
 function LandingPage() {
   
   const [records, setRecords] = useState([]);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [editedRow, setEditedRow] = useState(null);
   const [puestos, setPuestos] = useState([]);
@@ -265,6 +265,8 @@ function LandingPage() {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [showColumns, setShowColumns] = useState(false);
   const [showALLColumns, setShowALLColumns] = useState("");
+  const [showButton, setShowButton] = useState(true)
+  const [showButtonB, setShowButtonB] = useState(false)
 
   const [filters, setFilters] = useState({
     N_RSocial: "",
@@ -285,10 +287,6 @@ function LandingPage() {
     ID_Ambiente:"",
   });
 
-  /*const handleShowAllData = () => {
-    setShowAllData(true);
-  }*/
- 
   
   const handleToggleColumns = () =>{
     setShowColumns(!showColumns);
@@ -300,8 +298,11 @@ function LandingPage() {
 
   useEffect(()=> {
     const searchParams = new URLSearchParams(location.search);
-        const paisParam =  searchParams.get("pais") || setShowALLColumns(true);
+        const paisParam =  searchParams.get("pais") || setShowALLColumns(true) || setShowButton(false) || setShowFilters(false) || setShowButtonB(true);
         setSelectedCountry(paisParam || "" );
+        if(setShowButton(false)){
+          
+        }
 
         
 
@@ -1007,25 +1008,6 @@ function LandingPage() {
         ),
     },
   ];
-
-  /*const columnDefinitions = [
-    {name: "Razon Solcial", selector: "N_RSocial"},
-    {name: "Departamento", selector: "N_Departamento"},
-    {name: "Nombre", selector: "Nombre"},
-    {name: "Puesto", selector: "N_Puesto"},
-    {name: "Rol", selector: "Rol"},
-    {name: "Aplicacions", selector: "N_Aplicaciones"},
-    {name: "Ambientes", selector: "N_Ambientes"},
-    {name: "Puesto Jefe", selector: "Puesto_Jefe"},
-    {name: "Estados", selector: "Estado_Perfil"},
-    {name: "Ticket", selector: "Ticket"},
-    {name: "Obsevaciones", selector: "Observaciones"},
-  ]*/
-
-
-  
-
-
   return (
     <MainContainer>
       <TopBar />
@@ -1035,9 +1017,9 @@ function LandingPage() {
           <HeaderContainer>
             <Title>Matriz de perfiles de { selectedCountry || " todos los Paises"}</Title>
             <ButtonGroup>
-              <Button primary onClick={toggleFilters}>
+              {showButtonB ?<Button primary onClick={toggleFilters}>
                 {showFilters ? "Ocultar" : "Buscar"}
-              </Button>
+              </Button> : ''}
               <Button onClick={handleInsert}>Insertar Nuevo Perfil</Button>
             </ButtonGroup>
           </HeaderContainer>
@@ -1114,7 +1096,7 @@ function LandingPage() {
               onChange={(e) => handleFilterChange(e, "Observaciones")}
               placeholder="Buscar por Observaciones"
             />
-            <Button onClick={handleToggleALLColumns}>Buscar</Button>
+            {showButton? <Button onClick={handleToggleALLColumns}>Buscar</Button>: ''}
           </FilterWrapper>
           <Button onClick={handleToggleColumns} style={{marginLeft: "auto", position: "relative", marginRight: 10, backgroundColor: "white", color:"blue"}}>{showColumns ? 'Ver Menos Detalles' : 'Ver Mas Detalles'}</Button>
           <StyledDataTable
