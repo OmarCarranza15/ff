@@ -6,8 +6,6 @@ import styled from "styled-components";
 import "../styles/DataTable.css"; // Importa el archivo CSS
 import axios from "axios";
 import { FaEdit, FaSave, FaTimes } from "react-icons/fa"; // Importa el ícono de edición
-import { useLocation } from "react-router-dom";
-
 
 
 const MainContainer = styled.div`
@@ -247,7 +245,7 @@ const GuardarButton = styled(ModalButton)`
 function LandingPage() {
   
   const [records, setRecords] = useState([]);
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editedRow, setEditedRow] = useState(null);
   const [puestos, setPuestos] = useState([]);
@@ -261,13 +259,10 @@ function LandingPage() {
   const [errors, setErrors] = useState({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
   const [modalValues, setModalValues] = useState({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
   const [showModal, setShowModal] = useState(false);
-  const location = useLocation();
-  const [selectedCountry, setSelectedCountry] = useState("");
   const [showColumns, setShowColumns] = useState(false);
-  const [showALLColumns, setShowALLColumns] = useState("");
-  const [showButton, setShowButton] = useState(true);
-  const [showButtonB, setShowButtonB] = useState(false);
-  const [filteredData, setFilteredData] = useState("");
+  
+  
+  
 
   const [filters, setFilters] = useState({
     N_RSocial: "",
@@ -292,20 +287,12 @@ function LandingPage() {
   const handleToggleColumns = () =>{
     setShowColumns(!showColumns);
   } 
-  const handleToggleALLColumns = () =>{
-    setShowALLColumns(true);
-  } 
   
 
   useEffect(()=> {
-    const searchParams = new URLSearchParams(location.search);
-        const paisParam =  searchParams.get("pais") || setShowALLColumns(true) || setShowButton(false) || setShowFilters(false) || setShowButtonB(true);
-        setSelectedCountry(paisParam || "" );
-
-        
-        
-
-        
+   
+      
+      
 
     const fetchData = async () => {
       try {
@@ -427,7 +414,7 @@ function LandingPage() {
     fetchRsocial();
     fetchPuestos();
     fetchData();
-  }, [location.search]);
+  })
 
   const handleFilterChange = (event, column) => {
     const { value } = event.target;
@@ -731,43 +718,29 @@ function LandingPage() {
     setEditMode(null);
   };
 
-  const handleSearch = () =>{
-    if (showButton){
-      const {Rol, N_Puesto} = filters;
-      if (!Rol && !N_Puesto){
-        alert("no");
-        return;
-      } 
-    }
-  
-  const filtered = records.filter((row) => {
-    const isActive = filters.Estado_Perfil.toLowerCase() === "activo";
-
-    return (
-      (filters.N_RSocial === "" || row.N_RSocial.toLowerCase().includes(filters.N_RSocial.toLowerCase())) &&
-      (selectedCountry === "" || row.N_Pais.toLowerCase().includes(selectedCountry.toLowerCase())) &&
-      (filters.N_Departamento === "" || row.N_Departamento.toLowerCase().includes(filters.N_Departamento.toLowerCase())) &&
-      (filters.Rol === "" || row.Rol.toLowerCase().includes(filters.Rol.toLowerCase())) &&
-      (filters.Nombre === "" || row.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase())) &&
-      (filters.N_Puesto === "" || row.N_Puesto.toLowerCase().includes(filters.N_Puesto.toLowerCase())) &&
-      (filters.Observaciones === "" || row.Observaciones.toLowerCase().includes(filters.Observaciones.toLowerCase())) &&
-      (filters.N_Aplicaciones === "" || row.N_Aplicaciones.toLowerCase().includes(filters.N_Aplicaciones.toLowerCase())) &&
-      (filters.Ticket === "" || (row.Ticket ? row.Ticket.toString().includes(filters.Ticket.toString()) : false)) &&
-      /*(filters.N_Ambiente === "" || row.N_Ambiente.toLowerCase().includes(filters.N_Ambiente.toLowerCase())) &&*/
-      (filters.Puesto_Jefe === "" || row.Puesto_Jefe.toLowerCase().includes(filters.Puesto_Jefe.toLowerCase())) &&
-      (filters.Estado_Perfil === "" || row.Estado_Perfil.toLowerCase().includes(filters.Estado_Perfil.toLowerCase())) &&
-      (isActive ? row.Estado_Perfil.toLowerCase() === "activo" : true)
-    );
-  
-  });
-  setFilteredData(filtered);
-  }
   
 
-  
- 
+      const filtered = records.filter((row) => {
+        const isActive = filters.Estado_Perfil.toLowerCase() === "activo";
     
-     
+        return (
+          (filters.N_RSocial === "" || row.N_RSocial.toLowerCase().includes(filters.N_RSocial.toLowerCase())) &&
+          (filters.N_Pais === "" || row.N_Pais.toLowerCase().includes(filters.N_Pais.toLowerCase())) &&
+          (filters.N_Departamento === "" || row.N_Departamento.toLowerCase().includes(filters.N_Departamento.toLowerCase())) &&
+          (filters.Rol === "" || row.Rol.toLowerCase().includes(filters.Rol.toLowerCase())) &&
+          (filters.Nombre === "" || row.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase())) &&
+          (filters.N_Puesto === "" || row.N_Puesto.toLowerCase().includes(filters.N_Puesto.toLowerCase())) &&
+          (filters.Observaciones === "" || row.Observaciones.toLowerCase().includes(filters.Observaciones.toLowerCase())) &&
+          (filters.N_Aplicaciones === "" || row.N_Aplicaciones.toLowerCase().includes(filters.N_Aplicaciones.toLowerCase())) &&
+          (filters.Ticket === "" || (row.Ticket ? row.Ticket.toString().includes(filters.Ticket.toString()) : false)) &&
+          /*(filters.N_Ambiente === "" || row.N_Ambiente.toLowerCase().includes(filters.N_Ambiente.toLowerCase())) &&*/
+          (filters.Puesto_Jefe === "" || row.Puesto_Jefe.toLowerCase().includes(filters.Puesto_Jefe.toLowerCase())) &&
+          (filters.Estado_Perfil === "" || row.Estado_Perfil.toLowerCase().includes(filters.Estado_Perfil.toLowerCase())) &&
+          (isActive ? row.Estado_Perfil.toLowerCase() === "activo" : true)
+        );
+      }); 
+    
+  
    
 
   const columns = [
@@ -789,7 +762,7 @@ function LandingPage() {
             ))}
           </select>
         ) : (
-          <div>{showALLColumns ? row.N_Pais: ""}</div>
+          <div>{row.N_Pais}</div>
         ),
     },
     {
@@ -803,7 +776,7 @@ function LandingPage() {
         editMode && editedRow?.id === row.id ? (
           <div style={{color: "red"}}>{row.N_RSocial}</div>
         ):(
-            <div>{showALLColumns ? row.N_RSocial: ""}</div>
+            <div>{row.N_RSocial}</div>
           )
     },
     /*{
@@ -830,7 +803,7 @@ function LandingPage() {
         editMode && editedRow?.id === row.id ? (
           <div style={{color: "red"}}>{row.N_Departamento}</div>
         ):(
-            <div>{showALLColumns ? row.N_Departamento: ""}</div>
+            <div>{row.N_Departamento}</div>
           )
     },
     {
@@ -844,7 +817,7 @@ function LandingPage() {
         editMode && editedRow?.id === row.id ? (
         <div style={{color: "red"}}>{row.Nombre}</div>
       ):(
-          <div>{showALLColumns ? row.Nombre: ""}</div>
+          <div>{row.Nombre}</div>
         )
     },
     {
@@ -863,7 +836,7 @@ function LandingPage() {
             ))}
           </select>
         ) : (
-          <div>{showALLColumns ? row.N_Puesto: ""}</div>
+          <div>{row.N_Puesto}</div>
       ),
     },
     {
@@ -880,7 +853,7 @@ function LandingPage() {
             onChange={(e) => handleEditChange(e, "Rol")}
           />
         ) : (
-          <div>{showALLColumns ? row.Rol:""}</div>
+          <div>{row.Rol}</div>
       ),
     },
     {
@@ -899,7 +872,7 @@ function LandingPage() {
           ))}
         </select>
         ) : (
-          <div>{showALLColumns ? row.N_Aplicaciones: ""}</div>
+          <div>{row.N_Aplicaciones}</div>
       ),
     },
     /*{
@@ -929,7 +902,7 @@ function LandingPage() {
             onChange={(e) => handleEditChange(e, "Puesto_Jefe")}
           />
         ) : (
-          <div>{showALLColumns ? row.Puesto_Jefe: ""}</div>
+          <div>{row.Puesto_Jefe}</div>
       ),
     },
     {
@@ -947,7 +920,7 @@ function LandingPage() {
             onChange={(e) => handleEditChange(e, "Ticket")}
           />
         ) : (
-          <div>{showALLColumns ? row.Ticket: ""}</div>
+          <div>{row.Ticket}</div>
       ),
     },
     {
@@ -965,7 +938,7 @@ function LandingPage() {
             onChange={(e) => handleEditChange(e, "Observaciones")}
           />
         ) : (
-          <div>{showALLColumns ? row.Observaciones: ""}</div>
+          <div>{row.Observaciones}</div>
         ),
     },
     {
@@ -982,14 +955,13 @@ function LandingPage() {
         </select>
       )
         : (
-          <div>{showALLColumns ? row.Estado_Perfil: ""}</div>
+          <div>{row.Estado_Perfil}</div>
         ),
         sortable: true,
     },
     {
       name: "Acciones",
-      //omit: !showColumns,
-      omit: !showALLColumns,
+      omit: !showColumns,
       cell: (row) =>
         editMode === row.id ? (
           <div style={{ display: "flex", justifyContent: "center" }}>
@@ -1014,11 +986,11 @@ function LandingPage() {
         <Sidebar />
         <DataTableContainer>
           <HeaderContainer>
-            <Title>Matriz de perfiles de { selectedCountry || " todos los Paises"}</Title>
+            <Title>Matriz de perfiles de {" todos los Paises"}</Title>
             <ButtonGroup>
-              {showButtonB ?<Button primary onClick={toggleFilters}>
+              <Button primary onClick={toggleFilters}>
                 {showFilters ? "Ocultar" : "Buscar"}
-              </Button> : ''}
+              </Button>
               <Button onClick={handleInsert}>Insertar Nuevo Perfil</Button>
             </ButtonGroup>
           </HeaderContainer>
@@ -1095,12 +1067,11 @@ function LandingPage() {
               onChange={(e) => handleFilterChange(e, "Observaciones")}
               placeholder="Buscar por Observaciones"
             />
-            {showButton? <Button onClick={handleToggleALLColumns && handleSearch}>Buscar</Button>: ''}
           </FilterWrapper>
           <Button onClick={handleToggleColumns} style={{marginLeft: "auto", position: "relative", marginRight: 10, backgroundColor: "white", color:"blue"}}>{showColumns ? 'Ver Menos Detalles' : 'Ver Mas Detalles'}</Button>
           <StyledDataTable
             columns={columns}
-            data={filteredData}
+            data={filtered}
             pagination
             paginationPerPage={13}
             showFilters={showFilters}
