@@ -267,6 +267,7 @@ function LandingPage() {
   const [showALLColumns, setShowALLColumns] = useState("");
   const [showButton, setShowButton] = useState(true);
   const [showButtonB, setShowButtonB] = useState(false);
+  const [filteredData, setFilteredData] = useState("");
 
   const [filters, setFilters] = useState({
     N_RSocial: "",
@@ -298,7 +299,7 @@ function LandingPage() {
 
   useEffect(()=> {
     const searchParams = new URLSearchParams(location.search);
-        const paisParam =  searchParams.get("pais") || setShowButton(false) || setShowALLColumns(true) || setShowFilters(false) || setShowButtonB(true);
+        const paisParam =  searchParams.get("pais") || setShowALLColumns(true) || setShowButton(false) || setShowFilters(false) || setShowButtonB(true);
         setSelectedCountry(paisParam || "" );
 
         
@@ -730,9 +731,16 @@ function LandingPage() {
     setEditMode(null);
   };
 
+  const handleSearch = () =>{
+    if (showButton){
+      const {Rol, N_Puesto} = filters;
+      if (!Rol && !N_Puesto){
+        alert("no");
+        return;
+      } 
+    }
   
-  
-  const filteredData = records.filter((row) => {
+  const filtered = records.filter((row) => {
     const isActive = filters.Estado_Perfil.toLowerCase() === "activo";
 
     return (
@@ -752,6 +760,8 @@ function LandingPage() {
     );
   
   });
+  setFilteredData(filtered);
+  }
   
 
   
@@ -1085,7 +1095,7 @@ function LandingPage() {
               onChange={(e) => handleFilterChange(e, "Observaciones")}
               placeholder="Buscar por Observaciones"
             />
-            {showButton? <Button onClick={handleToggleALLColumns}>Mostrar</Button>: ''}
+            {showButton? <Button onClick={handleToggleALLColumns && handleSearch}>Buscar</Button>: ''}
           </FilterWrapper>
           <Button onClick={handleToggleColumns} style={{marginLeft: "auto", position: "relative", marginRight: 10, backgroundColor: "white", color:"blue"}}>{showColumns ? 'Ver Menos Detalles' : 'Ver Mas Detalles'}</Button>
           <StyledDataTable
