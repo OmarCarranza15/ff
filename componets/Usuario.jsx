@@ -354,8 +354,8 @@ function Puesto() {
           ),
       },
     {
-      name: "Nombre",
-      selector: (row) => row.Nombre,
+      name: "Contraseña",
+      selector: (row) => row.Contrasenia,
       sortable: true,
       minWidth: "300px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
@@ -363,14 +363,31 @@ function Puesto() {
         editMode && editedRow?.id === row.id ? (
             <input
             type="text"
-            value={editedRow.Nombre}
-            onChange={(e) => handleEditChange(e, "Nombre")}
+            value={editedRow.Contrasenia}
+            onChange={(e) => handleEditChange(e, "Contrasenia")}
           />
         ) : (
-          <div>{row.Nombre}</div>
+          <div>{row.Contrasenia}</div>
         ),
     },
-    {
+      {
+        name: "Nombre",
+        selector: (row) => row.Nombre,
+        sortable: true,
+        minWidth: "300px", // Ajusta el tamaño mínimo según sea necesario
+        maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+        cell: (row) =>
+          editMode && editedRow?.id === row.id ? (
+              <input
+              type="text"
+              value={editedRow.Nombre}
+              onChange={(e) => handleEditChange(e, "Nombre")}
+            />
+          ) : (
+            <div>{row.Nombre}</div>
+          ),
+      },
+      {
       name: "Estado",
       selector: (row) => editMode === row.id ?(
         <select value={editedRow.Estado} onChange={(e) => handleEditChange(e, "Estado")}>
