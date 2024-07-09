@@ -141,9 +141,6 @@ const StyledDataTable = styled(DataTable)`
     }
   }
 `;
-
-
-
 function Puesto() {
   const [usuario] = useState([]);
   const [records, setRecords] = useState([]);
@@ -152,17 +149,13 @@ function Puesto() {
   const [editedRow, setEditedRow] = useState(null);
   const [puestoin, setPuestoin] = useState([]);
   const [rolusuario, setRolusuario] = useState([]);
- 
 
   const [filters, setFilters] = useState({
-    N_Puesto: "",
-    Codigo: "",
-    N_Pais: "",
-    N_RSocial: "",
-    N_Division: "",
-    N_Departamento: "",
+    Usuario: "",
     Nombre: "",
     Estado: "",
+    N_PuestoIn: "",
+    N_Rol: "",
   });
 
   useEffect(()=> {
@@ -180,7 +173,7 @@ function Puesto() {
               Usuario: usuario.Usuario,
               Nombre: usuario.Nombre,
               Contrasenia: usuario.Contrasenia,
-              Estado: usuario.Estado === 1 ?  "Nuevo":  2 ? "Activo": 3 ? "Inactivo": "Expirado",
+              Estado: usuario.Estado === 1 ?  "Nuevo" :usuario.Estado ===  2 ? "En Servicio":usuario.Estado === 3 ? "Suspendido": "Expirado",
               ID_PuestoIn: usuario.ID_PuestoIn,
               N_PuestoIn: puestoinResponse.data.N_PuestoIn,
               ID_RolUsuario: usuario.ID_RolUsuario,
@@ -217,8 +210,6 @@ function Puesto() {
     
   }, []);
 
- 
-
   const handleFilterChange = (event, column) => {
     const { value } = event.target;
     setFilters((prevFilters) => ({ ...prevFilters, [column]: value }));
@@ -232,8 +223,6 @@ function Puesto() {
     //setShowModal(true);
   };
 
-
-
   const startEdit = (row) => {
     setEditedRow({ ...row });
     setEditMode(row.id);
@@ -244,9 +233,7 @@ function Puesto() {
     setEditedRow((prevState) => ({
       ...prevState,
       [field]: value,
-      ...(field === "ID_Usuario" && { Usuario: usuario.find((p) => p.id === parseInt(value)).Usuario }),
-      ...(field === "ID_Usuario" && { Nombre: usuario.find((p) => p.id === parseInt(value)).Nombre }),
-      ...(field === "ID_Usuario" && { Estado: usuario.find((p) => p.id === parseInt(value)).Estado }),
+     
       ...(field === "ID_PuestoIn" && { ID_PuestoIn: puestoin.find((p) => p.id === parseInt(value)).ID_PuestoIn }),
       ...(field === "ID_RolUsuario" && { N_Rol: rolusuario.find((p) => p.id === parseInt(value)).N_Rol }),
     
@@ -262,9 +249,12 @@ function Puesto() {
 
       const updateRow = {
         ...editedRow,
+        Estado: usuario.Estado === 1 ?  "Nuevo" :usuario.Estado ===  2 ? "Operativo":usuario.Estado === 3 ? "No Operativo": "Expirado",
       }
       
-      await axios.put(`http://localhost:3000/puesto/${id}`,updateRow);   
+      await axios.put(`http://localhost:3000/usuarios/${id}`,updateRow);   
+
+      
 
       const updatedRecords = records.map ((row) => 
         row.id === id ? {...editedRow} : row
@@ -274,7 +264,8 @@ function Puesto() {
       setRecords(updatedRecords);
       setEditedRow(null);
       setEditMode(null); 
-    
+
+      console.log("Cambios guardados correctamente");
                                                                                
       console.log("Cambios guardados correctamente");
     } catch(error) {
@@ -289,25 +280,20 @@ function Puesto() {
 
   const filteredData = records.filter((row) => {
    return(
-    (filters.N_Pais === "" ||
-        row.N_Pais
+    (filters.Usuario === "" ||
+        row.Usuario
           .toLowerCase()
-          .includes(filters.N_Pais.toLowerCase())) &&
-    (filters.N_Departamento === "" ||
-        row.N_Departamento
-            .toLowerCase()
-            .includes(filters.N_Departamento.toLowerCase())) &&
+          .includes(filters.Usuario.toLowerCase())) &&
     (filters.Nombre === "" ||
-        row.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase())) &&
-    (filters.N_RSocial === "" ||
-        row.N_RSocial.toLowerCase().includes(filters.N_RSocial.toLowerCase())) &&
-    (filters.N_Division === "" ||
-        row.N_Division.toLowerCase().includes(filters.N_Division.toLowerCase())) &&
-    (filters.Codigo === "" ||
-        row.Codigo.toString().toLowerCase().includes(filters.Codigo.toLowerCase())) &&
-    (filters.N_Puesto === "" ||
-        row.N_Puesto.toLowerCase().includes(filters.N_Puesto.toLowerCase())) 
-    
+        row.Nombre
+            .toLowerCase()
+            .includes(filters.Nombre.toLowerCase())) &&
+    (filters.Estado === "" ||
+        row.Estado.toLowerCase().includes(filters.Estado.toLowerCase())) &&
+    (filters.N_PuestoIn === "" ||
+        row.N_PuestoIn.toLowerCase().includes(filters.N_PuestoIn.toLowerCase())) &&
+    (filters.N_Rol === "" ||
+        row.N_Rol.toLowerCase().includes(filters.N_Rol.toLowerCase())) 
         );
   });
 
@@ -391,11 +377,11 @@ function Puesto() {
           <option value={"Nuevo"}>
             Nuevo
           </option>
-          <option value={"Activo"}>
-            Activo
+          <option value={"En Servicio"}>
+            En Servicio
           </option>
-          <option value={"Inactivo"}>
-            Inactivo
+          <option value={"Suspendido"}>
+            Suspendido
           </option>
           <option value={"Expirado"}>
           Expirado
@@ -445,45 +431,33 @@ function Puesto() {
           <FilterWrapper show={showFilters}>
             <FilterInput
               type="text"
-              value={filters.N_Pais}
-              onChange={(e) => handleFilterChange(e, "N_Pais")}
-              placeholder="Buscar por Pais"
+              value={filters.N_PuestoIn}
+              onChange={(e) => handleFilterChange(e, "N_PuestoIn")}
+              placeholder="Buscar por Puesto Interno"
             />
             <FilterInput
               type="text"
-              value={filters.N_RSocial}
-              onChange={(e) => handleFilterChange(e, "N_RSocial")}
-              placeholder="Buscar por Razon Social"
+              value={filters.Usuario}
+              onChange={(e) => handleFilterChange(e, "Usuario")}
+              placeholder="Buscar por Usuario"
             />
             <FilterInput
               type="text"
-              value={filters.N_Division}
-              onChange={(e) => handleFilterChange(e, "N_Division")}
-              placeholder="Buscar por Division"
-            />
-            <FilterInput
-              type="text"
-              value={filters.N_Departamento}
-              onChange={(e) => handleFilterChange(e, "N_Departamento")}
-              placeholder="Buscar por Departamento"
+              value={filters.N_Rol}
+              onChange={(e) => handleFilterChange(e, "N_Rol")}
+              placeholder="Buscar por Rol"
             />
             <FilterInput
               type="text"
               value={filters.Nombre}
               onChange={(e) => handleFilterChange(e, "Nombre")}
-              placeholder="Buscar por Centro de Costos"
+              placeholder="Buscar por Nombre"
             />
             <FilterInput
               type="text"
-              value={filters.Codigo}
-              onChange={(e) => handleFilterChange(e, "Codigo")}
-              placeholder="Buscar por Codigo"
-            />
-            <FilterInput
-              type="text"
-              value={filters.N_Puesto}
-              onChange={(e) => handleFilterChange(e, "N_Puesto")}
-              placeholder="Buscar por Puesto"
+              value={filters.Estado}
+              onChange={(e) => handleFilterChange(e, "Estado")}
+              placeholder="Buscar por Estado"
             />
             
           </FilterWrapper>
