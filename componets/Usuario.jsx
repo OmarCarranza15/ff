@@ -179,7 +179,7 @@ function Puesto() {
               Usuario: usuario.Usuario,
               Nombre: usuario.Nombre,
               Contrasenia: usuario.Contrasenia,
-              Estado: usuario.Estado  === 1 ?  "Nuevo" : usuario.Estado ===  2 ? "En Servicio":usuario.Estado === 3 ? "Suspendido": "Expirado",
+              Estado: usuario.Estado  === 1 ?  "Nuevo" : usuario.Estado ===  2 ? "En Servicio":  usuario.Estado=== 3 ? "Suspendido": "Expirado",
               ID_PuestoIn: usuario.ID_PuestoIn,
               ID_RolUsuario: usuario.ID_RolUsuario,
               N_PuestoIn: puestoinResponse.data.N_PuestoIn,
@@ -262,7 +262,7 @@ function Puesto() {
 
       const updateRow = {
         ...editedRow,
-        
+        Estado: editMode.Estado === "No Operativo" ? 1 : 2,
       }
       
       await axios.put(`http://localhost:3000/usuarios/${id}`,updateRow);   
