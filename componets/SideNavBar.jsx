@@ -2,6 +2,14 @@ import React, { useState,useEffect } from "react";
 import {GrTable, GrSystem, GrUserSettings, GrGroup, GrGlobe, GrContactInfo, GrMonitor, GrOrganization, GrShieldSecurity, GrMultiple, GrFlag, GrFolder, GrSearch, GrArticle, GrBusinessService} from "react-icons/gr";
 import "../styles/SideNavBar.css";
 import axios from "axios";
+import styled from "styled-components";
+
+
+
+const Banderas = styled.img`
+  width: 20px;
+  height: 20px;
+`;
 
 const SideNavBar = () => {
     const [isExpanded, setExpandState] = useState(false);
@@ -18,16 +26,18 @@ const SideNavBar = () => {
             }
         };
         fetchPaises();
-    }, []);
+    }, []);//<GrFlag/>
 
+    
     const menuItems = [
         {
+            
             title: "Matriz de Perfiles",
             icon: <GrTable/>,
             subNav: paises.map( pais=> ({
                 title: pais.N_Pais,
-                icon: <GrFlag/>, // Icono de bandera
-                path: `/landingPage?pais=${encodeURIComponent(pais.N_Pais)}`
+                icon: <Banderas src="../imgs/panama.png"  />, // Icono de bandera
+                path: `/matrizPais?pais=${encodeURIComponent(pais.N_Pais)}`
                 
                 //path:`/landingPage?pais=${pais.N_Pais}`
             }
