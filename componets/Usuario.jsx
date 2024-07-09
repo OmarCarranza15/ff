@@ -162,16 +162,17 @@ function Puesto() {
     N_Division: "",
     N_Departamento: "",
     Nombre: "",
+    Estado: "",
   });
 
   useEffect(()=> {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/usuario/`);
+        const response = await axios.get(`http://localhost:3000/usuarios/`);
         const data = response.data;
         const mappedData = await Promise.all(
           data.map(async (usuario)=> {
-            //const puestoinResponse = await axios.get(`http://localhost:3000/puestoin/${usuario.ID_PuestoIn}`); 
+            const puestoinResponse = await axios.get(`http://localhost:3000/puestoin/${usuario.ID_PuestoIn}`); 
             const rolusuarioResponse = await axios.get(`http://localhost:3000/rolusuario/${usuario.ID_RolUsuario}`); 
             
             return {
@@ -179,8 +180,9 @@ function Puesto() {
               Usuario: usuario.Usuario,
               Nombre: usuario.Nombre,
               Contrasenia: usuario.Contrasenia,
-              Estado: usuario.Estado,
+              Estado: usuario.Estado === 1 ?  "Nuevo":  2 ? "Activo": 3 ? "Inactivo": "Expirado",
               ID_PuestoIn: usuario.ID_PuestoIn,
+              N_PuestoIn: puestoinResponse.data.N_PuestoIn,
               ID_RolUsuario: usuario.ID_RolUsuario,
               N_Rol: rolusuarioResponse.data.N_Rol,
         
@@ -312,7 +314,7 @@ function Puesto() {
   const columns = [
       {
         name: "Puesto Interno",
-        selector: (row) => row.ID_PuestoIn,
+        selector: (row) => row.N_PuestoIn,
         sortable: true,
         minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
         maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
@@ -321,12 +323,12 @@ function Puesto() {
             <select value={editedRow.ID_PuestoIn} onChange={(e) => handleEditChange(e, "ID_PuestoIn")}>
               {puestoin.map((puestoin) => (
                 <option key={puestoin.id} value={puestoin.id}>
-                  {puestoin.ID_PuestoIn}
+                  {puestoin.N_PuestoIn}
                 </option>
               ))}
             </select>
           ) : (
-            <div>{row.ID_PuestoIn}</div>
+            <div>{row.N_PuestoIn}</div>
           ),
       },
       {
@@ -381,6 +383,29 @@ function Puesto() {
         ) : (
           <div>{row.Nombre}</div>
         ),
+    },
+    {
+      name: "Estado",
+      selector: (row) => editMode === row.id ?(
+        <select value={editedRow.Estado} onChange={(e) => handleEditChange(e, "Estado")}>
+          <option value={"Nuevo"}>
+            Nuevo
+          </option>
+          <option value={"Activo"}>
+            Activo
+          </option>
+          <option value={"Inactivo"}>
+            Inactivo
+          </option>
+          <option value={"Expirado"}>
+          Expirado
+          </option>
+        </select>
+      )
+        : (
+          <div>{row.Estado}</div>
+        ),
+        sortable: true,
     },
     {
       name: "Acciones",
