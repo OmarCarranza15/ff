@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
-import Sidebar from "./SideNavBar.jsx";
-import TopBar from "./TopBar.jsx";
+import Sidebar from "./SideNavBar.jsx"; // Ajusta la ruta según la ubicación real de Sidebar.jsx
+import TopBar from "./TopBar.jsx"; // Ajusta la ruta según la ubicación real de TopBar.jsx
 import styled from "styled-components";
-import "../styles/DataTable.css";
+import "../styles/DataTable.css"; // Importa el archivo CSS
 import axios from "axios";
-import { FaEdit, FaSave, FaTimes } from "react-icons/fa";
+import { FaEdit, FaSave, FaTimes } from "react-icons/fa"; // Importa el ícono de edición
+
+
 
 const MainContainer = styled.div`
   display: flex;
@@ -33,7 +35,7 @@ const Title = styled.h2`
 `;
 
 const FilterWrapper = styled.div`
-  position: relative;
+  position: relative; /* Cambiado de 'absolute' a 'relative' */
   right: 9px;
   padding: 10px;
   background-color: #ffffff;
@@ -42,8 +44,7 @@ const FilterWrapper = styled.div`
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   z-index: 100;
   display: ${(props) => (props.show ? "flex" : "none")};
-  flex-wrap: wrap;
-  margin: 0% 30%; 
+  flex-wrap: wrap; 
 `;
 
 const FilterInput = styled.input`
@@ -55,7 +56,7 @@ const FilterInput = styled.input`
   font-size: 14px;
   justify-content: center;
   flex: 1;
-  display: flex; 
+  display: flex;
 `;
 
 const ButtonGroup = styled.div`
@@ -63,6 +64,7 @@ const ButtonGroup = styled.div`
   gap: 10px;
 `;
 
+//Estilos de Boton de Buscar y de Insertar un nuevo perfil
 const Button = styled.button`
   background-color: ${(props) => (props.primary ? "#008cba" : "#4caf50")};
   color: #ffffff;
@@ -75,6 +77,7 @@ const Button = styled.button`
   gap: 5px;
 `;
 
+//Estilos del Boton cancelar
 const ButtonCancelar = styled.button`
   background-color: ${(props) =>
     props.primary ? "#008cba" : props.cancel ? "#bf1515" : "#4caf50"};
@@ -94,21 +97,20 @@ const DataTableContainer = styled.div`
   overflow: auto;
   position: relative;
   width: 100%;
-  height: calc(100vh - 80px);
+  height: calc(100vh - 80px); /* Ajusta el tamaño del contenedor de la tabla */
 `;
 
 const StyledDataTable = styled(DataTable)`
   border-collapse: collapse;
-  width: 45%;
+  width: 100%;
   position: relative;
   margin: center;
-  margin: 0% 25%;
 
   th,
   td {
     border: 1px solid #ddd;
     padding: 15px;
-    text-align: center;
+    text-align: center; /* Centra el texto en las celdas */
     white-space: normal;
     word-break: break-word;
     overflow-wrap: break-word;
@@ -116,7 +118,7 @@ const StyledDataTable = styled(DataTable)`
 
   th {
     background-color: #f0f0f0;
-    text-align: center;
+    text-align: center; /* Centra el texto en los encabezados */
   }
 
   td {
@@ -140,146 +142,82 @@ const StyledDataTable = styled(DataTable)`
   }
 `;
 
-const ModalBackground = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-`;
 
-const ModalWrapper = styled.div`
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-  z-index: 1100;
-  animation: fadeIn 0.3s ease-out;
-  max-width: 400px;
-  width: 100%;
 
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-`;
-
-const ModalTitle = styled.h3`
-  margin-bottom: 15px;
-  text-align: center;
-`;
-
-const ModalInput = styled.input`
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 15px;
-  border: 1px solid ${(props) => (props.error ? "red" : "#ccc")};
-  border-radius: 5px;
-  font-size: 16px;
-  outline: none;
-  box-sizing: border-box;
-  transition: border-color 0.3s ease;
-
-  &:focus {
-    border-color: #008cba;
-    box-shadow: 0 0 5px rgba(0, 140, 186, 0.5);
-  }
-`;
-
-const ErrorMessage = styled.p`
-  color: red;
-  font-size: 12px;
-  margin-bottom: 10px;
-`;
-
-const ModalButtonGroup = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-`;
-
-const ModalButton = styled.button`
-  background-color: ${(props) =>
-    props.primary ? "#4caf50" : props.cancel ? "#bf1515" : "#4caf50"};
-  color: #ffffff;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: ${(props) =>
-      props.primary ? "#45a049" : props.cancel ? "#ad1111" : "#45a049"};
-  }
-`;
-
-const GuardarButton = styled(ModalButton)`
-  background-color: #4caf50;
-`;
-
-function Usuario() {
-  const [puestos, setPuestos] = useState([]);
-  const [roles, setRoles] = useState([]);
+function Puesto() {
+  const [usuario] = useState([]);
   const [records, setRecords] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editedRow, setEditedRow] = useState(null);
-  const [errors, setErrors] = useState({ usuario: "", nombre: "", contrasenia: "" });
-  const [modalValues, setModalValues] = useState({ usuario: "", nombre: "", contrasenia: "", estado: "", ID_PuestoIn: "", ID_RolUsuario: "" });
-  const [showModal, setShowModal] = useState(false);
+  const [puestoin, setPuestoin] = useState([]);
+  const [rolusuario, setRolusuario] = useState([]);
+ 
 
   const [filters, setFilters] = useState({
-    Usuario: "",
+    N_Puesto: "",
+    Codigo: "",
+    N_Pais: "",
+    N_RSocial: "",
+    N_Division: "",
+    N_Departamento: "",
     Nombre: "",
   });
 
-  useEffect(() => {
+  useEffect(()=> {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/usuario/`);
-        setRecords(response.data);
+        const response = await axios.get(`http://localhost:3000/usuarios/`);
+        const data = response.data;
+        const mappedData = await Promise.all(
+          data.map(async (usuario)=> {
+            const puestoinResponse = await axios.get(`http://localhost:3000/puestoin/${usuario.ID_PuestoIn}`); 
+            const rolusuarioResponse = await axios.get(`http://localhost:3000/rolusuario/${usuario.ID_RolUsuario}`); 
+            
+            return {
+              id: usuario.id,   
+              Usuario: usuario.Usuario,
+              Nombre: usuario.Nombre,
+              Contrasenia: usuario.Contrasenia,
+              Estado: usuario.Estado  === 1 ?  "Nuevo" : usuario.Estado ===  2 ? "En Servicio":usuario.Estado === 3 ? "Suspendido": "Expirado",
+              ID_PuestoIn: usuario.ID_PuestoIn,
+              ID_RolUsuario: usuario.ID_RolUsuario,
+              N_PuestoIn: puestoinResponse.data.N_PuestoIn,
+              N_Rol: rolusuarioResponse.data.N_Rol,
+              
+        
+            }
+          })
+        )
+        setRecords(mappedData);
       } catch (error) {
-        console.error("Error al obtener los usuarios:", error);
+        console.error ('Error al obtener los Puestos:', error);
       }
     };
-
-    const fetchPuestos = async () => {
-      try {
-        const response = await axios.get(`http://localhost:3000/puestoIn/`);
-        setPuestos(response.data);
-      } catch (error) {
-        console.error("Error al obtener los puestos:", error);
-      }
+    const fetchPuestoin = async () =>{
+        try {
+            const response = await axios.get(`http://localhost:3000/puestoin/`);
+            setPuestoin(response.data);
+        } catch (error) {
+            console.error('Error al obtener la lista de Puestoin', error);
+        }
     };
-
-    const fetchRoles = async () => {
-      try {
-        const response = await axios.get(`http://localhost:3000/rolUsuario/`);
-        setRoles(response.data);
-      } catch (error) {
-        console.error("Error al obtener los roles:", error);
-      }
-    };
-
+    const fetchRolusuario = async () =>{
+        try {
+             const response = await axios.get(`http://localhost:3000/rolusuario/`);
+             setRolusuario(response.data);
+         } catch (error) {
+             console.error('Error al obtener la lista de razon social', error);
+         }
+     };
+  
     fetchData();
-    fetchPuestos();
-    fetchRoles();
+    fetchPuestoin();
+    fetchRolusuario();
+    
   }, []);
+
+ 
 
   const handleFilterChange = (event, column) => {
     const { value } = event.target;
@@ -291,318 +229,277 @@ function Usuario() {
   };
 
   const handleInsert = () => {
-    setShowModal(true);
+    //setShowModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setModalValues({ usuario: "", nombre: "", contrasenia: "", estado: "", ID_PuestoIn: "", ID_RolUsuario: "" });
-    setErrors({ usuario: "", nombre: "", contrasenia: "" });
-  };
 
-  const handleModalChange = (event, field) => {
-    const { value } = event.target;
-    setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
-  };
 
-  const SaveModal = async ()
-   => {
-    const { usuario, nombre, contrasenia, estado, ID_PuestoIn, ID_RolUsuario } = modalValues;
-    const newErrors = { usuario: "", nombre: "", contrasenia: "" };
-
-    if (usuario.trim() === "") newErrors.usuario = "Usuario es requerido";
-    if (nombre.trim() === "") newErrors.nombre = "Nombre es requerido";
-    if (contrasenia.trim() === "") newErrors.contrasenia = "Contraseña es requerida";
-
-    setErrors(newErrors);
-
-    if (Object.values(newErrors).every((error) => error === "")) {
-      try {
-        const response = await axios.post(`http://localhost:3000/usuario/`, { usuario, nombre, contrasenia, estado, ID_PuestoIn, ID_RolUsuario });
-        setRecords((prevRecords) => [...prevRecords, response.data]);
-        handleCloseModal();
-      } catch (error) {
-        console.error("Error al insertar usuario:", error);
-      }
-    }
-  };
-
-  const handleEdit = (row) => {
-    setEditMode(true);
+  const startEdit = (row) => {
     setEditedRow({ ...row });
+    setEditMode(row.id);
   };
 
-  const handleCancelEdit = () => {
-    setEditMode(false);
-    setEditedRow(null);
+  const handleEditChange = (event, field) => {
+    const { value } = event.target;
+    setEditedRow((prevState) => ({
+      ...prevState,
+      [field]: value,
+      ...(field === "ID_Usuario" && { Usuario: usuario.find((p) => p.id === parseInt(value)).Usuario }),
+      ...(field === "ID_Usuario" && { Nombre: usuario.find((p) => p.id === parseInt(value)).Nombre }),
+      ...(field === "ID_Usuario" && { Estado: usuario.find((p) => p.id === parseInt(value)).Estado }),
+      ...(field === "ID_PuestoIn" && { N_PuestoIn: puestoin.find((p) => p.id === parseInt(value)).N_PuestoIn }),
+      ...(field === "ID_RolUsuario" && { N_Rol: rolusuario.find((p) => p.id === parseInt(value)).N_Rol }),
+    
+  }));
+   
   };
 
-  const handleSaveEdit = async () => {
+  
+  
+
+  const saveChanges = async(id) => {
     try {
-      await axios.put(`http://localhost:3000/usuario/${editedRow.ID_Usuario}`, editedRow);
-      setRecords((prevRecords) =>
-        prevRecords.map((record) => (record.ID_Usuario === editedRow.ID_Usuario ? editedRow : record))
-      );
-      setEditMode(false);
+
+      const updateRow = {
+        ...editedRow,
+        
+      }
+      
+      await axios.put(`http://localhost:3000/usuarios/${id}`,updateRow);   
+
+      const updatedRecords = records.map ((row) => 
+        row.id === id ? {...editedRow} : row
+      )
+      
+      //setRecords(updatedRecordsPuesto);
+      setRecords(updatedRecords);
       setEditedRow(null);
-    } catch (error) {
-      console.error("Error al actualizar usuario:", error);
+      setEditMode(null); 
+    
+                                                                               
+      console.log("Cambios guardados correctamente");
+    } catch(error) {
+      console.error("Error al guardar los cambios", error)
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setEditedRow((prevRow) => ({
-      ...prevRow,
-      [name]: value,
-    }));
+  const cancelEdit = () => {
+    setEditedRow(null);
+    setEditMode(null);
   };
+
+  const filteredData = records.filter((row) => {
+   return(
+    (filters.N_Pais === "" ||
+        row.N_Pais
+          .toLowerCase()
+          .includes(filters.N_Pais.toLowerCase())) &&
+    (filters.N_Departamento === "" ||
+        row.N_Departamento
+            .toLowerCase()
+            .includes(filters.N_Departamento.toLowerCase())) &&
+    (filters.Nombre === "" ||
+        row.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase())) &&
+    (filters.N_RSocial === "" ||
+        row.N_RSocial.toLowerCase().includes(filters.N_RSocial.toLowerCase())) &&
+    (filters.N_Division === "" ||
+        row.N_Division.toLowerCase().includes(filters.N_Division.toLowerCase())) &&
+    (filters.Codigo === "" ||
+        row.Codigo.toString().toLowerCase().includes(filters.Codigo.toLowerCase())) &&
+    (filters.N_Puesto === "" ||
+        row.N_Puesto.toLowerCase().includes(filters.N_Puesto.toLowerCase())) 
+    
+        );
+  });
 
   const columns = [
-    {
-      name: "Usuario",
-      selector: (row) =>
-        editMode && editedRow && editedRow.ID_Usuario === row.ID_Usuario ? (
-          <input
-            type="text"
-            name="Usuario"
-            value={editedRow.Usuario}
-            onChange={handleChange}
-          />
-        ) : (
-          row.Usuario
-        ),
-      sortable: true,
-    },
+      {
+        name: "Puesto Interno",
+        selector: (row) => row.N_PuestoIn,
+        sortable: true,
+        minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
+        maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+        cell: (row) =>
+          editMode && editedRow?.id === row.id ? (
+            <select value={editedRow.ID_PuestoIn} onChange={(e) => handleEditChange(e, "ID_PuestoIn")}>
+              {puestoin.map((puestoin) => (
+                <option key={puestoin.id} value={puestoin.id}>
+                  {puestoin.N_PuestoIn}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div>{row.N_PuestoIn}</div>
+          ),
+      },
+      {
+        name: "Rol del Usuario",
+        selector: (row) => row.N_Rol,
+        sortable: true,
+        minWidth: "300px", // Ajusta el tamaño mínimo según sea necesario
+        maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+        cell: (row) =>
+          editMode && editedRow?.id === row.id ? (
+            <select value={editedRow.ID_RolUsuario} onChange={(e) => handleEditChange(e, "ID_RolUsuario")}>
+              {rolusuario.map((rolusuario) => (
+                <option key={rolusuario.id} value={rolusuario.id}>
+                  {rolusuario.N_Rol}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div>{row.N_Rol}</div>
+          ),
+      },
+      {
+        name: "Usuario",
+        selector: (row) => row.Usuario,
+        sortable: true,
+        minWidth: "10px", // Ajusta el tamaño mínimo según sea necesario
+        maxWidth: "2000px", // Ajusta el tamaño máximo según sea necesario
+        cell: (row) =>
+          editMode && editedRow?.id === row.id ? (
+              <input
+              type= "text"
+              value={editedRow.Usuario}
+              onChange={(e) => handleEditChange(e, "Usuario")}
+            />
+          ) : (
+            <div>{row.Usuario}</div>
+          ),
+      },
     {
       name: "Nombre",
-      selector: (row) =>
-        editMode && editedRow && editedRow.ID_Usuario === row.ID_Usuario ? (
-          <input
+      selector: (row) => row.Nombre,
+      sortable: true,
+      minWidth: "300px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+            <input
             type="text"
-            name="Nombre"
             value={editedRow.Nombre}
-            onChange={handleChange}
+            onChange={(e) => handleEditChange(e, "Nombre")}
           />
         ) : (
-          row.Nombre
+          <div>{row.Nombre}</div>
         ),
-      sortable: true,
-    },
-    {
-      name: "Contraseña",
-      selector: (row) =>
-        editMode && editedRow && editedRow.ID_Usuario === row.ID_Usuario ? (
-          <input
-            type="password"
-            name="Contrasenia"
-            value={editedRow.Contrasenia}
-            onChange={handleChange}
-          />
-        ) : (
-          row.Contrasenia
-        ),
-      sortable: true,
     },
     {
       name: "Estado",
-      selector: (row) =>
-        editMode && editedRow && editedRow.ID_Usuario === row.ID_Usuario ? (
-          <select
-            name="Estado"
-            value={editedRow.Estado}
-            onChange={handleChange}
-          >
-            <option value="1">Activo</option>
-            <option value="2">Inactivo</option>
-          </select>
-        ) : row.Estado === 1 ? (
-          "Activo"
-        ) : (
-          "Inactivo"
+      selector: (row) => editMode === row.id ?(
+        <select value={editedRow.Estado} onChange={(e) => handleEditChange(e, "Estado")}>
+          <option value={"Nuevo"}>
+            Nuevo
+          </option>
+          <option value={"En Servicio"}>
+            En Servicio
+          </option>
+          <option value={"Suspendido"}>
+            Suspendido
+          </option>
+          <option value={"Expirado"}>
+          Expirado
+          </option>
+        </select>
+      )
+        : (
+          <div>{row.Estado}</div>
         ),
-      sortable: true,
-    },
-    {
-      name: "Puesto",
-      selector: (row) =>
-        editMode && editedRow && editedRow.ID_Usuario === row.ID_Usuario ? (
-          <select
-            name="ID_PuestoIn"
-            value={editedRow.ID_PuestoIn}
-            onChange={handleChange}
-          >
-            {puestos.map((puesto) => (
-              <option key={puesto.ID_PuestoIn} value={puesto.ID_PuestoIn}>
-                {puesto.Nombre}
-              </option>
-            ))}
-          </select>
-        ) : (
-          row.NombrePuesto
-        ),
-      sortable: true,
-    },
-    {
-      name: "Rol",
-      selector: (row) =>
-        editMode && editedRow && editedRow.ID_Usuario === row.ID_Usuario ? (
-          <select
-            name="ID_RolUsuario"
-            value={editedRow.ID_RolUsuario}
-            onChange={handleChange}
-          >
-            {roles.map((rol) => (
-              <option key={rol.ID_RolUsuario} value={rol.ID_RolUsuario}>
-                {rol.Nombre}
-              </option>
-            ))}
-          </select>
-        ) : (
-          row.NombreRol
-        ),
-      sortable: true,
+        sortable: true,
     },
     {
       name: "Acciones",
       cell: (row) =>
-        editMode && editedRow && editedRow.ID_Usuario === row.ID_Usuario ? (
-          <div>
-            <Button onClick={handleSaveEdit}>
-              <FaSave /> Guardar
+        editMode === row.id ? (
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <Button onClick={() => saveChanges(row.id)}>
+              <FaSave />
             </Button>
-            <ButtonCancelar cancel onClick={handleCancelEdit}>
-              <FaTimes /> Cancelar
+            <ButtonCancelar cancel onClick={cancelEdit}>
+              <FaTimes />
             </ButtonCancelar>
           </div>
         ) : (
-          <Button primary onClick={() => handleEdit(row)}>
-            <FaEdit /> Editar
+          <Button onClick={() => startEdit(row)}>
+            <FaEdit />
           </Button>
         ),
-      ignoreRowClick: true,
-      allowOverflow: true,
-      button: true,
     },
   ];
-
-  const filteredRecords = records.filter(
-    (record) =>
-      record.Usuario.toLowerCase().includes(filters.Usuario.toLowerCase()) &&
-      record.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase())
-  );
 
   return (
     <MainContainer>
       <TopBar />
       <ContentContainer>
         <Sidebar />
-        <div style={{ flex: 1, padding: "0px" }}>
+        <DataTableContainer>
           <HeaderContainer>
-            <Title>Matriz de Perfiles</Title>
+            <Title><h2 className="Title">Usuarios</h2></Title>
             <ButtonGroup>
               <Button primary onClick={toggleFilters}>
-                Filtrar
+                {showFilters ? "Ocultar" : "Buscar"}
               </Button>
-              <Button onClick={handleInsert}>
-                Insertar
-              </Button>
+              <Button onClick={handleInsert}>Nuevo Puesto</Button>
             </ButtonGroup>
           </HeaderContainer>
           <FilterWrapper show={showFilters}>
             <FilterInput
               type="text"
-              placeholder="Usuario"
-              value={filters.Usuario}
-              onChange={(e) => handleFilterChange(e, "Usuario")}
+              value={filters.N_Pais}
+              onChange={(e) => handleFilterChange(e, "N_Pais")}
+              placeholder="Buscar por Pais"
             />
             <FilterInput
               type="text"
-              placeholder="Nombre"
+              value={filters.N_RSocial}
+              onChange={(e) => handleFilterChange(e, "N_RSocial")}
+              placeholder="Buscar por Razon Social"
+            />
+            <FilterInput
+              type="text"
+              value={filters.N_Division}
+              onChange={(e) => handleFilterChange(e, "N_Division")}
+              placeholder="Buscar por Division"
+            />
+            <FilterInput
+              type="text"
+              value={filters.N_Departamento}
+              onChange={(e) => handleFilterChange(e, "N_Departamento")}
+              placeholder="Buscar por Departamento"
+            />
+            <FilterInput
+              type="text"
               value={filters.Nombre}
               onChange={(e) => handleFilterChange(e, "Nombre")}
+              placeholder="Buscar por Centro de Costos"
             />
+            <FilterInput
+              type="text"
+              value={filters.Codigo}
+              onChange={(e) => handleFilterChange(e, "Codigo")}
+              placeholder="Buscar por Codigo"
+            />
+            <FilterInput
+              type="text"
+              value={filters.N_Puesto}
+              onChange={(e) => handleFilterChange(e, "N_Puesto")}
+              placeholder="Buscar por Puesto"
+            />
+            
           </FilterWrapper>
-          <DataTableContainer>
-            <StyledDataTable
-              columns={columns}
-              data={filteredRecords}
-              highlightOnHover
-              pagination
-            />
-          </DataTableContainer>
-        </div>
+          <StyledDataTable
+            columns={columns}
+            data={filteredData}
+            pagination
+            paginationPerPage={30}
+            showFilters={showFilters}
+          />
+        </DataTableContainer>
       </ContentContainer>
-
-      {showModal && (
-        <ModalBackground>
-          <ModalWrapper>
-            <ModalTitle>Insertar Usuario</ModalTitle>
-            <ModalInput
-              type="text"
-              placeholder="Usuario"
-              value={modalValues.usuario}
-              onChange={(e) => handleModalChange(e, "usuario")}
-              error={errors.usuario}
-            />
-            {errors.usuario && <ErrorMessage>{errors.usuario}</ErrorMessage>}
-            <ModalInput
-              type="text"
-              placeholder="Nombre"
-              value={modalValues.nombre}
-              onChange={(e) => handleModalChange(e, "nombre")}
-              error={errors.nombre}
-            />
-            {errors.nombre && <ErrorMessage>{errors.nombre}</ErrorMessage>}
-            <ModalInput
-              type="password"
-              placeholder="Contraseña"
-              value={modalValues.contrasenia}
-              onChange={(e) => handleModalChange(e, "contrasenia")}
-              error={errors.contrasenia}
-            />
-            {errors.contrasenia && <ErrorMessage>{errors.contrasenia}</ErrorMessage>}
-            <ModalInput
-              type="text"
-              placeholder="Estado"
-              value={modalValues.estado}
-              onChange={(e) => handleModalChange(e, "estado")}
-            />
-            <select
-              name="ID_PuestoIn"
-              value={modalValues.ID_PuestoIn}
-              onChange={(e) => handleModalChange(e, "ID_PuestoIn")}
-            >
-              {puestos.map((puesto) => (
-                <option key={puesto.ID_PuestoIn} value={puesto.ID_PuestoIn}>
-                  {puesto.Nombre}
-                </option>
-              ))}
-            </select>
-            <select
-              name="ID_RolUsuario"
-              value={modalValues.ID_RolUsuario}
-              onChange={(e) => handleModalChange(e, "ID_RolUsuario")}
-            >
-              {roles.map((rol) => (
-                <option key={rol.ID_RolUsuario} value={rol.ID_RolUsuario}>
-                  {rol.Nombre}
-                </option>
-              ))}
-            </select>
-            <ModalButtonGroup>
-              <GuardarButton onClick={SaveModal} disabled={!modalValues.usuario || !modalValues.nombre || !modalValues.contrasenia}>
-                <FaSave /> Guardar
-              </GuardarButton>
-              <ModalButton cancel onClick={handleCloseModal}>
-                <FaTimes /> Cancelar
-              </ModalButton>
-            </ModalButtonGroup>
-          </ModalWrapper>
-        </ModalBackground>
-      )}
+      
     </MainContainer>
   );
 }
 
-export default Usuario;
+export default Puesto;
