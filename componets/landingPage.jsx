@@ -290,10 +290,6 @@ function LandingPage() {
   
 
   useEffect(()=> {
-   
-      
-      
-
     const fetchData = async () => {
       try {
         const response = await axios.get(`http://localhost:3000/perfil/`);
@@ -321,7 +317,7 @@ function LandingPage() {
               Puesto_Jefe: perfil.Puesto_Jefe,
               Ticket: perfil.Ticket,
               Observaciones: perfil.Observaciones,
-              Estado_Perfil: perfil.Estado_Perfil === 1 ? "Activo": "Inactivo",
+              Estado_Perfil: perfil.Estado_Perfil === 1 ? "En Servicio": "Suspendido",
               id: perfil.id,
               ID_Pais: perfil.ID_Pais,
               ID_Aplicaciones: perfil.ID_Aplicaciones,
@@ -414,7 +410,7 @@ function LandingPage() {
     fetchRsocial();
     fetchPuestos();
     fetchData();
-  })
+  },[])
 
   const handleFilterChange = (event, column) => {
     const { value } = event.target;
@@ -661,7 +657,7 @@ function LandingPage() {
 
       const updateRow = {
         ...editedRow,
-        Estado_Perfil: editedRow.Estado_Perfil === "Activo" ? 1: 2,
+        Estado_Perfil: editedRow.Estado_Perfil === "En Servicio" ? 1: 2,
       }
       
       await axios.put(`http://localhost:3000/perfil/${id}`,updateRow);   
@@ -721,8 +717,6 @@ function LandingPage() {
   
 
       const filtered = records.filter((row) => {
-        const isActive = filters.Estado_Perfil.toLowerCase() === "activo";
-    
         return (
           (filters.N_RSocial === "" || row.N_RSocial.toLowerCase().includes(filters.N_RSocial.toLowerCase())) &&
           (filters.N_Pais === "" || row.N_Pais.toLowerCase().includes(filters.N_Pais.toLowerCase())) &&
@@ -735,8 +729,8 @@ function LandingPage() {
           (filters.Ticket === "" || (row.Ticket ? row.Ticket.toString().includes(filters.Ticket.toString()) : false)) &&
           /*(filters.N_Ambiente === "" || row.N_Ambiente.toLowerCase().includes(filters.N_Ambiente.toLowerCase())) &&*/
           (filters.Puesto_Jefe === "" || row.Puesto_Jefe.toLowerCase().includes(filters.Puesto_Jefe.toLowerCase())) &&
-          (filters.Estado_Perfil === "" || row.Estado_Perfil.toLowerCase().includes(filters.Estado_Perfil.toLowerCase())) &&
-          (isActive ? row.Estado_Perfil.toLowerCase() === "activo" : true)
+          (filters.Estado_Perfil === "" || row.Estado_Perfil.toLowerCase().includes(filters.Estado_Perfil.toLowerCase())) 
+          
         );
       }); 
     
@@ -946,11 +940,11 @@ function LandingPage() {
       omit: !showColumns,
       selector: (row) => editMode === row.id ?(
         <select value={editedRow.Estado_Perfil} onChange={(e) => handleEditChange(e, "Estado_Perfil")}>
-          <option value={"Activo"}>
-            Activo
+          <option value={"En Servicio"}>
+            En Servicio
           </option>
-          <option value={"Inactivo"}>
-            Inactivo
+          <option value={"Suspendido"}>
+            Suspendido
           </option>
         </select>
       )
@@ -994,25 +988,37 @@ function LandingPage() {
               <Button onClick={handleInsert}>Insertar Nuevo Perfil</Button>
             </ButtonGroup>
           </HeaderContainer>
-          <FilterWrapper show={showFilters}>
-            <FilterInput
-              type="text"
-              value={filters.N_RSocial}
-              onChange={(e) => handleFilterChange(e, "N_RSocial")}
-              placeholder=" Razón Social"
-            />
-            <FilterInput
+          <FilterWrapper show={showFilters} >
+          <FilterInput 
+            type="text" 
+            value={filters.N_Pais}
+            onChange={(e) => handleFilterChange(e, "N_Pais" ) }
+            placeholder=" Buscar Pais"
+          /> 
+          {showColumns && (
+            <>
+            <FilterInput 
+            type="text" 
+            value={filters.N_RSocial}
+            onChange={(e) => handleFilterChange(e, "N_RSocial" ) }
+            placeholder=" Razón Social"
+          /> 
+          <FilterInput 
               type="text"
               value={filters.N_Departamento}
               onChange={(e) => handleFilterChange(e, "N_Departamento")}
               placeholder="Buscar por Departamento"
+             
             />
             <FilterInput
               type="text"
               value={filters.Nombre}
               onChange={(e) => handleFilterChange(e, "Nombre")}
               placeholder="Buscar por Centro de Costos"
+              
             />
+          </>
+          )}
             {/*<FilterInput
               type="text"
               value={filters.N_Pais}
@@ -1049,7 +1055,9 @@ function LandingPage() {
               onChange={(e) => handleFilterChange(e, "Puesto_Jefe")}
               placeholder="Buscar por Jefe Inmediato"
             />
-            <FilterInput
+            {showColumns && (
+              <>
+              <FilterInput
               type="text"
               value={filters.Ticket}
               onChange={(e) => handleFilterChange(e, "Ticket")}
@@ -1066,7 +1074,11 @@ function LandingPage() {
               value={filters.Observaciones}
               onChange={(e) => handleFilterChange(e, "Observaciones")}
               placeholder="Buscar por Observaciones"
-            />
+            /> 
+            </>
+            )}
+                
+                                        
           </FilterWrapper>
           <Button onClick={handleToggleColumns} style={{marginLeft: "auto", position: "relative", marginRight: 10, backgroundColor: "white", color:"blue"}}>{showColumns ? 'Ver Menos Detalles' : 'Ver Mas Detalles'}</Button>
           <StyledDataTable
