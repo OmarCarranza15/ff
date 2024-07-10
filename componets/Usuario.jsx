@@ -145,7 +145,7 @@ const StyledDataTable = styled(DataTable)`
 
 
 function Puesto() {
-  const [usuario] = useState([]);
+  //const [usuario] = useState([]);
   const [records, setRecords] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -179,7 +179,7 @@ function Puesto() {
               Usuario: usuario.Usuario,
               Nombre: usuario.Nombre,
               Contrasenia: usuario.Contrasenia,
-              Estado: usuario.Estado  === 1 ?  "Nuevo" : usuario.Estado ===  2 ? "En Servicio":  usuario.Estado=== 3 ? "Suspendido": "Expirado",
+              Estado: usuario.Estado === 1?"Nuevo":  usuario.Estado === 2? "En Servicio":  usuario.Estado ===3 ? "Suspendido": "Expirado",
               ID_PuestoIn: usuario.ID_PuestoIn,
               ID_RolUsuario: usuario.ID_RolUsuario,
               N_PuestoIn: puestoinResponse.data.N_PuestoIn,
@@ -244,9 +244,9 @@ function Puesto() {
     setEditedRow((prevState) => ({
       ...prevState,
       [field]: value,
-      ...(field === "ID_Usuario" && { Usuario: usuario.find((p) => p.id === parseInt(value)).Usuario }),
-      ...(field === "ID_Usuario" && { Nombre: usuario.find((p) => p.id === parseInt(value)).Nombre }),
-      ...(field === "ID_Usuario" && { Estado: usuario.find((p) => p.id === parseInt(value)).Estado }),
+      //...(field === "ID_Usuario" && { Usuario: usuario.find((p) => p.id === parseInt(value)).Usuario }),
+      //...(field === "ID_Usuario" && { Nombre: usuario.find((p) => p.id === parseInt(value)).Nombre }),
+      //...(field === "ID_Usuario" && { Estado: usuario.find((p) => p.id === parseInt(value)).Estado }),
       ...(field === "ID_PuestoIn" && { N_PuestoIn: puestoin.find((p) => p.id === parseInt(value)).N_PuestoIn }),
       ...(field === "ID_RolUsuario" && { N_Rol: rolusuario.find((p) => p.id === parseInt(value)).N_Rol }),
     
@@ -258,11 +258,11 @@ function Puesto() {
   
 
   const saveChanges = async(id) => {
-    try {
 
+    try {
       const updateRow = {
         ...editedRow,
-        Estado: editMode.Estado === "No Operativo" ? 1 : 2,
+        Estado: editedRow.Estado === "Nuevo" ? 1: editedRow.Estado ==="En Servicio"? 2:  editedRow.Estado ==="Suspendido" ? 3: 4,
       }
       
       await axios.put(`http://localhost:3000/usuarios/${id}`,updateRow);   
