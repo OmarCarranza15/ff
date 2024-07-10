@@ -736,7 +736,7 @@ function LandingPage() {
     if (showButton){
       const {Rol, N_Puesto} = filters;
       if (!Rol && !N_Puesto){
-        alert("Por favor escriba el ROl Y PUESTO");
+        alert("Por favor escriba algo en Puesto, Rol, Aplicacion o Jefe Inmediato");
         return;
       } 
 
@@ -1017,24 +1017,30 @@ function LandingPage() {
             </ButtonGroup>
           </HeaderContainer>
           <FilterWrapper show={showFilters}>
-            <FilterInput
-              type="text"
-              value={filters.N_RSocial}
-              onChange={(e) => handleFilterChange(e, "N_RSocial")}
-              placeholder=" Razón Social"
-            />
-            <FilterInput
+          {showColumns && (
+            <>
+            <FilterInput 
+            type="text" 
+            value={filters.N_RSocial}
+            onChange={(e) => handleFilterChange(e, "N_RSocial" ) }
+            placeholder=" Razón Social"
+          /> 
+          <FilterInput 
               type="text"
               value={filters.N_Departamento}
               onChange={(e) => handleFilterChange(e, "N_Departamento")}
               placeholder="Buscar por Departamento"
+             
             />
             <FilterInput
               type="text"
               value={filters.Nombre}
               onChange={(e) => handleFilterChange(e, "Nombre")}
               placeholder="Buscar por Centro de Costos"
+              
             />
+          </>
+          )}
             {/*<FilterInput
               type="text"
               value={filters.N_Pais}
@@ -1071,7 +1077,9 @@ function LandingPage() {
               onChange={(e) => handleFilterChange(e, "Puesto_Jefe")}
               placeholder="Buscar por Jefe Inmediato"
             />
-            <FilterInput
+           {showColumns && (
+              <>
+              <FilterInput
               type="text"
               value={filters.Ticket}
               onChange={(e) => handleFilterChange(e, "Ticket")}
@@ -1088,7 +1096,9 @@ function LandingPage() {
               value={filters.Observaciones}
               onChange={(e) => handleFilterChange(e, "Observaciones")}
               placeholder="Buscar por Observaciones"
-            />
+            /> 
+            </>
+            )}
             {showButton? <Button onClick={handleToggleALLColumns && handleSearch}>Buscar</Button>: ''}
           </FilterWrapper>
           <Button onClick={handleToggleColumns} style={{marginLeft: "auto", position: "relative", marginRight: 10, backgroundColor: "white", color:"blue"}}>{showColumns ? 'Ver Menos Detalles' : 'Ver Mas Detalles'}</Button>
