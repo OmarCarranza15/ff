@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 import Sidebar from "./SideNavBar.jsx"; // Ajusta la ruta según la ubicación real de Sidebar.jsx
 import TopBar from "./TopBar.jsx"; // Ajusta la ruta según la ubicación real de TopBar.jsx
-import styled from "styled-components";
+import { styled, keyframes } from "styled-components";
 import "../styles/DataTable.css"; // Importa el archivo CSS
 import axios from "axios";
-import { FaEdit, FaSave, FaTimes } from "react-icons/fa"; // Importa el ícono de edición
+import { FaPlus,FaUndo, FaEdit, FaSave, FaTimes } from "react-icons/fa"; // Importa el ícono de edición
 import { useLocation } from "react-router-dom";
 
 
@@ -243,6 +243,64 @@ const GuardarButton = styled(ModalButton)`
 `;
 ////////////////////////////////////////////////////////////////////////////////
 
+//Boton Limpiar filtros 
+const RedButton = styled(Button)`
+  background-color: #ff0000; /* Rojo */
+  font-size: 13px; 
+  padding: 2px 4px; 
+  border-radius: 5px; 
+  height: 35px; 
+  width: 120px;
+`;
+
+const ButtonB = styled(Button)`
+  background-color: ${(props) => (props.primary ? "#008cba" : "#4caf50")};
+  font-size: 15px; 
+  padding: 2px 10px; 
+  border-radius: 5px; 
+  height: 35px; 
+  width: 70px; 
+  marginRight: 10;
+  marginLeft: "auto";
+  position: "relative";
+`;
+
+const rotate360 = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+const Spinner = styled.div`
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;
+  animation: ${rotate360} 1s linear infinite;
+  transform: translateZ(0);
+  border-top: 2px solid grey;
+  border-right: 2px solid grey;
+  border-bottom: 2px solid grey;
+  border-left: 4px solid black;
+  background: transparent;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+`;
+
+
+const CustomLoader = () => (
+  <div style={{ padding: "54px" }}>
+    <Spinner />
+    <div>Cargando Registros...</div>
+  </div>
+);
+
+
+
 
 function LandingPage() {
   
@@ -257,17 +315,19 @@ function LandingPage() {
   const [centrocosto, setCentrocostos] = useState([]);
   const [aplicacion, setAplicacion] = useState([]);
   const [ambiente, setAmbiente] = useState([]);
-  const [pais, setPais] = useState([]);
   const [errors, setErrors] = useState({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
   const [modalValues, setModalValues] = useState({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
   const [showModal, setShowModal] = useState(false);
   const location = useLocation();
   const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedCountryId, setSelectedCountryId] = useState("");
   const [showColumns, setShowColumns] = useState(false);
   const [showALLColumns, setShowALLColumns] = useState(true);
   const [showButton, setShowButton] = useState(true);
   const [showButtonB, setShowButtonB] = useState(false);
   const [dataFil, setDataFil] = useState("")
+  const [loading, setLoading] = useState(true);
+
   
 
   const [filters, setFilters] = useState({
@@ -288,7 +348,7 @@ function LandingPage() {
     ID_Puesto:"",
     ID_Ambiente:"",
   });
-
+  
   
   const handleToggleColumns = () =>{
     setShowColumns(!showColumns);
@@ -299,16 +359,18 @@ function LandingPage() {
   
 
   useEffect(()=> {
-    const searchParams = new URLSearchParams(location.search);
+    /*const searchParams = new URLSearchParams(location.search);
         const paisParam =  searchParams.get("pais") || setShowALLColumns(true) || setShowButton(false) || setShowFilters(false) || setShowButtonB(true);
-        setSelectedCountry(paisParam || "" );
+        setSelectedCountry(paisParam || "" );*/
+    const searchParams = new URLSearchParams(location.search);
+    const paisId = searchParams.get("pais") || setShowALLColumns(true) || setShowButton(false) || setShowFilters(false) || setShowButtonB(true);
+    const paisNombre = searchParams.get("Nombre");
+    setSelectedCountryId(paisId);
+    setSelectedCountry(paisNombre);
+    
       
-        
-        
-
-        
-
     const fetchData = async () => {
+      setLoading(true);
       try {
         const response = await axios.get(`http://localhost:3000/perfil/`);
         const data = response.data;
@@ -350,8 +412,10 @@ function LandingPage() {
           })
         )
         setRecords(mappedData);
+        setLoading(false);
       } catch (error) {
         console.error ('Error al obtener los perfiles:', error);
+        setLoading(false);
       }
     };
 
@@ -363,14 +427,6 @@ function LandingPage() {
           console.error('Error al obtener la lista de puestos', error);
       }
   }
-    const fetchPais = async () =>{
-      try {
-          const response = await axios.get(`http://localhost:3000/pais/`);
-          setPais(response.data);
-      } catch (error) {
-          console.error('Error al obtener la lista de pais', error);
-      }
-  };
     const fetchRsocial = async () =>{
      try {
           const response = await axios.get(`http://localhost:3000/rsocial/`);
@@ -403,9 +459,9 @@ function LandingPage() {
            console.error('Error al obtener la lista de centro de costos', error);
       }
   };
-    const fetchAplicacion = async () =>{
+    const fetchAplicacion = async (ID_Pais) =>{
       try {
-           const response = await axios.get(`http://localhost:3000/aplicacion/`);
+           const response = await axios.get(`http://localhost:3000/aplicacion?${ID_Pais}`);
            setAplicacion(response.data);
       } catch (error) {
            console.error('Error al obtener la lista de aplicaciones', error);
@@ -420,7 +476,6 @@ function LandingPage() {
       }
   };
     fetchAmbiente();
-    fetchPais();
     fetchAplicacion();
     fetchCentrocostos();
     fetchDepartamento();
@@ -454,6 +509,7 @@ function LandingPage() {
     setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
   };
 
+
   const SaveModal = async () => {
     const newErrors = {
       ID_Pais: "",
@@ -466,10 +522,6 @@ function LandingPage() {
       Ticket: "",
     };
   
-    // Validación de campos
-    if (!modalValues.ID_Pais) {
-      newErrors.pais = "El campo País es obligatorio";
-    }
     if (!modalValues.ID_Puesto) {
       newErrors.puesto = "El campo Puesto es obligatorio";
     }
@@ -530,7 +582,7 @@ function LandingPage() {
         // Datos del nuevo perfil
         const newPerfil = {
           Estado_Perfil: 1,
-          ID_Pais: parseInt(modalValues.ID_Pais, 10),
+          ID_Pais: selectedCountryId,
           ID_Aplicaciones: parseInt(modalValues.ID_Aplicaciones, 10),
           ID_Puesto: parseInt(modalValues.ID_Puesto, 10),
           Rol: modalValues.Rol,
@@ -546,13 +598,12 @@ function LandingPage() {
           `http://localhost:3000/perfil`,
           newPerfil
         );
-  
         console.log("Respuesta de inserción:", insertResponse.data);
   
         // Actualizar la lista de perfiles con el nuevo perfil
-        const paisResponse = await axios.get(
+        /*const paisResponse = await axios.get(
           `http://localhost:3000/pais/${modalValues.ID_Pais}`
-        );
+        );*/
         const aplicacionResponse = await axios.get(
           `http://localhost:3000/aplicacion/${modalValues.ID_Aplicaciones}`
         );
@@ -561,7 +612,6 @@ function LandingPage() {
         );
   
         console.log("Datos de respuesta para actualizar la UI:", {
-          paisResponse: paisResponse.data,
           aplicacionResponse: aplicacionResponse.data,
           puestoResponse: puestoResponse.data,
         });
@@ -575,8 +625,7 @@ function LandingPage() {
             Puesto_Jefe: modalValues.Puesto_Jefe,
             Ticket: parseInt(modalValues.Ticket, 10),
             Estado_Perfil: 1,
-            ID_Pais: modalValues.ID_Pais,
-            N_Pais: paisResponse.data.N_Pais,
+            ID_Pais: selectedCountryId,
             ID_Aplicaciones: modalValues.ID_Aplicaciones,
             N_Aplicaciones: aplicacionResponse.data.N_Aplicaciones,
             ID_Puesto: modalValues.ID_Puesto,
@@ -616,7 +665,6 @@ function LandingPage() {
     setEditedRow((prevState) => ({
       ...prevState,
       [field]: value,
-      ...(field === "ID_Pais" && { N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais }),
       ...(field === "ID_Aplicaciones" && { N_Aplicaciones: aplicacion.find((p) => p.id === parseInt(value)).N_Aplicaciones }),
       ...(field === "ID_Puesto" && { N_Puesto: puestos.find((p) => p.id === parseInt(value)).N_Puesto }),
       ...(field === "ID_Ambiente" && { N_Ambiente: ambiente.find((p) => p.id === parseInt(value)).N_Ambiente }),
@@ -630,13 +678,7 @@ function LandingPage() {
   };
   const validateInput = (field, value) => {
     let newErrors = { ...errors };
-    if (field === "ID_Pais") {
-      if (!value.trim()) {
-        newErrors.ID_Pais = "El campo País es obligatorio";
-      } else {
-        newErrors.ID_Pais = "";
-      }
-    }else if (field === "Ticket") {
+    if (field === "Ticket") {
       if (!/^\d+$/.test(modalValues.Ticket)){
         newErrors.Ticket = "Solo se aceptan Digitos"
       }
@@ -745,7 +787,6 @@ function LandingPage() {
     
         return (
           (filters.N_RSocial === "" || row.N_RSocial.toLowerCase().includes(filters.N_RSocial.toLowerCase())) &&
-          (selectedCountry === "" || row.N_Pais.toLowerCase().includes(selectedCountry.toLowerCase())) &&
           (filters.N_Departamento === "" || row.N_Departamento.toLowerCase().includes(filters.N_Departamento.toLowerCase())) &&
           (filters.Rol === "" || row.Rol.toLowerCase().includes(filters.Rol.toLowerCase())) &&
           (filters.Nombre === "" || row.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase())) &&
@@ -765,27 +806,6 @@ function LandingPage() {
    
 
   const columns = [
-    {
-      name: "Pais",
-      selector: (row) => row.N_Pais,
-      //omit: !showColumns,
-      
-      sortable: true,
-      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-          <select value={editedRow.ID_Pais} onChange={(e) => handleEditChange(e, "ID_Pais")}>
-            {pais.map((pais) => (
-              <option key={pais.id} value={pais.id}>
-                {pais.N_Pais}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <div>{showALLColumns ? row.N_Pais: ""}</div>
-        ),
-    },
     {
       name: "Razon Social",
       selector: (row) => row.N_RSocial,
@@ -1001,6 +1021,27 @@ function LandingPage() {
         ),
     },
   ];
+
+  const resetFilters = () => {
+    setFilters({
+       N_RSocial: "",
+      N_Departamento: "",
+      N_Pais: "",
+      N_Puesto: "",
+      Rol: "",
+      N_Aplicaciones: "",
+      N_Ambiente: "",
+      Puesto_Jefe: "",
+      Ticket: "",
+      Nombre: "", //Nombre del centro de costos
+      Observaciones: "",
+      Estado_Perfil: "",
+      ID_Pais: "",
+      ID_Aplicaciones: "",
+      ID_Puesto:"",
+      ID_Ambiente:"",
+    })};
+
   return (
     <MainContainer>
       <TopBar />
@@ -1011,9 +1052,9 @@ function LandingPage() {
             <Title>Matriz de perfiles de {selectedCountry}</Title>
             <ButtonGroup>
               {showButtonB ?<Button primary onClick={toggleFilters}>
-                {showFilters ? "Ocultar" : "Buscar"}
+              {showFilters ? "Ocultar" : "Buscar"}
               </Button> : ''}
-              <Button onClick={handleInsert}>Insertar Nuevo Perfil</Button>
+              <Button onClick={handleInsert}><FaPlus />Insertar Nuevo Perfil</Button>
             </ButtonGroup>
           </HeaderContainer>
           <FilterWrapper show={showFilters}>
@@ -1099,9 +1140,16 @@ function LandingPage() {
             /> 
             </>
             )}
-            {showButton? <Button onClick={handleToggleALLColumns && handleSearch}>Buscar</Button>: ''}
+            <ButtonGroup>{showButton? <ButtonB onClick={handleToggleALLColumns && handleSearch}>Buscar</ButtonB>: ''}
+            <RedButton onClick={resetFilters}>
+              <FaUndo /> Resetear Filtros
+            </RedButton>
+            </ButtonGroup>
           </FilterWrapper>
           <Button onClick={handleToggleColumns} style={{marginLeft: "auto", position: "relative", marginRight: 10, backgroundColor: "white", color:"blue"}}>{showColumns ? 'Ver Menos Detalles' : 'Ver Mas Detalles'}</Button>
+          {loading ? (
+            <CustomLoader />
+          ) : (
           <StyledDataTable
             columns={columns}
             data={dataFil}
@@ -1109,7 +1157,7 @@ function LandingPage() {
             paginationPerPage={13}
             showFilters={showFilters}
             noDataComponent= {<h2 style={{color:  " #004ea1"}}>Por favor busque un registro</h2>}
-          />
+          />)}
         </DataTableContainer>
       </ContentContainer>
 
@@ -1119,20 +1167,6 @@ function LandingPage() {
           <ModalWrapper>
             <ModalTitle>Nuevo Perfil</ModalTitle>
 
-            <Select
-              value={modalValues.ID_Pais}
-              onChange={(e) => handleModalChange(e, "ID_Pais")}
-              error={errors.pais}
-              required
-            >
-              <option value="">Seleccione un país</option>
-              {pais.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.N_Pais}
-                </option>
-              ))}
-            </Select>
-            {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
 
             <Select
               value={modalValues.ID_Puesto}
