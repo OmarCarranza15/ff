@@ -348,17 +348,22 @@ function Aplicacion() {
             const paisResponse = await axios.get(
               `http://localhost:3000/pais/${aplicacion.ID_Pais}`
             );
-            const ambienteResponse = await axios.get(
-              `http://localhost:3000/ambiente/${aplicacion.ID_Ambiente}`
-            );
 
+            const ambienteIds = aplicacion.Ambientes.split(',').map(Number);
+            const ambienteNombres = await Promise.all(
+              ambienteIds.map(async (id) => {
+                const ambienteResponse = await axios.get(
+                  `http://localhost:3000/ambiente/${id}`
+                );
+                return ambienteResponse.data.N_Ambiente;
+              })
+            )
             return {
               id: aplicacion.id,
               N_Aplicaciones: aplicacion.N_Aplicaciones,
               ID_Pais: aplicacion.ID_Pais,
               N_Pais: paisResponse.data.N_Pais,
-              Ambientes: aplicacion.Ambientes,
-              N_Ambiente:ambienteResponse.N_Ambiente,
+              Ambientes: ambienteNombres.join(', '),
             };
           })
         );
@@ -622,28 +627,6 @@ function Aplicacion() {
           <div>{row.N_Aplicaciones}</div>
         ),
     },
-    /*{
-      name: "Ambientes",
-      selector: (row) => row.Ambientes,
-      sortable: true,
-      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-          <select
-            value={editedRow.ID_Ambiente}
-            onChange={(e) => handleEditChange(e, "Ambientes")}
-          >
-            {ambiente.map((ambiente) => (
-              <option key={ambiente.id} value={ambiente.id}>
-                {ambiente.N_Ambiente}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <div>{row.N_Ambiente}</div>
-        ),
-    },*/
     {
       name: "Ambientes",
       selector: (row) => row.Ambientes,
