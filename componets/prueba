@@ -363,7 +363,7 @@ function Aplicacion() {
               N_Aplicaciones: aplicacion.N_Aplicaciones,
               ID_Pais: aplicacion.ID_Pais,
               N_Pais: paisResponse.data.N_Pais,
-              Ambientes: ambienteNombres.join(', '),
+              Ambientes: ambienteNombres,
             };
           })
         );
@@ -649,7 +649,7 @@ function Aplicacion() {
             value={editedRow.Ambientes}
             onChange={(e) => handleEditChange(e,"Ambientes")}
           >{ambiente.map((ambiente) => (
-            <option key={ambiente.id} value={ambiente.id}>
+            <option key={ambiente.id} value={ambiente.N_Ambiente}>
               {ambiente.N_Ambiente}
             </option>
           ))}
