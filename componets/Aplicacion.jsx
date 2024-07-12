@@ -296,6 +296,15 @@ const SelectPais = styled.select`
   ${(props) => props.error && `border: 1px solid red;`}
 `;
 
+const SelectAmbiente = styled.select`
+  width: 100%;
+  padding: 7px;
+  margin-bottom: 9px;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  ${(props) => props.error && `border: 1px solid red;`}
+`;
 
 const GuardarButton = styled(ModalButton)`
   background-color: #4caf50;
@@ -308,13 +317,16 @@ function Aplicacion() {
   const [editMode, setEditMode] = useState(false);
   const [editedRow, setEditedRow] = useState(null);
   const [pais, setPais] = useState([]);
+  const [ambiente, setAmbiente] = useState([]);
   const [errors, setErrors] = useState({
     pais: "",
     aplicacion: "",
+    ambiente: "",
   }); //validaciones para insertar una nueva razon social
   const [modalValues, setModalValues] = useState({
     ID_Pais: "",
     aplicacion: "",
+    ID_Ambiente: "",
   });
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false); // Estado para mostrar/ocultar el modal
@@ -322,6 +334,7 @@ function Aplicacion() {
   const [filters, setFilters] = useState({
     N_Aplicaciones: "",
     N_Pais: "",
+    N_Ambiente: "",
   });
 
   useEffect(() => {
@@ -335,12 +348,17 @@ function Aplicacion() {
             const paisResponse = await axios.get(
               `http://localhost:3000/pais/${aplicacion.ID_Pais}`
             );
+            const ambienteResponse = await axios.get(
+              `http://localhost:3000/ambiente/${aplicacion.ID_Ambiente}`
+            );
 
             return {
               id: aplicacion.id,
               N_Aplicaciones: aplicacion.N_Aplicaciones,
               ID_Pais: aplicacion.ID_Pais,
               N_Pais: paisResponse.data.N_Pais,
+              Ambientes: aplicacion.Ambientes,
+              N_Ambiente:ambienteResponse.N_Ambiente,
             };
           })
         );
@@ -359,9 +377,18 @@ function Aplicacion() {
         console.error("Error al obtener la lista de Paises", error);
       }
     };
+    const fetchAmbiente = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/ambiente/`);
+        setAmbiente(response.data);
+      } catch (error) {
+        console.error("Error al obtener la lista de ambientes", error);
+      }
+    };
 
     fetchData();
     fetchPais();
+    fetchAmbiente();
   }, []);
 
   const handleFilterChange = (event, column) => {
@@ -379,8 +406,8 @@ function Aplicacion() {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setModalValues({ pais: "", aplicacion: "" });
-    setErrors({ pais: "", aplicacion: "" });
+    setModalValues({ pais: "", aplicacion: "", ambiente: "" });
+    setErrors({ pais: "", aplicacion: "", ambiente: "" });
   };
 
   const handleModalChange = (event, field) => {
@@ -389,10 +416,13 @@ function Aplicacion() {
   };
 
   const SaveModal = async () => {
-    const newErrors = { pais: "", aplicacion: ""};
+    const newErrors = { pais: "", aplicacion: "", ambiente: "" };
 
     if (!modalValues.ID_Pais) {
       newErrors.pais = "El campo Pais es obligatorio";
+    }
+    if (!modalValues.ID_Ambiente) {
+      newErrors.ambiente = "El campo Ambiente es obligatorio";
     }
 
     if (!modalValues.aplicacion.trim()) {
@@ -418,6 +448,7 @@ function Aplicacion() {
         const newAplicacion = {
           N_Aplicaciones: modalValues.aplicacion,
           ID_Pais: modalValues.ID_Pais,
+          ID_Ambiente: modalValues.ID_Ambiente,
         };
         const insertResponse = await axios.post(
           `http://localhost:3000/aplicacion`,
@@ -428,6 +459,9 @@ function Aplicacion() {
         const paisResponse = await axios.get(
           `http://localhost:3000/pais/${modalValues.ID_Pais}`
         );
+        const ambienteResponse = await axios.get(
+          `http://localhost:3000/ambiente/${modalValues.ID_Ambiente}`
+        );
 
         const updatedRecords = [
           ...records,
@@ -436,11 +470,13 @@ function Aplicacion() {
             N_Aplicaciones: modalValues.aplicacion,
             ID_Pais: modalValues.ID_Pais,
             N_Pais: paisResponse.data.N_Pais,
+            ID_Ambiente: modalValues.ID_Ambiente,
+            N_Ambiente: ambienteResponse.data.N_Ambiente,
           },
         ];
         setRecords(updatedRecords);
         setShowModal(false); // Ocultar el modal después de guardar
-        setModalValues({ ID_Pais: "", aplicacion: "" }); // Limpiar los valores del modal
+        setModalValues({ ID_Pais: "", aplicacion: "", ID_Ambiente: "" }); // Limpiar los valores del modal
       } catch (error) {
         console.error("Error al insertar un nuevo Ambiente:", error);
       }
@@ -464,6 +500,9 @@ function Aplicacion() {
       ...(field === "ID_Pais" && {
         N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais,
       }),
+      ...(field === "ID_Ambiente" && {
+        N_Ambiente: ambiente.find((p) => p.id === parseInt(value)).N_Ambiente,
+      }),
     }));
     validateInput(field, value);
   };
@@ -473,16 +512,21 @@ function Aplicacion() {
     if (field === "pais") {
       if (!value.trim()) {
         newErrors.pais = "El campo Pais es obligatorio";
-      } else if (!/^[a-zA-Z\s]+$/.test(value)) {
-        newErrors.pais = "El campo Pais solo acepta letras y espacios en blanco";
       } else {
         newErrors.pais = "";
       }
-    }else if (field === "aplicacion") {
+    } else if (field === "ambiente") {
+      if (!value.trim()) {
+        newErrors.ambiente = "El campo Ambiente es obligatorio";
+      } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+        newErrors.ambiente =
+          "El campo Ambiente solo acepta letras y espacios en blanco";
+      } else {
+        newErrors.ambiente = "";
+      }
+    } else if (field === "aplicacion") {
       if (!value.trim()) {
         newErrors.aplicacion = "El campo Aplicacion es obligatorio";
-      } else if (!/^[a-zA-Z\s]+$/.test(value)) {
-        newErrors.aplicacion = "El campo Aplicacion solo acepta letras y espacios en blanco";
       } else {
         newErrors.aplicacion = "";
       }
@@ -525,7 +569,9 @@ function Aplicacion() {
       (filters.N_Aplicaciones === "" ||
         row.N_Aplicaciones.toLowerCase().includes(
           filters.N_Aplicaciones.toLowerCase()
-        )) 
+        )) &&
+      (filters.N_Ambiente === "" ||
+        row.N_Ambiente.toLowerCase().includes(filters.N_Ambiente.toLowerCase()))
     );
   });
 
@@ -533,6 +579,7 @@ function Aplicacion() {
     setFilters({
       N_Aplicaciones: "",
       N_Pais: "",
+      N_Ambiente: "",
     });
   };
   const columns = [
@@ -573,6 +620,45 @@ function Aplicacion() {
           />
         ) : (
           <div>{row.N_Aplicaciones}</div>
+        ),
+    },
+    /*{
+      name: "Ambientes",
+      selector: (row) => row.Ambientes,
+      sortable: true,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <select
+            value={editedRow.ID_Ambiente}
+            onChange={(e) => handleEditChange(e, "Ambientes")}
+          >
+            {ambiente.map((ambiente) => (
+              <option key={ambiente.id} value={ambiente.id}>
+                {ambiente.N_Ambiente}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div>{row.N_Ambiente}</div>
+        ),
+    },*/
+    {
+      name: "Ambientes",
+      selector: (row) => row.Ambientes,
+      sortable: true,
+      minWidth: "330px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "50px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.Ambientes}
+            onChange={(e) => handleEditChange(e, "Ambientes")}
+          />
+        ) : (
+          <div>{row.Ambientes}</div>
         ),
     },
     {
@@ -628,6 +714,13 @@ function Aplicacion() {
               onChange={(e) => handleFilterChange(e, "N_Aplicaciones")}
               placeholder="Buscar por Aplicacion"
             />
+            <FilterInput
+              type="text"
+              value={filters.N_Ambiente}
+              onChange={(e) => handleFilterChange(e, "N_Ambiente")}
+              placeholder="Buscar por Ambiente"
+            />
+
             <RedButton onClick={resetFilters}>
               <FaUndo /> Limpiar Filtros
             </RedButton>
@@ -639,7 +732,7 @@ function Aplicacion() {
               columns={columns}
               data={filteredData}
               pagination
-              paginationPerPage={15}
+              paginationPerPage={30}
               showFilters={showFilters}
             />
           )}
@@ -664,6 +757,20 @@ function Aplicacion() {
               ))}
             </SelectPais>
             {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
+            <SelectAmbiente
+              value={modalValues.ID_Ambiente}
+              onChange={(e) => handleModalChange(e, "ID_Ambiente")}
+              error={errors.ambiente}
+              required
+            >
+              <option value="">Seleccione un ambiente</option>
+              {ambiente.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.N_Ambiente}
+                </option>
+              ))}
+            </SelectAmbiente>
+            {errors.ambiente && <ErrorMessage>{errors.ambiente}</ErrorMessage>}
             <ModalInput
               type="text"
               value={modalValues.aplicacion}
