@@ -1,152 +1,212 @@
-Si al seleccionar un país no se actualizan las listas dependientes, puede haber varios factores en juego, como problemas en la configuración del `useEffect`, en la llamada a las APIs, o en la forma en que los datos se manejan en el estado. A continuación, vamos a abordar el problema paso a paso para asegurarnos de que todas las partes están configuradas correctamente.
+Sí, la lógica implementada en los efectos y las funciones de fetch debería garantizar que, al seleccionar un país, solo se muestren las opciones correspondientes a ese país en los campos dependientes. 
 
-### Revisar el Efecto de `useEffect` y la Lógica de Estado
+Para asegurarte de que esto funcione correctamente, vamos a revisar cada paso involucrado en el proceso y verificar que las dependencias están configuradas correctamente.
 
-Vamos a desglosar y simplificar el código para verificar cada parte del proceso de selección y actualización de datos.
+### Pasos Detallados:
 
-1. **Verificar el `useEffect` para actualizar listas dependientes:**
-   - Este `useEffect` debería ejecutarse cuando `modalValues.ID_Pais` cambie.
+1. **Efecto para Fetch Inicial:**
+   - Este efecto se encarga de obtener los datos iniciales de `Puestos` y `Paises`. Debe ejecutarse una vez cuando el componente se monta.
 
-2. **Verificar las Funciones de Fetch:**
-   - Asegúrate de que cada función fetch esté correctamente definida y de que las URLs sean correctas.
+2. **Efecto para Fetch Dependiente de `ID_Pais`:**
+   - Este efecto se ejecuta cada vez que `modalValues.ID_Pais` cambia. Llama a las funciones para obtener `Rsocial`, `Division`, `Departamento` y `Centrocostos` basados en el `ID_Pais` seleccionado.
 
-3. **Verificar el Estado del Modal:**
-   - Asegúrate de que `modalValues` se actualice correctamente al cambiar el valor del país.
+3. **Funciones de Fetch:**
+   - Cada función obtiene datos específicos de una tabla relacionada con el país seleccionado.
 
-Aquí tienes un ejemplo simplificado del código con verificaciones de consola para ayudarte a depurar:
+4. **Actualización del Estado:**
+   - Cuando se cambia el país (`ID_Pais`), el estado de `modalValues` se actualiza y las listas dependientes (`rsocial`, `division`, `departamento`, `centrocostos`) se limpian y luego se llenan con los datos correspondientes.
+
+### Código Completo con Comentarios:
 
 ```jsx
-useEffect(() => {
-  const fetchData = async () => {
-    setLoading(true);
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+const MyComponent = () => {
+  const [loading, setLoading] = useState(false);
+  const [records, setRecords] = useState([]);
+  const [pais, setPais] = useState([]);
+  const [rsocial, setRsocial] = useState([]);
+  const [division, setDivision] = useState([]);
+  const [departamento, setDepartamento] = useState([]);
+  const [centrocostos, setCentrocostos] = useState([]);
+  const [modalValues, setModalValues] = useState({
+    ID_Pais: '',
+    // Otros campos necesarios...
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get('http://localhost:3000/puesto/');
+        const data = response.data;
+        const mappedData = await Promise.all(
+          data.map(async (puesto) => {
+            const paisResponse = await axios.get(`http://localhost:3000/pais/${puesto.ID_Pais}`);
+            const rsocialResponse = await axios.get(`http://localhost:3000/rsocial/${puesto.ID_RSocial}`);
+            const divisionResponse = await axios.get(`http://localhost:3000/division/${puesto.ID_Division}`);
+            const departamentoResponse = await axios.get(`http://localhost:3000/departamento/${puesto.ID_Departamento}`);
+            const centrocostoResponse = await axios.get(`http://localhost:3000/centrocosto/${puesto.ID_CentroCostos}`);
+
+            return {
+              id: puesto.id,
+              N_Puesto: puesto.N_Puesto,
+              Codigo: puesto.Codigo,
+              ID_Pais: puesto.ID_Pais,
+              N_Pais: paisResponse.data.N_Pais,
+              ID_RSocial: puesto.ID_RSocial,
+              N_RSocial: rsocialResponse.data.N_RSocial,
+              ID_Division: puesto.ID_Division,
+              N_Division: divisionResponse.data.N_Division,
+              ID_Departamento: puesto.ID_Departamento,
+              N_Departamento: departamentoResponse.data.N_Departamento,
+              ID_CentroCostos: puesto.ID_CentroCostos,
+              Nombre: centrocostoResponse.data.Nombre,
+            };
+          })
+        );
+        setRecords(mappedData);
+      } catch (error) {
+        console.error('Error al obtener los Puestos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchPais = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/pais/');
+        setPais(response.data);
+      } catch (error) {
+        console.error('Error al obtener la lista de Paises', error);
+      }
+    };
+
+    fetchData();
+    fetchPais();
+  }, []);
+
+  useEffect(() => {
+    if (modalValues.ID_Pais) {
+      fetchRsocial(modalValues.ID_Pais);
+      fetchDivision(modalValues.ID_Pais);
+      fetchDepartamento(modalValues.ID_Pais);
+      fetchCentrocostos(modalValues.ID_Pais);
+    }
+  }, [modalValues.ID_Pais]);
+
+  const fetchRsocial = async (paisId) => {
     try {
-      const response = await axios.get(`http://localhost:3000/puesto/`);
-      const data = response.data;
-      const mappedData = await Promise.all(
-        data.map(async (puesto) => {
-          const paisResponse = await axios.get(`http://localhost:3000/pais/${puesto.ID_Pais}`); 
-          const rsocialResponse = await axios.get(`http://localhost:3000/rsocial/${puesto.ID_RSocial}`); 
-          const divisionResponse = await axios.get(`http://localhost:3000/division/${puesto.ID_Division}`); 
-          const departamentoResponse = await axios.get(`http://localhost:3000/departamento/${puesto.ID_Departamento}`); 
-          const centrocostoResponse = await axios.get(`http://localhost:3000/centrocosto/${puesto.ID_CentroCostos}`); 
-          
-          return {
-            id: puesto.id,   
-            N_Puesto: puesto.N_Puesto,
-            Codigo: puesto.Codigo,
-            ID_Pais: puesto.ID_Pais,
-            N_Pais: paisResponse.data.N_Pais,
-            ID_RSocial: puesto.ID_RSocial,
-            N_RSocial: rsocialResponse.data.N_RSocial,
-            ID_Division: puesto.ID_Division,
-            N_Division: divisionResponse.data.N_Division,
-            ID_Departamento: puesto.ID_Departamento,
-            N_Departamento: departamentoResponse.data.N_Departamento,
-            ID_CentroCostos: puesto.ID_CentroCostos,
-            Nombre: centrocostoResponse.data.Nombre,
-          }
-        })
-      )
-      setRecords(mappedData);
-      setLoading(false);
+      const response = await axios.get(`http://localhost:3000/rsocial/pais/${paisId}`);
+      setRsocial(response.data);
     } catch (error) {
-      console.error('Error al obtener los Puestos:', error);
-      setLoading(false);
+      console.error('Error al obtener la lista de razón social', error);
     }
   };
-  
-  const fetchPais = async () => {
+
+  const fetchDivision = async (paisId) => {
     try {
-      const response = await axios.get(`http://localhost:3000/pais/`);
-      setPais(response.data);
+      const response = await axios.get(`http://localhost:3000/division/pais/${paisId}`);
+      setDivision(response.data);
     } catch (error) {
-      console.error('Error al obtener la lista de Paises', error);
+      console.error('Error al obtener la lista de división', error);
     }
   };
 
-  fetchData();
-  fetchPais();
-}, []);
+  const fetchDepartamento = async (paisId) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/departamento/pais/${paisId}`);
+      setDepartamento(response.data);
+    } catch (error) {
+      console.error('Error al obtener la lista de departamentos', error);
+    }
+  };
 
-useEffect(() => {
-  if (modalValues.ID_Pais) {
-    console.log('ID_Pais changed:', modalValues.ID_Pais); // Verificación
-    fetchRsocial(modalValues.ID_Pais);
-    fetchDivision(modalValues.ID_Pais);
-    fetchDepartamento(modalValues.ID_Pais);
-    fetchCentrocostos(modalValues.ID_Pais);
-  }
-}, [modalValues.ID_Pais]);
+  const fetchCentrocostos = async (paisId) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/centrocosto/pais/${paisId}`);
+      setCentrocostos(response.data);
+    } catch (error) {
+      console.error('Error al obtener la lista de centro de costos', error);
+    }
+  };
 
-const fetchRsocial = async (paisId) => {
-  try {
-    console.log('Fetching RSocial for paisId:', paisId); // Verificación
-    const response = await axios.get(`http://localhost:3000/rsocial/pais/${paisId}`);
-    console.log('RSocial data:', response.data); // Verificación
-    setRsocial(response.data);
-  } catch (error) {
-    console.error('Error al obtener la lista de razón social', error);
-  }
+  const handleModalChange = (event, field) => {
+    const { value } = event.target;
+    setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
+
+    if (field === 'ID_Pais') {
+      setRsocial([]);
+      setDivision([]);
+      setDepartamento([]);
+      setCentrocostos([]);
+    }
+  };
+
+  return (
+    <div>
+      <select value={modalValues.ID_Pais} onChange={(e) => handleModalChange(e, 'ID_Pais')}>
+        <option value="">Seleccione un País</option>
+        {pais.map((p) => (
+          <option key={p.ID} value={p.ID}>
+            {p.N_Pais}
+          </option>
+        ))}
+      </select>
+
+      {/* Aquí van los otros selectores dependientes */}
+      <select value={modalValues.ID_RSocial} onChange={(e) => handleModalChange(e, 'ID_RSocial')}>
+        <option value="">Seleccione una Razón Social</option>
+        {rsocial.map((r) => (
+          <option key={r.ID} value={r.ID}>
+            {r.N_RSocial}
+          </option>
+        ))}
+      </select>
+
+      <select value={modalValues.ID_Division} onChange={(e) => handleModalChange(e, 'ID_Division')}>
+        <option value="">Seleccione una División</option>
+        {division.map((d) => (
+          <option key={d.ID} value={d.ID}>
+            {d.N_Division}
+          </option>
+        ))}
+      </select>
+
+      <select value={modalValues.ID_Departamento} onChange={(e) => handleModalChange(e, 'ID_Departamento')}>
+        <option value="">Seleccione un Departamento</option>
+        {departamento.map((d) => (
+          <option key={d.ID} value={d.ID}>
+            {d.N_Departamento}
+          </option>
+        ))}
+      </select>
+
+      <select value={modalValues.ID_CentroCostos} onChange={(e) => handleModalChange(e, 'ID_CentroCostos')}>
+        <option value="">Seleccione un Centro de Costos</option>
+        {centrocostos.map((c) => (
+          <option key={c.ID} value={c.ID}>
+            {c.Nombre}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 };
 
-const fetchDivision = async (paisId) => {
-  try {
-    console.log('Fetching Division for paisId:', paisId); // Verificación
-    const response = await axios.get(`http://localhost:3000/division/pais/${paisId}`);
-    console.log('Division data:', response.data); // Verificación
-    setDivision(response.data);
-  } catch (error) {
-    console.error('Error al obtener la lista de división', error);
-  }
-};
-
-const fetchDepartamento = async (paisId) => {
-  try {
-    console.log('Fetching Departamento for paisId:', paisId); // Verificación
-    const response = await axios.get(`http://localhost:3000/departamento/pais/${paisId}`);
-    console.log('Departamento data:', response.data); // Verificación
-    setDepartamento(response.data);
-  } catch (error) {
-    console.error('Error al obtener la lista de departamentos', error);
-  }
-};
-
-const fetchCentrocostos = async (paisId) => {
-  try {
-    console.log('Fetching CentroCostos for paisId:', paisId); // Verificación
-    const response = await axios.get(`http://localhost:3000/centrocosto/pais/${paisId}`);
-    console.log('CentroCostos data:', response.data); // Verificación
-    setCentrocostos(response.data);
-  } catch (error) {
-    console.error('Error al obtener la lista de centro de costos', error);
-  }
-};
-
-const handleModalChange = (event, field) => {
-  const { value } = event.target;
-  setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
-
-  if (field === "ID_Pais") {
-    setRsocial([]);
-    setDivision([]);
-    setDepartamento([]);
-    setCentrocostos([]);
-  }
-};
+export default MyComponent;
 ```
 
-### Pasos para Depuración:
+### Verificaciones y Depuración:
 
-1. **Verifica las Consolas**:
-   - Revisa las salidas de consola para asegurarte de que las funciones se están llamando y que los datos se están recibiendo correctamente.
+1. **Consola de Verificación**:
+   - Asegúrate de que los mensajes de consola para la selección de `ID_Pais` y las respuestas de las APIs se muestren correctamente.
 
-2. **Asegúrate de que las Rutas de las APIs son Correctas**:
-   - Verifica que las URLs en las llamadas a `axios.get` sean correctas y estén retornando los datos esperados.
+2. **Datos en Selectores**:
+   - Verifica que los datos en cada selector dependiente cambien según el `ID_Pais` seleccionado.
 
-3. **Verifica el Estado del Modal**:
-   - Asegúrate de que el estado de `modalValues` se está actualizando correctamente cuando cambias el país.
+3. **URLs de API**:
+   - Confirma que las URLs de las APIs son correctas y que los endpoints están configurados para devolver los datos filtrados por país.
 
-4. **Verifica los Selectores en el Modal**:
-   - Asegúrate de que los selectores para `rsocial`, `division`, `departamento` y `centrocostos` están vinculados correctamente al estado y que se están actualizando cuando cambian los valores.
-
-Realiza estos pasos y verifica si las listas dependientes se actualizan correctamente. Si hay algún error específico en las llamadas a la API o en el manejo del estado, las salidas de consola te ayudarán a identificar el problema.
+Este código y los pasos de depuración deberían ayudarte a asegurarte de que al seleccionar un país, solo se muestren las opciones correspondientes a ese país en los selectores dependientes.
