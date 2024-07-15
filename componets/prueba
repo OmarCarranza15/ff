@@ -1,62 +1,178 @@
-{showModal && (
-  <ModalBackground>
-    <ModalWrapper>
-      <ModalTitle>Nueva Aplicación</ModalTitle>
-      <SelectPais
-        value={modalValues.ID_Pais}
-        onChange={(e) => handleModalChange(e, "ID_Pais")}
-        error={errors.pais}
-        required
-      >
-        <option value="">Seleccione un país</option>
-        {pais.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.N_Pais}
-          </option>
-        ))}
-      </SelectPais>
-      {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
-      
-      <Select
-        isMulti
-        value={modalValues.Ambientes.map((id) => ({
-          value: id,
-          label: ambiente.find((a) => a.id === id)?.N_Ambiente,
-        }))}
-        options={ambiente.map((a) => ({
-          value: a.id,
-          label: a.N_Ambiente,
-        }))}
-        onChange={(selectedOptions) => {
-          const selectedValues = selectedOptions.map(option => option.value);
-          setModalValues((prevValues) => ({
-            ...prevValues,
-            Ambientes: selectedValues,
-          }));
-        }}
-        placeholder="Selecciona Ambientes"
-      />
-      {errors.ambientes && <ErrorMessage>{errors.ambientes}</ErrorMessage>}
+Para lograr que al seleccionar un país solo se muestren las opciones de división, razón social, departamento y centro de costos correspondientes a ese país en el modal de inserción, necesitas actualizar tus `useEffect` y manejar el cambio en el selector de país. Aquí tienes los pasos a seguir:
 
-      <ModalInput
-        type="text"
-        value={modalValues.aplicacion}
-        onChange={(e) => handleModalChange(e, "aplicacion")}
-        placeholder="Aplicacion"
-        error={errors.aplicacion}
-        required
-      />
-      {errors.aplicacion && (
-        <ErrorMessage>{errors.aplicacion}</ErrorMessage>
-      )}
-      <ModalButtonGroup>
-        <GuardarButton onClick={SaveModal}>
-          <FaSave /> Guardar
-        </GuardarButton>
-        <ModalButton cancel onClick={handleCloseModal}>
-          <FaTimes /> Cancelar
-        </ModalButton>
-      </ModalButtonGroup>
-    </ModalWrapper>
-  </ModalBackground>
+1. **Actualizar `useEffect`** para cargar los datos filtrados en función del país seleccionado.
+2. **Manejar el cambio de país** en el modal para actualizar las listas de las demás entidades.
+
+Primero, define las funciones para obtener los datos filtrados:
+
+```jsx
+const fetchRsocial = async (paisId) => {
+    try {
+        const response = await axios.get(`http://localhost:3000/rsocial/pais/${paisId}`);
+        setRsocial(response.data);
+    } catch (error) {
+        console.error('Error al obtener la lista de razón social', error);
+    }
+};
+
+const fetchDivision = async (paisId) => {
+    try {
+        const response = await axios.get(`http://localhost:3000/division/pais/${paisId}`);
+        setDivision(response.data);
+    } catch (error) {
+        console.error('Error al obtener la lista de división', error);
+    }
+};
+
+const fetchDepartamento = async (paisId) => {
+    try {
+        const response = await axios.get(`http://localhost:3000/departamento/pais/${paisId}`);
+        setDepartamento(response.data);
+    } catch (error) {
+        console.error('Error al obtener la lista de departamentos', error);
+    }
+};
+
+const fetchCentrocostos = async (paisId) => {
+    try {
+        const response = await axios.get(`http://localhost:3000/centrocosto/pais/${paisId}`);
+        setCentrocostos(response.data);
+    } catch (error) {
+        console.error('Error al obtener la lista de centro de costos', error);
+    }
+};
+```
+
+Luego, modifica el `useEffect` para cargar los datos iniciales y manejar el cambio de país:
+
+```jsx
+useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const response = await axios.get(`http://localhost:3000/puesto/`);
+            const data = response.data;
+            const mappedData = await Promise.all(
+                data.map(async (puesto) => {
+                    const paisResponse = await axios.get(`http://localhost:3000/pais/${puesto.ID_Pais}`);
+                    const rsocialResponse = await axios.get(`http://localhost:3000/rsocial/${puesto.ID_RSocial}`);
+                    const divisionResponse = await axios.get(`http://localhost:3000/division/${puesto.ID_Division}`);
+                    const departamentoResponse = await axios.get(`http://localhost:3000/departamento/${puesto.ID_Departamento}`);
+                    const centrocostoResponse = await axios.get(`http://localhost:3000/centrocosto/${puesto.ID_CentroCostos}`);
+
+                    return {
+                        id: puesto.id,
+                        N_Puesto: puesto.N_Puesto,
+                        Codigo: puesto.Codigo,
+                        ID_Pais: puesto.ID_Pais,
+                        N_Pais: paisResponse.data.N_Pais,
+                        ID_RSocial: puesto.ID_RSocial,
+                        N_RSocial: rsocialResponse.data.N_RSocial,
+                        ID_Division: puesto.ID_Division,
+                        N_Division: divisionResponse.data.N_Division,
+                        ID_Departamento: puesto.ID_Departamento,
+                        N_Departamento: departamentoResponse.data.N_Departamento,
+                        ID_CentroCostos: puesto.ID_CentroCostos,
+                        Nombre: centrocostoResponse.data.Nombre,
+                    };
+                })
+            );
+            setRecords(mappedData);
+        } catch (error) {
+            console.error('Error al obtener los Puestos:', error);
+        }
+    };
+    const fetchPais = async () => {
+        try {
+            const response = await axios.get(`http://localhost:3000/pais/`);
+            setPais(response.data);
+        } catch (error) {
+            console.error('Error al obtener la lista de Países', error);
+        }
+    };
+
+    fetchData();
+    fetchPais();
+}, []);
+
+useEffect(() => {
+    if (modalValues.ID_Pais) {
+        fetchRsocial(modalValues.ID_Pais);
+        fetchDivision(modalValues.ID_Pais);
+        fetchDepartamento(modalValues.ID_Pais);
+        fetchCentrocostos(modalValues.ID_Pais);
+    }
+}, [modalValues.ID_Pais]);
+```
+
+Finalmente, modifica el modal para manejar el cambio de país:
+
+```jsx
+const handleModalChange = (event, field) => {
+    const { value } = event.target;
+    setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
+
+    if (field === "ID_Pais") {
+        setRsocial([]);
+        setDivision([]);
+        setDepartamento([]);
+        setCentrocostos([]);
+    }
+};
+```
+
+Y actualiza el renderizado del modal para mostrar las listas filtradas:
+
+```jsx
+{showModal && (
+    <Modal>
+        <select value={modalValues.ID_Pais} onChange={(e) => handleModalChange(e, "ID_Pais")}>
+            <option value="">Seleccionar País</option>
+            {pais.map((p) => (
+                <option key={p.id} value={p.id}>
+                    {p.N_Pais}
+                </option>
+            ))}
+        </select>
+
+        <select value={modalValues.ID_RSocial} onChange={(e) => handleModalChange(e, "ID_RSocial")} disabled={!modalValues.ID_Pais}>
+            <option value="">Seleccionar Razón Social</option>
+            {rsocial.map((r) => (
+                <option key={r.id} value={r.id}>
+                    {r.N_RSocial}
+                </option>
+            ))}
+        </select>
+
+        <select value={modalValues.ID_Division} onChange={(e) => handleModalChange(e, "ID_Division")} disabled={!modalValues.ID_Pais}>
+            <option value="">Seleccionar División</option>
+            {division.map((d) => (
+                <option key={d.id} value={d.id}>
+                    {d.N_Division}
+                </option>
+            ))}
+        </select>
+
+        <select value={modalValues.ID_Departamento} onChange={(e) => handleModalChange(e, "ID_Departamento")} disabled={!modalValues.ID_Pais}>
+            <option value="">Seleccionar Departamento</option>
+            {departamento.map((d) => (
+                <option key={d.id} value={d.id}>
+                    {d.N_Departamento}
+                </option>
+            ))}
+        </select>
+
+        <select value={modalValues.ID_CentroCostos} onChange={(e) => handleModalChange(e, "ID_CentroCostos")} disabled={!modalValues.ID_Pais}>
+            <option value="">Seleccionar Centro de Costos</option>
+            {centrocosto.map((c) => (
+                <option key={c.id} value={c.id}>
+                    {c.Nombre}
+                </option>
+            ))}
+        </select>
+
+        {/* Otros campos y botones del modal */}
+    </Modal>
 )}
+```
+
+Con estos cambios, las listas de razón social, división, departamento y centro de costos se actualizarán dinámicamente en función del país seleccionado.
