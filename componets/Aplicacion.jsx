@@ -5,6 +5,8 @@ import TopBar from "./TopBar.jsx"; // Ajusta la ruta según la ubicación real d
 import { styled, keyframes } from "styled-components";
 import "../styles/DataTable.css"; // Importa el archivo CSS
 import axios from "axios";
+import Select from "react-select";
+
 import {
   FaEdit,
   FaSave,
@@ -296,22 +298,22 @@ const SelectPais = styled.select`
   ${(props) => props.error && `border: 1px solid red;`}
 `;
 
-const SelectAmbiente = styled.select`
-  width: 100%;
-  padding: 7px;
-  margin-bottom: 9px;
-  border: 2px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
-  ${(props) => props.error && `border: 1px solid red;`}
-`;
-
 const GuardarButton = styled(ModalButton)`
   background-color: #4caf50;
 `;
 
+/*const customStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    border: state.isFocused ? '1px solid #80bdff' : '1px solid #ced4da',
+    boxShadow: state.isFocused ? '0 0 0 0.2rem rgba(0,123,255,.25' : null,
+    '&:hover': {
+      border: state.isFocused ? '1px solid #80bdff' : '1px solid #adb5bd',
+    }
+  })
+};*/
+
 function Aplicacion() {
-  const [aplicacion] = useState([]);
   const [records, setRecords] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -326,7 +328,7 @@ function Aplicacion() {
   const [modalValues, setModalValues] = useState({
     ID_Pais: "",
     aplicacion: "",
-    ID_Ambiente: "",
+    Ambientes: "",
   });
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false); // Estado para mostrar/ocultar el modal
@@ -363,7 +365,7 @@ function Aplicacion() {
               N_Aplicaciones: aplicacion.N_Aplicaciones,
               ID_Pais: aplicacion.ID_Pais,
               N_Pais: paisResponse.data.N_Pais,
-              Ambientes: ambienteNombres.join(', '),
+              Ambientes: ambienteNombres,
             };
           })
         );
@@ -426,7 +428,7 @@ function Aplicacion() {
     if (!modalValues.ID_Pais) {
       newErrors.pais = "El campo Pais es obligatorio";
     }
-    if (!modalValues.ID_Ambiente) {
+    if (!modalValues.Ambientes) {
       newErrors.ambiente = "El campo Ambiente es obligatorio";
     }
 
@@ -453,7 +455,7 @@ function Aplicacion() {
         const newAplicacion = {
           N_Aplicaciones: modalValues.aplicacion,
           ID_Pais: modalValues.ID_Pais,
-          ID_Ambiente: modalValues.ID_Ambiente,
+          Ambientes: modalValues.Ambientes,
         };
         const insertResponse = await axios.post(
           `http://localhost:3000/aplicacion`,
@@ -464,10 +466,6 @@ function Aplicacion() {
         const paisResponse = await axios.get(
           `http://localhost:3000/pais/${modalValues.ID_Pais}`
         );
-        const ambienteResponse = await axios.get(
-          `http://localhost:3000/ambiente/${modalValues.ID_Ambiente}`
-        );
-
         const updatedRecords = [
           ...records,
           {
@@ -475,13 +473,13 @@ function Aplicacion() {
             N_Aplicaciones: modalValues.aplicacion,
             ID_Pais: modalValues.ID_Pais,
             N_Pais: paisResponse.data.N_Pais,
-            ID_Ambiente: modalValues.ID_Ambiente,
-            N_Ambiente: ambienteResponse.data.N_Ambiente,
+            Ambientes: modalValues.Ambientes,
           },
         ];
         setRecords(updatedRecords);
         setShowModal(false); // Ocultar el modal después de guardar
-        setModalValues({ ID_Pais: "", aplicacion: "", ID_Ambiente: "" }); // Limpiar los valores del modal
+        setModalValues({ ID_Pais: "", aplicacion: "", Ambientes: "" }); // Limpiar los valores del modal
+        window.location.reload();
       } catch (error) {
         console.error("Error al insertar un nuevo Ambiente:", error);
       }
@@ -489,27 +487,34 @@ function Aplicacion() {
   };
 
   const startEdit = (row) => {
-    setEditedRow({ ...row });
+    const ambienteIds = row.Ambientes.map((nombre) => {
+      const ambienteObj = ambiente.find((a) => a.N_Ambiente === nombre);
+      return ambienteObj ? ambienteObj.id : null;
+    }).filter((id) => id !== null);
+  
+    setEditedRow({ ...row, Ambientes: ambienteIds });
     setEditMode(row.id);
   };
+  
 
   const handleEditChange = (event, field) => {
-    const { value } = event.target;
-    setEditedRow((prevState) => ({
-      ...prevState,
-      [field]: value,
-      ...(field === "ID_Aplicaciones" && {
-        N_Aplicaciones: aplicacion.find((p) => p.id === parseInt(value))
-          .N_Aplicaciones,
-      }),
-      ...(field === "ID_Pais" && {
-        N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais,
-      }),
-      ...(field === "ID_Ambiente" && {
-        N_Ambiente: ambiente.find((p) => p.id === parseInt(value)).N_Ambiente,
-      }),
-    }));
-    validateInput(field, value);
+    if (field === "Ambientes") {
+      const selectedOptions = Array.from(event.target.selectedOptions, option => option.value);
+      setEditedRow((prevState) => ({
+        ...prevState,
+        Ambientes: selectedOptions,
+      }));
+    } else {
+      const { value } = event.target;
+      setEditedRow((prevState) => ({
+        ...prevState,
+        [field]: value,
+        ...(field === "ID_Pais" && {
+          N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais,
+        }),
+      }));
+      validateInput(field, value);
+    }
   };
 
   const validateInput = (field, value) => {
@@ -543,6 +548,7 @@ function Aplicacion() {
     try {
       const updateRow = {
         ...editedRow,
+        Ambientes: editedRow.Ambientes.join(", "),
       };
 
       await axios.put(`http://localhost:3000/aplicacion/${id}`, updateRow);
@@ -557,6 +563,7 @@ function Aplicacion() {
       setEditMode(null);
 
       console.log("Cambios guardados correctamente");
+      //window.location.reload();
     } catch (error) {
       console.error("Error al guardar los cambios", error);
     }
@@ -629,20 +636,33 @@ function Aplicacion() {
     },
     {
       name: "Ambientes",
-      selector: (row) => row.Ambientes,
+      selector: (row) => row.Ambientes.join(", "),
       sortable: true,
-      minWidth: "330px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "50px", // Ajusta el tamaño máximo según sea necesario
+      minWidth: "330px",
+      maxWidth: "50px",
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
-          <input
-            type="text"
-            value={editedRow.Ambientes}
-            onChange={(e) => handleEditChange(e, "Ambientes")}
+          <Select
+            isMulti
+            value={editedRow.Ambientes.map((id) => ({
+              value: id,
+              label: ambiente.find((a) => a.id === id)?.N_Ambiente,
+            }))}
+            options={ambiente.map((a) => ({
+              value: a.id,
+              label: a.N_Ambiente,
+            }))}
+            onChange={(selectedOptions) => {
+              const selectedValues = selectedOptions.map(option => option.value);
+              setEditedRow((prevState) => ({
+                ...prevState,
+                Ambientes: selectedValues,
+              }));
+            }}
           />
         ) : (
-          <div>{row.Ambientes}</div>
-        ),
+          <div>{row.Ambientes.join(', ')}</div>
+        )
     },
     {
       name: "Acciones",
@@ -740,19 +760,14 @@ function Aplicacion() {
               ))}
             </SelectPais>
             {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
-            <SelectAmbiente
-              value={modalValues.ID_Ambiente}
-              onChange={(e) => handleModalChange(e, "ID_Ambiente")}
+            <ModalInput
+              type="text"
+              value={modalValues.Ambientes}
+              onChange={(e) => handleModalChange(e, "Ambientes")}
+              placeholder="Aplicacion"
               error={errors.ambiente}
               required
-            >
-              <option value="">Seleccione un ambiente</option>
-              {ambiente.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.N_Ambiente}
-                </option>
-              ))}
-            </SelectAmbiente>
+            />
             {errors.ambiente && <ErrorMessage>{errors.ambiente}</ErrorMessage>}
             <ModalInput
               type="text"
