@@ -1,179 +1,62 @@
-Claro, aquí están los cambios específicos:
+{showModal && (
+  <ModalBackground>
+    <ModalWrapper>
+      <ModalTitle>Nueva Aplicación</ModalTitle>
+      <SelectPais
+        value={modalValues.ID_Pais}
+        onChange={(e) => handleModalChange(e, "ID_Pais")}
+        error={errors.pais}
+        required
+      >
+        <option value="">Seleccione un país</option>
+        {pais.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.N_Pais}
+          </option>
+        ))}
+      </SelectPais>
+      {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
+      
+      <Select
+        isMulti
+        value={modalValues.Ambientes.map((id) => ({
+          value: id,
+          label: ambiente.find((a) => a.id === id)?.N_Ambiente,
+        }))}
+        options={ambiente.map((a) => ({
+          value: a.id,
+          label: a.N_Ambiente,
+        }))}
+        onChange={(selectedOptions) => {
+          const selectedValues = selectedOptions.map(option => option.value);
+          setModalValues((prevValues) => ({
+            ...prevValues,
+            Ambientes: selectedValues,
+          }));
+        }}
+        placeholder="Selecciona Ambientes"
+      />
+      {errors.ambientes && <ErrorMessage>{errors.ambientes}</ErrorMessage>}
 
-### 1. Actualización del Estado `modalValues` para `Ambientes`:
-
-Cambia la inicialización de `modalValues`:
-
-```jsx
-const [modalValues, setModalValues] = useState({
-  ID_Pais: "",
-  aplicacion: "",
-  Ambientes: [],
-});
-```
-
-### 2. Función para manejar el cambio de `Ambientes` en el Modal:
-
-Añade esta función para manejar cambios en el select múltiple:
-
-```jsx
-const handleModalAmbienteChange = (event) => {
-  const selectedOptions = Array.from(event.target.selectedOptions, option => option.value);
-  setModalValues((prevValues) => ({ ...prevValues, Ambientes: selectedOptions }));
-};
-```
-
-### 3. Cambios en la función `SaveModal`:
-
-Asegúrate de que `Ambientes` es una lista y se maneja adecuadamente:
-
-```jsx
-const SaveModal = async () => {
-  const newErrors = { pais: "", aplicacion: "", ambientes: "" };
-
-  if (!modalValues.ID_Pais) {
-    newErrors.pais = "El campo Pais es obligatorio";
-  }
-  if (!modalValues.Ambientes.length) {
-    newErrors.ambientes = "El campo Ambiente es obligatorio";
-  }
-
-  if (!modalValues.aplicacion.trim()) {
-    newErrors.aplicacion = "El campo aplicacion es obligatorio";
-  }
-  setErrors(newErrors);
-
-  if (Object.values(newErrors).every((error) => error === "")) {
-    try {
-      const response = await axios.get(`http://localhost:3000/aplicacion`);
-      const aplicacionExists = response.data.some(
-        (aplicacion) =>
-          aplicacion.N_Aplicaciones.toLowerCase() ===
-          modalValues.aplicacion.toLowerCase()
-      );
-      if (aplicacionExists) {
-        setErrors({ aplicacion: "El Aplicacion ya existe" });
-        return;
-      }
-
-      const newAplicacion = {
-        N_Aplicaciones: modalValues.aplicacion,
-        ID_Pais: modalValues.ID_Pais,
-        Ambientes: modalValues.Ambientes.join(","),
-      };
-      const insertResponse = await axios.post(
-        `http://localhost:3000/aplicacion`,
-        newAplicacion
-      );
-
-      const paisResponse = await axios.get(
-        `http://localhost:3000/pais/${modalValues.ID_Pais}`
-      );
-      const updatedRecords = [
-        ...records,
-        {
-          id: insertResponse.data.id,
-          N_Aplicaciones: modalValues.aplicacion,
-          ID_Pais: modalValues.ID_Pais,
-          N_Pais: paisResponse.data.N_Pais,
-          Ambientes: modalValues.Ambientes.map(id => ambiente.find(a => a.id === id)?.N_Ambiente),
-        },
-      ];
-      setRecords(updatedRecords);
-      setShowModal(false); 
-      setModalValues({ ID_Pais: "", aplicacion: "", Ambientes: [] }); 
-      window.location.reload();
-    } catch (error) {
-      console.error("Error al insertar un nuevo Ambiente:", error);
-    }
-  }
-};
-```
-
-### 4. Añadir el `select` múltiple en el modal:
-
-Asegúrate de tener el select múltiple en el modal:
-
-```jsx
-<label>
-  Ambientes:
-  <select
-    multiple
-    value={modalValues.Ambientes}
-    onChange={handleModalAmbienteChange}
-  >
-    {ambiente.map((amb) => (
-      <option key={amb.id} value={amb.id}>
-        {amb.N_Ambiente}
-      </option>
-    ))}
-  </select>
-  {errors.ambientes && (
-    <p className="error">{errors.ambientes}</p>
-  )}
-</label>
-```
-
-### 5. Filtrado de `Ambientes`:
-
-Actualiza el filtro de datos para manejar `Ambientes` como una lista de nombres:
-
-```jsx
-const filteredData = records.filter((row) => {
-  return (
-    (!filters.N_Aplicaciones ||
-      row.N_Aplicaciones.toLowerCase().includes(
-        filters.N_Aplicaciones.toLowerCase()
-      )) &&
-    (!filters.N_Pais ||
-      row.N_Pais.toLowerCase().includes(filters.N_Pais.toLowerCase())) &&
-    (!filters.N_Ambientes ||
-      row.Ambientes.some((ambiente) =>
-        ambiente.toLowerCase().includes(filters.N_Ambientes.toLowerCase())
-      ))
-  );
-});
-```
-
-### 6. Manejo de `Ambientes` en `startEdit`:
-
-Ajusta el `startEdit` para convertir nombres en IDs:
-
-```jsx
-const startEdit = (row) => {
-  const ambienteIds = row.Ambientes.map((nombre) => {
-    const ambienteObj = ambiente.find((a) => a.N_Ambiente === nombre);
-    return ambienteObj ? ambienteObj.id : null;
-  }).filter((id) => id !== null);
-
-  setEditedRow({ ...row, Ambientes: ambienteIds });
-  setEditMode(row.id);
-};
-```
-
-### 7. Manejo de `Ambientes` en `saveChanges`:
-
-Asegúrate de manejar `Ambientes` correctamente al guardar cambios:
-
-```jsx
-const saveChanges = async (id) => {
-  try {
-    const updateRow = {
-      ...editedRow,
-      Ambientes: editedRow.Ambientes.join(","),
-    };
-
-    await axios.put(`http://localhost:3000/aplicacion/${id}`, updateRow);
-    setRecords((prevRecords) =>
-      prevRecords.map((row) =>
-        row.id === id ? { ...editedRow, Ambientes: editedRow.Ambientes.map(id => ambiente.find(a => a.id === id)?.N_Ambiente) } : row
-      )
-    );
-    setEditMode(false);
-  } catch (error) {
-    console.error("Error al guardar los cambios:", error);
-  }
-};
-```
-
-Estos cambios deberían ayudarte a implementar correctamente el multiselect y manejar adecuadamente los ambientes tanto en la inserción como en la edición.
+      <ModalInput
+        type="text"
+        value={modalValues.aplicacion}
+        onChange={(e) => handleModalChange(e, "aplicacion")}
+        placeholder="Aplicacion"
+        error={errors.aplicacion}
+        required
+      />
+      {errors.aplicacion && (
+        <ErrorMessage>{errors.aplicacion}</ErrorMessage>
+      )}
+      <ModalButtonGroup>
+        <GuardarButton onClick={SaveModal}>
+          <FaSave /> Guardar
+        </GuardarButton>
+        <ModalButton cancel onClick={handleCloseModal}>
+          <FaTimes /> Cancelar
+        </ModalButton>
+      </ModalButtonGroup>
+    </ModalWrapper>
+  </ModalBackground>
+)}
