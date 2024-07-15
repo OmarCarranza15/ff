@@ -328,7 +328,7 @@ function Aplicacion() {
   const [modalValues, setModalValues] = useState({
     ID_Pais: "",
     aplicacion: "",
-    Ambientes: "",
+    Ambientes: [],
   });
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false); // Estado para mostrar/ocultar el modal
@@ -422,24 +422,28 @@ function Aplicacion() {
     setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
   };
 
-  const SaveModal = async () => {
-    const newErrors = { pais: "", aplicacion: "", ambiente: "" };
+  const handleModalAmbienteChange = (event) => {
+    const selectedOptions = Array.from(event.target.selectedOptions, option => option.value);
+    setModalValues((prevValues) => ({ ...prevValues, Ambientes: selectedOptions }));
+  };
 
+  const SaveModal = async () => {
+    const newErrors = { pais: "", aplicacion: "", ambientes: "" };
+  
     if (!modalValues.ID_Pais) {
       newErrors.pais = "El campo Pais es obligatorio";
     }
-    if (!modalValues.Ambientes) {
-      newErrors.ambiente = "El campo Ambiente es obligatorio";
+    if (!modalValues.Ambientes.length) {
+      newErrors.ambientes = "El campo Ambiente es obligatorio";
     }
-
+  
     if (!modalValues.aplicacion.trim()) {
       newErrors.aplicacion = "El campo aplicacion es obligatorio";
-    } 
+    }
     setErrors(newErrors);
-
+  
     if (Object.values(newErrors).every((error) => error === "")) {
       try {
-        // Verificar si la Aplicacion ya existe en la base de datos
         const response = await axios.get(`http://localhost:3000/aplicacion`);
         const aplicacionExists = response.data.some(
           (aplicacion) =>
@@ -450,19 +454,17 @@ function Aplicacion() {
           setErrors({ aplicacion: "El Aplicacion ya existe" });
           return;
         }
-
-        // Insertar una nueva Aplicacion
+  
         const newAplicacion = {
           N_Aplicaciones: modalValues.aplicacion,
           ID_Pais: modalValues.ID_Pais,
-          Ambientes: modalValues.Ambientes,
+          Ambientes: modalValues.Ambientes.join(","),
         };
         const insertResponse = await axios.post(
           `http://localhost:3000/aplicacion`,
           newAplicacion
         );
-
-        // Actualizar la lista de Aplicaciones con la nueva aplicacion
+  
         const paisResponse = await axios.get(
           `http://localhost:3000/pais/${modalValues.ID_Pais}`
         );
@@ -473,12 +475,12 @@ function Aplicacion() {
             N_Aplicaciones: modalValues.aplicacion,
             ID_Pais: modalValues.ID_Pais,
             N_Pais: paisResponse.data.N_Pais,
-            Ambientes: modalValues.Ambientes,
+            Ambientes: modalValues.Ambientes.map(id => ambiente.find(a => a.id === id)?.N_Ambiente),
           },
         ];
         setRecords(updatedRecords);
-        setShowModal(false); // Ocultar el modal después de guardar
-        setModalValues({ ID_Pais: "", aplicacion: "", Ambientes: "" }); // Limpiar los valores del modal
+        setShowModal(false); 
+        setModalValues({ ID_Pais: "", aplicacion: "", Ambientes: [] }); 
         window.location.reload();
       } catch (error) {
         console.error("Error al insertar un nuevo Ambiente:", error);
@@ -563,7 +565,7 @@ function Aplicacion() {
       setEditMode(null);
 
       console.log("Cambios guardados correctamente");
-      //window.location.reload();
+      window.location.reload();
     } catch (error) {
       console.error("Error al guardar los cambios", error);
     }
@@ -760,15 +762,23 @@ function Aplicacion() {
               ))}
             </SelectPais>
             {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
-            <ModalInput
-              type="text"
-              value={modalValues.Ambientes}
-              onChange={(e) => handleModalChange(e, "Ambientes")}
-              placeholder="Aplicacion"
-              error={errors.ambiente}
-              required
-            />
-            {errors.ambiente && <ErrorMessage>{errors.ambiente}</ErrorMessage>}
+            <label>
+  Ambientes:
+  <select
+    multiple
+    value={modalValues.Ambientes}
+    onChange={handleModalAmbienteChange}
+  >
+    {ambiente.map((amb) => (
+      <option key={amb.id} value={amb.id}>
+        {amb.N_Ambiente}
+      </option>
+    ))}
+  </select>
+  {errors.ambientes && (
+    <p className="error">{errors.ambientes}</p>
+  )}
+</label>
             <ModalInput
               type="text"
               value={modalValues.aplicacion}
