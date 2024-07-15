@@ -422,10 +422,10 @@ function Aplicacion() {
     setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
   };
 
-  const handleModalAmbienteChange = (event) => {
+  /*const handleModalAmbienteChange = (event) => {
     const selectedOptions = Array.from(event.target.selectedOptions, option => option.value);
     setModalValues((prevValues) => ({ ...prevValues, Ambientes: selectedOptions }));
-  };
+  };*/
 
   const SaveModal = async () => {
     const newErrors = { pais: "", aplicacion: "", ambientes: "" };
@@ -745,62 +745,67 @@ function Aplicacion() {
       </ContentContainer>
       {/* Modal para insertar una nueva aplicacion */}
       {showModal && (
-        <ModalBackground>
-          <ModalWrapper>
-            <ModalTitle>Nueva Aplicación</ModalTitle>
-            <SelectPais
-              value={modalValues.ID_Pais}
-              onChange={(e) => handleModalChange(e, "ID_Pais")}
-              error={errors.pais}
-              required
-            >
-              <option value="">Seleccione un país</option>
-              {pais.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.N_Pais}
-                </option>
-              ))}
-            </SelectPais>
-            {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
-            <label>
-  Ambientes:
-  <select
-    multiple
-    value={modalValues.Ambientes}
-    onChange={handleModalAmbienteChange}
-  >
-    {ambiente.map((amb) => (
-      <option key={amb.id} value={amb.id}>
-        {amb.N_Ambiente}
-      </option>
-    ))}
-  </select>
-  {errors.ambientes && (
-    <p className="error">{errors.ambientes}</p>
-  )}
-</label>
-            <ModalInput
-              type="text"
-              value={modalValues.aplicacion}
-              onChange={(e) => handleModalChange(e, "aplicacion")}
-              placeholder="Aplicacion"
-              error={errors.aplicacion}
-              required
-            />
-            {errors.aplicacion && (
-              <ErrorMessage>{errors.aplicacion}</ErrorMessage>
-            )}
-            <ModalButtonGroup>
-              <GuardarButton onClick={SaveModal}>
-                <FaSave /> Guardar
-              </GuardarButton>
-              <ModalButton cancel onClick={handleCloseModal}>
-                <FaTimes /> Cancelar
-              </ModalButton>
-            </ModalButtonGroup>
-          </ModalWrapper>
-        </ModalBackground>
+  <ModalBackground>
+    <ModalWrapper>
+      <ModalTitle>Nueva Aplicación</ModalTitle>
+      <SelectPais
+        value={modalValues.ID_Pais}
+        onChange={(e) => handleModalChange(e, "ID_Pais")}
+        error={errors.pais}
+        required
+      >
+        <option value="">Seleccione un país</option>
+        {pais.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.N_Pais}
+          </option>
+        ))}
+      </SelectPais>
+      {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
+      
+      <Select
+        isMulti
+        value={modalValues.Ambientes.map((id) => ({
+          value: id,
+          label: ambiente.find((a) => a.id === id)?.N_Ambiente,
+        }))}
+        options={ambiente.map((a) => ({
+          value: a.id,
+          label: a.N_Ambiente,
+        }))}
+        onChange={(selectedOptions) => {
+          const selectedValues = selectedOptions.map(option => option.value);
+          setModalValues((prevValues) => ({
+            ...prevValues,
+            Ambientes: selectedValues,
+          }));
+        }}
+        placeholder="Selecciona Ambientes"
+      />
+      {errors.ambientes && <ErrorMessage>{errors.ambientes}</ErrorMessage>}
+        <br/>
+      <ModalInput
+        type="text"
+        value={modalValues.aplicacion}
+        onChange={(e) => handleModalChange(e, "aplicacion")}
+        placeholder="Aplicacion"
+        error={errors.aplicacion}
+        required
+      />
+      {errors.aplicacion && (
+        <ErrorMessage>{errors.aplicacion}</ErrorMessage>
       )}
+      <ModalButtonGroup>
+        <GuardarButton onClick={SaveModal}>
+          <FaSave /> Guardar
+        </GuardarButton>
+        <ModalButton cancel onClick={handleCloseModal}>
+          <FaTimes /> Cancelar
+        </ModalButton>
+      </ModalButtonGroup>
+    </ModalWrapper>
+  </ModalBackground>
+)}
     </MainContainer>
   );
 }
