@@ -1,14 +1,19 @@
-Parece que el problema podría estar en la forma en que se actualizan las listas dependientes (`rsocial`, `division`, `departamento`, `centrocostos`) al seleccionar un país. Vamos a revisar y ajustar la lógica para asegurarnos de que las listas se actualicen correctamente.
+Si al seleccionar un país no se actualizan las listas dependientes, puede haber varios factores en juego, como problemas en la configuración del `useEffect`, en la llamada a las APIs, o en la forma en que los datos se manejan en el estado. A continuación, vamos a abordar el problema paso a paso para asegurarnos de que todas las partes están configuradas correctamente.
 
-### Pasos a seguir:
+### Revisar el Efecto de `useEffect` y la Lógica de Estado
 
-1. **Revisar el efecto `useEffect` para actualizar las listas dependientes**:
-    - Cuando se selecciona un país (`modalValues.ID_Pais`), se deben hacer llamadas a la API para obtener las listas correspondientes a ese país y actualizar el estado.
+Vamos a desglosar y simplificar el código para verificar cada parte del proceso de selección y actualización de datos.
 
-2. **Asegurarse de que los valores de `modalValues` y `editedRow` se actualicen correctamente**:
-    - Al seleccionar un país, se deben limpiar las listas dependientes y hacer las llamadas API necesarias.
+1. **Verificar el `useEffect` para actualizar listas dependientes:**
+   - Este `useEffect` debería ejecutarse cuando `modalValues.ID_Pais` cambie.
 
-Aquí tienes el código ajustado:
+2. **Verificar las Funciones de Fetch:**
+   - Asegúrate de que cada función fetch esté correctamente definida y de que las URLs sean correctas.
+
+3. **Verificar el Estado del Modal:**
+   - Asegúrate de que `modalValues` se actualice correctamente al cambiar el valor del país.
+
+Aquí tienes un ejemplo simplificado del código con verificaciones de consola para ayudarte a depurar:
 
 ```jsx
 useEffect(() => {
@@ -65,6 +70,7 @@ useEffect(() => {
 
 useEffect(() => {
   if (modalValues.ID_Pais) {
+    console.log('ID_Pais changed:', modalValues.ID_Pais); // Verificación
     fetchRsocial(modalValues.ID_Pais);
     fetchDivision(modalValues.ID_Pais);
     fetchDepartamento(modalValues.ID_Pais);
@@ -74,7 +80,9 @@ useEffect(() => {
 
 const fetchRsocial = async (paisId) => {
   try {
+    console.log('Fetching RSocial for paisId:', paisId); // Verificación
     const response = await axios.get(`http://localhost:3000/rsocial/pais/${paisId}`);
+    console.log('RSocial data:', response.data); // Verificación
     setRsocial(response.data);
   } catch (error) {
     console.error('Error al obtener la lista de razón social', error);
@@ -83,7 +91,9 @@ const fetchRsocial = async (paisId) => {
 
 const fetchDivision = async (paisId) => {
   try {
+    console.log('Fetching Division for paisId:', paisId); // Verificación
     const response = await axios.get(`http://localhost:3000/division/pais/${paisId}`);
+    console.log('Division data:', response.data); // Verificación
     setDivision(response.data);
   } catch (error) {
     console.error('Error al obtener la lista de división', error);
@@ -92,7 +102,9 @@ const fetchDivision = async (paisId) => {
 
 const fetchDepartamento = async (paisId) => {
   try {
+    console.log('Fetching Departamento for paisId:', paisId); // Verificación
     const response = await axios.get(`http://localhost:3000/departamento/pais/${paisId}`);
+    console.log('Departamento data:', response.data); // Verificación
     setDepartamento(response.data);
   } catch (error) {
     console.error('Error al obtener la lista de departamentos', error);
@@ -101,7 +113,9 @@ const fetchDepartamento = async (paisId) => {
 
 const fetchCentrocostos = async (paisId) => {
   try {
+    console.log('Fetching CentroCostos for paisId:', paisId); // Verificación
     const response = await axios.get(`http://localhost:3000/centrocosto/pais/${paisId}`);
+    console.log('CentroCostos data:', response.data); // Verificación
     setCentrocostos(response.data);
   } catch (error) {
     console.error('Error al obtener la lista de centro de costos', error);
@@ -121,15 +135,18 @@ const handleModalChange = (event, field) => {
 };
 ```
 
-### Verificaciones adicionales:
-1. **Verifica las llamadas a la API**:
-    - Asegúrate de que las rutas de las API sean correctas y estén retornando los datos esperados.
+### Pasos para Depuración:
 
-2. **Verifica los datos recibidos**:
-    - Asegúrate de que `setRsocial`, `setDivision`, `setDepartamento` y `setCentrocostos` actualicen correctamente el estado con los datos recibidos.
+1. **Verifica las Consolas**:
+   - Revisa las salidas de consola para asegurarte de que las funciones se están llamando y que los datos se están recibiendo correctamente.
 
-3. **Asegúrate de que las listas dependientes se muestran correctamente en el modal**:
-    - Verifica que los selectores en el modal se actualicen correctamente cuando cambie el país.
+2. **Asegúrate de que las Rutas de las APIs son Correctas**:
+   - Verifica que las URLs en las llamadas a `axios.get` sean correctas y estén retornando los datos esperados.
 
-4. **Asegúrate de limpiar el estado del modal correctamente**:
-    - Al cerrar el modal o cambiar el país, asegúrate de limpiar el estado adecuadamente para evitar datos inconsistentes.
+3. **Verifica el Estado del Modal**:
+   - Asegúrate de que el estado de `modalValues` se está actualizando correctamente cuando cambias el país.
+
+4. **Verifica los Selectores en el Modal**:
+   - Asegúrate de que los selectores para `rsocial`, `division`, `departamento` y `centrocostos` están vinculados correctamente al estado y que se están actualizando cuando cambian los valores.
+
+Realiza estos pasos y verifica si las listas dependientes se actualizan correctamente. Si hay algún error específico en las llamadas a la API o en el manejo del estado, las salidas de consola te ayudarán a identificar el problema.
