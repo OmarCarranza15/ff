@@ -1,1 +1,60 @@
- React Hook useEffect has a missing dependency: 'modalValues.ID_Pais'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+import React, { useState } from 'react';
+
+const TuComponente = () => {
+  const [modalValues, setModalValues] = useState({
+    ID_Aplicaciones: '',
+    cod_menu: '', // Asegúrate de tener este campo en el estado si es necesario
+    // Otros valores de la modal
+  });
+  const [codMenuVisible, setCodMenuVisible] = useState(false); // Estado para controlar la visibilidad de cod_menu
+
+  const handleModalChange = (e, fieldName) => {
+    const value = e.target.value;
+    if (fieldName === 'ID_Aplicaciones') {
+      setModalValues({
+        ...modalValues,
+        [fieldName]: value,
+      });
+
+      // Determinar cuándo mostrar cod_menu (ejemplo con 'T24')
+      if (value === 'T24') {
+        setCodMenuVisible(true);
+      } else {
+        setCodMenuVisible(false);
+      }
+    }
+  };
+
+  return (
+    <div>
+      <select
+        value={modalValues.ID_Aplicaciones}
+        onChange={(e) => handleModalChange(e, 'ID_Aplicaciones')}
+        required
+      >
+        <option value="">Seleccione una aplicación</option>
+        {aplicacion.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.N_Aplicaciones}
+          </option>
+        ))}
+      </select>
+
+      {/* Condición para mostrar cod_menu */}
+      {codMenuVisible && (
+        <div>
+          <label>Código de Menú:</label>
+          <input
+            type="text"
+            value={modalValues.cod_menu}
+            onChange={(e) => setModalValues({ ...modalValues, cod_menu: e.target.value })}
+          />
+        </div>
+      )}
+
+      {/* Otros campos de la modal */}
+    </div>
+  );
+};
+
+export default TuComponente;
