@@ -397,7 +397,7 @@ function LandingPage() {
               Puesto_Jefe: perfil.Puesto_Jefe,
               Ticket: perfil.Ticket,
               Observaciones: perfil.Observaciones,
-              Estado_Perfil: perfil.Estado_Perfil === 1 ? "Activo": "Inactivo",
+              Estado_Perfil: perfil.Estado_Perfil === 1 ? "En Servicio": "Suspendido",
               id: perfil.id,
               ID_Pais: perfil.ID_Pais,
               ID_Aplicaciones: perfil.ID_Aplicaciones,
@@ -507,6 +507,7 @@ function LandingPage() {
     setShowModal(false);
     setModalValues({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Cod_Menu: "",  Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
     setErrors({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Cod_Menu: "",  Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
+    setT24(false);
   };
 
   
@@ -746,7 +747,7 @@ function LandingPage() {
 
       const updateRow = {
         ...editedRow,
-        Estado_Perfil: editedRow.Estado_Perfil === "Activo" ? 1: 2,
+        Estado_Perfil: editedRow.Estado_Perfil === "En Servicio" ? 1: 2,
       }
       
       await axios.put(`http://localhost:3000/perfil/${id}`,updateRow);   
@@ -928,7 +929,7 @@ function LandingPage() {
     },
     {
       name: "Aplicación",
-      selector: (row) => row.N_Aplicaciones,
+      selector: (row) => row.N_Aplicaciones && row.Cod_Menu,
       sortable: true,
       minWidth: "150px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "600px", // Ajusta el tamaño máximo según sea necesario
@@ -942,7 +943,7 @@ function LandingPage() {
           ))}
         </select>
         ) : (
-          <div>{showALLColumns ? row.N_Aplicaciones: ""}</div>
+          <div>{showALLColumns ? row.N_Aplicaciones: "" && row.Cod_Menu }</div>
       ),
     },
     {
@@ -1229,32 +1230,30 @@ function LandingPage() {
             {errors.puesto && <ErrorMessage>{errors.puesto}</ErrorMessage>}
 
             <Select
-  value={modalValues.ID_Aplicaciones}
-  onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
-  error={errors.aplicacion}
-  required
->
-  <option value="">Seleccione una aplicacion</option>
-  {aplicacion.map((p) => (
-    <option key={p.id} value={p.id}>
-      {p.N_Aplicaciones}
-    </option>
-  ))}
-</Select>
-{errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
+              value={modalValues.ID_Aplicaciones}
+              onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
+              error={errors.aplicacion}
+              required
+              >
+                <option value="">Seleccione una aplicacion</option>
+                {aplicacion.map((p) => (
+                 <option key={p.id} value={p.id}>
+                  {p.N_Aplicaciones}
+                </option>
+                  ))}
+            </Select>
+            {errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
 
-{T24 && (
-  <ModalInput
-    type="text"
-    value={modalValues.Cod_Menu}
-    onChange={(e) => handleEditChange(e, "Cod_Menu")}
-    placeholder="Codigo del Menu"
-    error={errors.Cod_Menu}
-    required
-  />
-)}
-
-
+          {T24 && (
+          <ModalInput
+            type="text"
+            value={modalValues.Cod_Menu}
+            onChange={(e) => handleEditChange(e, "Cod_Menu")}
+            placeholder="Codigo del Menu"
+            error={errors.Cod_Menu}
+            required
+            />
+          )}
             <ModalInput
               type="text"
               value={modalValues.Rol}
