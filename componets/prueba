@@ -1,17 +1,29 @@
- const [T24, setT24] = useState(false);
+ El problema puede estar en los valores que usas para las opciones del select y los datos que usas para buscar la aplicación seleccionada. Aquí hay un ajuste que asegura que los valores coincidan correctamente:
 
- const handleModalChange = (e, fieldName) => {
+1. Verifica que el valor de las opciones del select y el valor buscado en `aplicacion.find` sean consistentes.
+2. Asegúrate de que el `N_Aplicaciones` sea el nombre correcto que buscas (en este caso, 'T24').
+
+Aquí tienes el código actualizado:
+
+```javascript
+import React, { useState } from 'react';
+
+const MyComponent = ({ aplicacion, errors }) => {
+  const [modalValues, setModalValues] = useState({});
+  const [T24, setT24] = useState(false);
+
+  const handleModalChange = (e, fieldName) => {
     const value = e.target.value;
-  
+
     if (fieldName === 'ID_Aplicaciones') {
       setModalValues((prevModalValues) => ({
         ...prevModalValues,
         [fieldName]: value,
       }));
-  
+
       // Encontrar la aplicación seleccionada en la lista de aplicaciones
-      const selectedApplication = aplicacion.find(app => app.ID_Aplicaciones === value);
-  
+      const selectedApplication = aplicacion.find(app => app.id === value);
+
       // Mostrar u ocultar cod_menu basado en el nombre de la aplicación
       if (selectedApplication && selectedApplication.N_Aplicaciones === 'T24') {
         setT24(true);
@@ -26,27 +38,44 @@
     }
   };
 
+  return (
+    <div>
+      <Select
+        value={modalValues.ID_Aplicaciones || ''}
+        onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
+        error={errors.aplicacion}
+        required
+      >
+        <option value="">Seleccione una aplicacion</option>
+        {aplicacion.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.N_Aplicaciones}
+          </option>
+        ))}
+      </Select>
+      {errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
+      
+      {T24 && (
+        <ModalInput
+          type="text"
+          value={modalValues.Cod_Menu || ''}
+          onChange={(e) => handleEditChange(e, "Cod_Menu")}
+          placeholder="Codigo del Menu"
+          error={errors.Cod_Menu}
+          required
+        />
+      )}
+    </div>
+  );
+};
 
- <Select
-              value={modalValues.ID_Aplicaciones}
-              onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
-              error={errors.aplicacion}
-              required
-            >
-              <option value="">Seleccione una aplicacion</option>
-              {aplicacion.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.N_Aplicaciones}
-                </option>
-              ))}
-            </Select>
-            {errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
-            
-            {T24 && (<ModalInput
-              type="text"
-              value={modalValues.Cod_Menu}
-              onChange={(e) => handleEditChange(e, "Cod_Menu")}
-              placeholder="Codigo del Menu"
-              error={errors.Cod_Menu}
-              required
-            />)}
+export default MyComponent;
+```
+
+### Puntos clave:
+
+1. **Comparación de ID**: Asegúrate de que los valores de las opciones en el select (`p.id`) coincidan con el valor buscado (`app.id`).
+2. **Comparación de Nombre**: Asegúrate de que el nombre de la aplicación (`N_Aplicaciones`) sea exactamente 'T24' cuando quieras mostrar el campo adicional.
+3. **Valor inicial del select**: Asegúrate de que el valor del select y otros campos de entrada sean manejados correctamente, incluso si son indefinidos al principio (`modalValues.ID_Aplicaciones || ''`).
+
+Con estos ajustes, el campo adicional `Cod_Menu` debería aparecer solo cuando la aplicación seleccionada sea 'T24'.
