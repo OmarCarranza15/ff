@@ -1,3 +1,5 @@
+ const [T24, setT24] = useState(false);
+
  const handleModalChange = (e, fieldName) => {
     const value = e.target.value;
   
@@ -11,10 +13,10 @@
       const selectedApplication = aplicacion.find(app => app.ID_Aplicaciones === value);
   
       // Mostrar u ocultar cod_menu basado en el nombre de la aplicación
-      if (selectedApplication && selectedApplication.Nombre === 'T24') {
-        setT24(T24);
+      if (selectedApplication && selectedApplication.N_Aplicaciones === 'T24') {
+        setT24(true);
       } else {
-        setT24(!T24);
+        setT24(false);
       }
     } else {
       setModalValues((prevModalValues) => ({
@@ -23,3 +25,28 @@
       }));
     }
   };
+
+
+ <Select
+              value={modalValues.ID_Aplicaciones}
+              onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
+              error={errors.aplicacion}
+              required
+            >
+              <option value="">Seleccione una aplicacion</option>
+              {aplicacion.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.N_Aplicaciones}
+                </option>
+              ))}
+            </Select>
+            {errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
+            
+            {T24 && (<ModalInput
+              type="text"
+              value={modalValues.Cod_Menu}
+              onChange={(e) => handleEditChange(e, "Cod_Menu")}
+              placeholder="Codigo del Menu"
+              error={errors.Cod_Menu}
+              required
+            />)}
