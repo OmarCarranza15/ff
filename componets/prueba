@@ -1,73 +1,20 @@
-styled-components: it looks like an unknown prop "error" is being sent through to the DOM, which will likely trigger a React console error. If you would like automatic filtering of unknown props, you can opt-into that behavior via `<StyleSheetManager shouldForwardProp={...}>` (connect an API like `@emotion/is-prop-valid`) or consider using transient props (`$` prefix for automatic filtering.)
-(anónimo) @ styled-components.browser.esm.js:659
-O @ styled-components.browser.esm.js:668
-renderWithHooks @ react-dom.development.js:13468
-updateForwardRef @ react-dom.development.js:16722
-beginWork @ react-dom.development.js:18783
-beginWork$1 @ react-dom.development.js:23706
-performUnitOfWork @ react-dom.development.js:22979
-workLoopSync @ react-dom.development.js:22899
-renderRootSync @ react-dom.development.js:22872
-performSyncWorkOnRoot @ react-dom.development.js:22564
-flushSyncCallbacks @ react-dom.development.js:10561
-(anónimo) @ react-dom.development.js:22196
-Mostrar 12 más cuadros
-Mostrar menos
-styled-components.browser.esm.js:659  styled-components: it looks like an unknown prop "cancel" is being sent through to the DOM, which will likely trigger a React console error. If you would like automatic filtering of unknown props, you can opt-into that behavior via `<StyleSheetManager shouldForwardProp={...}>` (connect an API like `@emotion/is-prop-valid`) or consider using transient props (`$` prefix for automatic filtering.)
-(anónimo) @ styled-components.browser.esm.js:659
-O @ styled-components.browser.esm.js:668
-renderWithHooks @ react-dom.development.js:13468
-updateForwardRef @ react-dom.development.js:16722
-beginWork @ react-dom.development.js:18783
-beginWork$1 @ react-dom.development.js:23706
-performUnitOfWork @ react-dom.development.js:22979
-workLoopSync @ react-dom.development.js:22899
-renderRootSync @ react-dom.development.js:22872
-performSyncWorkOnRoot @ react-dom.development.js:22564
-flushSyncCallbacks @ react-dom.development.js:10561
-(anónimo) @ react-dom.development.js:22196
-Mostrar 12 más cuadros
-Mostrar menos
-index.js:1191  Warning: Received `true` for a non-boolean attribute `cancel`.
+const handleModalChange = (e, fieldName) => {
+  const value = e.target.value;
 
-If you want to write it to the DOM, pass a string instead: cancel="true" or cancel={value.toString()}.
-    at button
-    at O (http://localhost:3001/static/js/0.chunk.js:135786:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:135786:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:135786:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:135786:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:135786:6)
-    at LandingPage (http://localhost:3001/static/js/main.chunk.js:12685:87)
-    at RenderedRoute (http://localhost:3001/static/js/0.chunk.js:121757:5)
-    at Routes (http://localhost:3001/static/js/0.chunk.js:122448:5)
-    at div
-    at Router (http://localhost:3001/static/js/0.chunk.js:122382:15)
-    at BrowserRouter (http://localhost:3001/static/js/0.chunk.js:120323:5)
-    at div
-    at div
-    at div
-    at div
-    at App
-console.<computed> @ index.js:1191
-printWarning @ react-dom.development.js:74
-error @ react-dom.development.js:51
-validateProperty$1 @ react-dom.development.js:3379
-warnUnknownProperties @ react-dom.development.js:3409
-validateProperties$2 @ react-dom.development.js:3428
-validatePropertiesInDevelopment @ react-dom.development.js:8400
-setInitialProperties @ react-dom.development.js:8648
-finalizeInitialChildren @ react-dom.development.js:9605
-completeWork @ react-dom.development.js:19256
-completeUnitOfWork @ react-dom.development.js:23006
-performUnitOfWork @ react-dom.development.js:22985
-workLoopSync @ react-dom.development.js:22899
-renderRootSync @ react-dom.development.js:22872
-performSyncWorkOnRoot @ react-dom.development.js:22564
-flushSyncCallbacks @ react-dom.development.js:10561
-(anónimo) @ react-dom.development.js:22196
-Mostrar 17 más cuadros
-Mostrar menos
+  // Actualizar el valor del campo en modalValues
+  setModalValues((prevModalValues) => ({
+    ...prevModalValues,
+    [fieldName]: value,
+  }));
+
+  // Encontrar la aplicación seleccionada en la lista de aplicaciones
+  const selectedApplication = aplicacion.find(app => app.id === value);
+
+  // Determinar si la aplicación seleccionada es T24
+  const isT24 = selectedApplication && selectedApplication.N_Aplicaciones === 'T24';
+
+  // Actualizar el estado T24
+  setT24(isT24);
+
+  // Puedes agregar más lógica aquí según sea necesario para otros campos
+};
