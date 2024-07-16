@@ -6,32 +6,45 @@
     return aplicacionText + (aplicacionText && codMenuText ? " - " : "") + codMenuText;
   },
   sortable: true,
-  minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
-  maxWidth: "1000px", // Ajusta el tamaño máximo según sea necesario
+  minWidth: "350px",
+  maxWidth: "1000px",
   cell: (row) => (
     editMode && editedRow?.id === row.id ? (
       <>
-        <select value={editedRow.ID_Aplicaciones} onChange={(e) => handleEditChange(e, "ID_Aplicaciones")}>
+        <select
+          value={editedRow.ID_Aplicaciones}
+          onChange={(e) => handleEditChange(e, "ID_Aplicaciones")}
+        >
           {aplicacion.map((aplicacion) => (
             <option key={aplicacion.id} value={aplicacion.id}>
               {aplicacion.N_Aplicaciones}
             </option>
           ))}
         </select>
-        <input
-          type="text"
-          value={editedRow.Cod_Menu}
-          onChange={(e) => handleEditChange(e, "Cod_Menu")}
-        />
+        {editedRow.N_Aplicaciones === 'T24' ? (
+          <input
+            type="text"
+            value={editedRow.Cod_Menu}
+            onChange={(e) => handleEditChange(e, "Cod_Menu")}
+          />
+        ) : (
+          <input
+            type="text"
+            value={editedRow.Cod_Menu}
+            readOnly // Establecer el campo como solo lectura si no es T24
+          />
+        )}
       </>
     ) : (
-      <div>{showALLColumns ? (
-        <>
-          {row.N_Aplicaciones && <span>{row.N_Aplicaciones}</span>}
-          {row.N_Aplicaciones && row.Cod_Menu && <span> - </span>}
-          {row.Cod_Menu && <span>{row.Cod_Menu}</span>}
-        </>
-      ) : ""}</div>
+      <div>
+        {showALLColumns ? (
+          <>
+            {row.N_Aplicaciones && <span>{row.N_Aplicaciones}</span>}
+            {row.N_Aplicaciones && row.Cod_Menu && <span> - </span>}
+            {row.Cod_Menu && <span>{row.Cod_Menu}</span>}
+          </>
+        ) : ""}
+      </div>
     )
   ),
 }
