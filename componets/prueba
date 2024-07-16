@@ -1,21 +1,27 @@
-const handleModalChange = (e, fieldName) => {
-  const value = e.target.value;
-
-  // Actualizar el valor del campo en modalValues
-  setModalValues((prevModalValues) => ({
-    ...prevModalValues,
-    [fieldName]: value,
-  }));
-
-  // Encontrar la aplicación seleccionada en la lista de aplicaciones
-  const selectedApplication = aplicacion.find(app => app.id === parseInt(value)); // Asegúrate de convertir a entero si es necesario
-
-  // Verificar si la aplicación seleccionada es T24
-  const isT24 = selectedApplication ? selectedApplication.N_Aplicaciones === 'T24' : false;
-
-  // Actualizar el estado T24
-  setT24(isT24);
-
-  // Log para verificar en consola la aplicación seleccionada
-  console.log('Aplicación seleccionada:', selectedApplication);
-};
+{
+  name: "Aplicación y Código del Menú",
+  selector: (row) => `${row.N_Aplicaciones} - ${row.Cod_Menu}`,
+  sortable: true,
+  minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
+  maxWidth: "1000px", // Ajusta el tamaño máximo según sea necesario
+  cell: (row) => (
+    editMode && editedRow?.id === row.id ? (
+      <>
+        <select value={editedRow.ID_Aplicaciones} onChange={(e) => handleEditChange(e, "ID_Aplicaciones")}>
+          {aplicacion.map((aplicacion) => (
+            <option key={aplicacion.id} value={aplicacion.id}>
+              {aplicacion.N_Aplicaciones}
+            </option>
+          ))}
+        </select>
+        <input
+          type="text"
+          value={editedRow.Cod_Menu}
+          onChange={(e) => handleEditChange(e, "Cod_Menu")}
+        />
+      </>
+    ) : (
+      <div>{showALLColumns ? `${row.N_Aplicaciones} - ${row.Cod_Menu}` : ""}</div>
+    )
+  ),
+}
