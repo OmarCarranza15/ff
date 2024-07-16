@@ -315,8 +315,8 @@ function LandingPage() {
   const [centrocosto, setCentrocostos] = useState([]);
   const [aplicacion, setAplicacion] = useState([]);
   const [ambiente, setAmbiente] = useState([]);
-  const [errors, setErrors] = useState({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
-  const [modalValues, setModalValues] = useState({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
+  const [errors, setErrors] = useState({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Cod_Menu: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
+  const [modalValues, setModalValues] = useState({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Cod_Menu: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
   const [showModal, setShowModal] = useState(false);
   const location = useLocation();
   const [selectedCountry, setSelectedCountry] = useState("");
@@ -347,6 +347,7 @@ function LandingPage() {
     ID_Aplicaciones: "",
     ID_Puesto:"",
     ID_Ambiente:"",
+    Cod_Menu: "",
   });
   
   
@@ -359,9 +360,6 @@ function LandingPage() {
   
 
   useEffect(()=> {
-    /*const searchParams = new URLSearchParams(location.search);
-        const paisParam =  searchParams.get("pais") || setShowALLColumns(true) || setShowButton(false) || setShowFilters(false) || setShowButtonB(true);
-        setSelectedCountry(paisParam || "" );*/
     const searchParams = new URLSearchParams(location.search);
     const paisId = searchParams.get("pais") || setShowALLColumns(true) || setShowButton(false) || setShowFilters(false) || setShowButtonB(true);
     const paisNombre = searchParams.get("Nombre");
@@ -402,6 +400,7 @@ function LandingPage() {
               ID_Pais: perfil.ID_Pais,
               ID_Aplicaciones: perfil.ID_Aplicaciones,
               ID_Puesto: perfil.ID_Puesto,
+              Cod_Menu: perfil.Cod_Menu,
               ID_Ambiente: aplicacionResponse.data.ID_Ambiente,
               ID_RSocial: puestoResponse.data.ID_RSocial,
               ID_Division: puestoResponse.data.ID_Division,
@@ -422,7 +421,9 @@ function LandingPage() {
     const fetchPuestos = async () =>{
       try {
           const response = await axios.get(`http://localhost:3000/puesto/`);
-          setPuestos(response.data);
+          const allPuestos = response.data;
+          const filteredPuestos = allPuestos.filter(puestos => puestos.ID_Pais === parseInt(paisId, 10));
+          setPuestos(filteredPuestos);
       } catch (error) {
           console.error('Error al obtener la lista de puestos', error);
       }
@@ -459,10 +460,12 @@ function LandingPage() {
            console.error('Error al obtener la lista de centro de costos', error);
       }
   };
-    const fetchAplicacion = async (ID_Pais) =>{
+    const fetchAplicacion = async () =>{
       try {
-           const response = await axios.get(`http://localhost:3000/aplicacion?${ID_Pais}`);
-           setAplicacion(response.data);
+           const response = await axios.get(`http://localhost:3000/aplicacion/`);
+           const allAplicaciones = response.data;
+           const filteredAplicaciones = allAplicaciones.filter(aplicacion => aplicacion.ID_Pais === parseInt(paisId, 10));
+           setAplicacion(filteredAplicaciones)
       } catch (error) {
            console.error('Error al obtener la lista de aplicaciones', error);
       }
@@ -500,8 +503,8 @@ function LandingPage() {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setModalValues({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
-    setErrors({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
+    setModalValues({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Cod_Menu: "",  Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
+    setErrors({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Cod_Menu: "",  Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
   };
 
   const handleModalChange = (event, field) => {
@@ -520,6 +523,7 @@ function LandingPage() {
       Puesto_Jefe: "",
       Observaciones: "",
       Ticket: "",
+      Cod_Menu: "", 
     };
   
     if (!modalValues.ID_Puesto) {
@@ -589,6 +593,7 @@ function LandingPage() {
           Ticket: parseInt(modalValues.Ticket, 10),
           Observaciones: modalValues.Observaciones,
           Puesto_Jefe: modalValues.Puesto_Jefe,
+          Cod_Menu: modalValues.Cod_Menu,
         };
   
         console.log("Enviando datos:", newPerfil);
@@ -607,6 +612,7 @@ function LandingPage() {
         const aplicacionResponse = await axios.get(
           `http://localhost:3000/aplicacion/${modalValues.ID_Aplicaciones}`
         );
+
         const puestoResponse = await axios.get(
           `http://localhost:3000/puesto/${modalValues.ID_Puesto}`
         );
@@ -630,6 +636,7 @@ function LandingPage() {
             N_Aplicaciones: aplicacionResponse.data.N_Aplicaciones,
             ID_Puesto: modalValues.ID_Puesto,
             N_Puesto: puestoResponse.data.N_Puesto,
+            Cod_Menu: modalValues.Cod_Menu,
           },
         ];
   
@@ -644,6 +651,7 @@ function LandingPage() {
           Estado_Perfil: "",
           ID_Puesto: "",
           ID_Aplicaciones: "",
+          Cod_Menu: "", 
         }); // Limpiar los valores del modal
         window.location.reload();
       } catch (error) {
@@ -776,8 +784,8 @@ function LandingPage() {
 
   const handleSearch = () =>{
     if (showButton){
-      const {Rol, N_Puesto} = filters;
-      if (!Rol && !N_Puesto){
+      const {Rol, N_Puesto,Puesto_Jefe,N_Aplicaciones} = filters;
+      if (!Rol && !N_Puesto && !Puesto_Jefe && !N_Aplicaciones){
         alert("Por favor escriba algo en Puesto, Rol, Aplicacion o Jefe Inmediato");
         return;
       } 
@@ -914,6 +922,24 @@ function LandingPage() {
         </select>
         ) : (
           <div>{showALLColumns ? row.N_Aplicaciones: ""}</div>
+      ),
+    },
+    {
+      name: "Codigo del menu",
+      omit: !showColumns,
+      selector: (row) => row.Cod_Menu,
+      sortable: true,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.Cod_Menu}
+            onChange={(e) => handleEditChange(e, "Cod_Menu")}
+          />
+        ) : (
+          <div>{showALLColumns ? row.Cod_Menu: ""}</div>
       ),
     },
     /*{
@@ -1154,7 +1180,7 @@ function LandingPage() {
             columns={columns}
             data={dataFil}
             pagination
-            paginationPerPage={13}
+            paginationPerPage={15}
             showFilters={showFilters}
             noDataComponent= {<h2 style={{color:  " #004ea1"}}>Por favor busque un registro</h2>}
           />)}
@@ -1165,9 +1191,7 @@ function LandingPage() {
        {showModal && (
         <ModalBackground>
           <ModalWrapper>
-            <ModalTitle>Nuevo Perfil</ModalTitle>
-
-
+            <ModalTitle>Nuevo Perfil {selectedCountry}</ModalTitle>
             <Select
               value={modalValues.ID_Puesto}
               onChange={(e) => handleModalChange(e, "ID_Puesto")}
@@ -1197,6 +1221,16 @@ function LandingPage() {
               ))}
             </Select>
             {errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
+            
+            <ModalInput
+              type="text"
+              value={modalValues.Cod_Menu}
+              onChange={(e) => handleModalChange(e, "Cod_Menu")}
+              placeholder="Codigo del Menu"
+              error={errors.Cod_Menu}
+              required
+            />
+
 
             <ModalInput
               type="text"
