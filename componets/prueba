@@ -10,11 +10,12 @@ const handleModalChange = (e, fieldName) => {
   // Encontrar la aplicación seleccionada en la lista de aplicaciones
   const selectedApplication = aplicacion.find(app => app.id === value);
 
-  // Determinar si la aplicación seleccionada es T24
-  const isT24 = selectedApplication && selectedApplication.N_Aplicaciones === 'T24';
+  // Verificar si la aplicación seleccionada es T24
+  const isT24 = selectedApplication ? selectedApplication.N_Aplicaciones === 'T24' : false;
 
   // Actualizar el estado T24
   setT24(isT24);
 
-  // Puedes agregar más lógica aquí según sea necesario para otros campos
+  // Log para verificar en consola la aplicación seleccionada
+  console.log('Aplicación seleccionada:', selectedApplication);
 };
