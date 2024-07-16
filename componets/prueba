@@ -7,7 +7,7 @@ const handleModalChange = (e, fieldName) => {
       [fieldName]: value,
     }));
 
-    // Encontrar la aplicación seleccionada
+    // Encontrar la aplicación seleccionada en la lista de aplicaciones
     const selectedApplication = applications.find(app => app.ID_Aplicaciones === value);
 
     // Mostrar u ocultar cod_menu basado en el nombre de la aplicación
