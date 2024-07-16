@@ -308,6 +308,7 @@ function Puesto() {
   const [modalValues, setModalValues] = useState({ ID_Pais: "", Codigo: "", N_Puesto: "", ID_RSocial: "", ID_Division: "", ID_Departamento: "", ID_CentroCostos: "" });
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [filteredRsocial, setFilteredRsocial] = useState([]);
 
 
   const [filters, setFilters] = useState({
@@ -322,7 +323,7 @@ function Puesto() {
 
   
 
-  useEffect(()=> {
+  useEffect((ID_Pais)=> {
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -370,8 +371,10 @@ function Puesto() {
     };
     const fetchRsocial = async () =>{
         try {
-             const response = await axios.get(`http://localhost:3000/rsocial/`);
-             setRsocial(response.data);
+          const response = await axios.get(`http://localhost:3000/rsocial/`);
+          const allRsiacial = response.data;
+          const filteredRsocial = allRsiacial.filter(rsocial => rsocial.ID_Pais === parseInt(ID_Pais, 10));
+          setRsocial(filteredRsocial)
          } catch (error) {
              console.error('Error al obtener la lista de razon social', error);
          }
@@ -409,6 +412,13 @@ function Puesto() {
     fetchDepartamento();
     fetchCentrocostos();
   }, []);
+
+  useEffect(() => {
+    if (modalValues.ID_Pais){
+      const filtered = rsocial.filter(rs => rs.ID_Pais === modalValues.ID_Pais);
+      setFilteredRsocial(filtered);
+    }
+  },[modalValues.ID_Pais, rsocial])
 
  
 
@@ -972,14 +982,15 @@ function Puesto() {
 
             <Select
               value={modalValues.ID_RSocial}
-              onChange={(e) => handleModalChange(e, "ID_RSocial")}
+              onChange={handleModalChange}
+              name="ID_RSocial"
               error={errors.rsocial}
               required
             >
               <option value="">Seleccione una Razon Social</option>
-              {rsocial.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.N_RSocial}
+              {filteredRsocial.map((rs) => (
+                <option key={rs.id} value={rs.id}>
+                  {rs.N_RSocial}
                 </option>
               ))}
             </Select>
