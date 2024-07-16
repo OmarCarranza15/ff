@@ -1,5 +1,6 @@
 const handleModalChange = (e, fieldName) => {
   const value = e.target.value;
+
   if (fieldName === 'ID_Aplicaciones') {
     setModalValues((prevModalValues) => ({
       ...prevModalValues,
@@ -8,9 +9,9 @@ const handleModalChange = (e, fieldName) => {
 
     // Determinar cuándo mostrar cod_menu (ejemplo con 'T24')
     if (value === 'T24') {
-      setCodMenuVisible(true); // Aquí debes tener un estado codMenuVisible y su respectivo setter
+      setCodMenuVisible(true); // Mostrar cod_menu si el valor es 'T24'
     } else {
-      setCodMenuVisible(false); // Si no es 'T24', ocultar cod_menu
+      setCodMenuVisible(false); // Ocultar cod_menu en otros casos
     }
   } else {
     setModalValues((prevModalValues) => ({
