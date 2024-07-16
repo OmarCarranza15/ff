@@ -1,11 +1,3 @@
- El problema puede estar en los valores que usas para las opciones del select y los datos que usas para buscar la aplicación seleccionada. Aquí hay un ajuste que asegura que los valores coincidan correctamente:
-
-1. Verifica que el valor de las opciones del select y el valor buscado en `aplicacion.find` sean consistentes.
-2. Asegúrate de que el `N_Aplicaciones` sea el nombre correcto que buscas (en este caso, 'T24').
-
-Aquí tienes el código actualizado:
-
-```javascript
 import React, { useState } from 'react';
 
 const MyComponent = ({ aplicacion, errors }) => {
@@ -70,12 +62,3 @@ const MyComponent = ({ aplicacion, errors }) => {
 };
 
 export default MyComponent;
-```
-
-### Puntos clave:
-
-1. **Comparación de ID**: Asegúrate de que los valores de las opciones en el select (`p.id`) coincidan con el valor buscado (`app.id`).
-2. **Comparación de Nombre**: Asegúrate de que el nombre de la aplicación (`N_Aplicaciones`) sea exactamente 'T24' cuando quieras mostrar el campo adicional.
-3. **Valor inicial del select**: Asegúrate de que el valor del select y otros campos de entrada sean manejados correctamente, incluso si son indefinidos al principio (`modalValues.ID_Aplicaciones || ''`).
-
-Con estos ajustes, el campo adicional `Cod_Menu` debería aparecer solo cuando la aplicación seleccionada sea 'T24'.
