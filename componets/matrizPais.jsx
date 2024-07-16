@@ -358,11 +358,7 @@ function LandingPage() {
   const handleToggleALLColumns = () =>{
     setShowALLColumns(true);
   } 
-  const handleToggleT24 = () =>{
-    setT24(!T24)
-  }
   
-
   useEffect(()=> {
     const searchParams = new URLSearchParams(location.search);
     const paisId = searchParams.get("pais") || setShowALLColumns(true) || setShowButton(false) || setShowFilters(false) || setShowButtonB(true);
@@ -387,9 +383,7 @@ function LandingPage() {
             const paisResponse = await axios.get(`http://localhost:3000/pais/${perfil.ID_Pais}`); 
             const ambienteResponse = await axios.get(`http://localhost:3000/ambiente/${aplicacionResponse.data.ID_Ambiente}`)
 
-            if (aplicacionResponse.data.N_Aplicaciones === 'T24'){
-              setT24(true);
-            }
+            
 
             return {
               N_RSocial: rsocialResponse.data.N_RSocial,
@@ -515,10 +509,29 @@ function LandingPage() {
     setErrors({ ID_Pais: "", Rol: "", Ticket:"", Observaciones: "", Puesto_Jefe: "", Cod_Menu: "",  Estado_Perfil: "", ID_Puesto: "", ID_Aplicaciones:"" });
   };
 
-  const handleModalChange = (event, field) => {
-    const { value } = event.target;
-    setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
+  
+  const handleModalChange = (e, fieldName) => {
+    const value = e.target.value;
+  
+    // Actualizar el valor del campo en modalValues
+    setModalValues((prevModalValues) => ({
+      ...prevModalValues,
+      [fieldName]: value,
+    }));
+  
+    // Encontrar la aplicación seleccionada en la lista de aplicaciones
+    const selectedApplication = aplicacion.find(app => app.id === parseInt(value)); // Asegúrate de convertir a entero si es necesario
+  
+    // Verificar si la aplicación seleccionada es T24
+    const isT24 = selectedApplication ? selectedApplication.N_Aplicaciones === 'T24' : false;
+  
+    // Actualizar el estado T24
+    setT24(isT24);
+  
+    // Log para verificar en consola la aplicación seleccionada
+    //console.log('Aplicación seleccionada:', selectedApplication);
   };
+  
 
 
   const SaveModal = async () => {
@@ -1021,11 +1034,11 @@ function LandingPage() {
       omit: !showColumns,
       selector: (row) => editMode === row.id ?(
         <select value={editedRow.Estado_Perfil} onChange={(e) => handleEditChange(e, "Estado_Perfil")}>
-          <option value={"Activo"}>
-            Activo
+          <option value={"En Servicio"}>
+            En Servicio
           </option>
-          <option value={"Inactivo"}>
-            Inactivo
+          <option value={"Suspendido"}>
+            Suspendido
           </option>
         </select>
       )
@@ -1085,8 +1098,8 @@ function LandingPage() {
           <HeaderContainer>
             <Title>Matriz de perfiles de {selectedCountry}</Title>
             <ButtonGroup>
-            <Button primary onClick={handleToggleT24}>{
-              T24 ? "ocultar" : "mostrar"}</Button>
+            {/*<Button primary onClick={handleToggleT24}>{
+              T24 ? "ocultar" : "mostrar"}</Button>*/}
               {showButtonB ?<Button primary onClick={toggleFilters}>{showFilters ? "Ocultar" : "Buscar"}</Button> : ''}
               <Button onClick={handleInsert}><FaPlus />Insertar Nuevo Perfil</Button>
             </ButtonGroup>
@@ -1216,28 +1229,30 @@ function LandingPage() {
             {errors.puesto && <ErrorMessage>{errors.puesto}</ErrorMessage>}
 
             <Select
-              value={modalValues.ID_Aplicaciones}
-              onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
-              error={errors.aplicacion}
-              required
-            >
-              <option value="">Seleccione una aplicacion</option>
-              {aplicacion.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.N_Aplicaciones}
-                </option>
-              ))}
-            </Select>
-            {errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
-            
-            {T24 && (<ModalInput
-              type="text"
-              value={modalValues.Cod_Menu}
-              onChange={(e) => handleModalChange(e, "Cod_Menu")}
-              placeholder="Codigo del Menu"
-              error={errors.Cod_Menu}
-              required
-            />)}
+  value={modalValues.ID_Aplicaciones}
+  onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
+  error={errors.aplicacion}
+  required
+>
+  <option value="">Seleccione una aplicacion</option>
+  {aplicacion.map((p) => (
+    <option key={p.id} value={p.id}>
+      {p.N_Aplicaciones}
+    </option>
+  ))}
+</Select>
+{errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
+
+{T24 && (
+  <ModalInput
+    type="text"
+    value={modalValues.Cod_Menu}
+    onChange={(e) => handleEditChange(e, "Cod_Menu")}
+    placeholder="Codigo del Menu"
+    error={errors.Cod_Menu}
+    required
+  />
+)}
 
 
             <ModalInput
