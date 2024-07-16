@@ -8,7 +8,8 @@ const handleModalChange = (e, fieldName) => {
     }));
 
     // Determinar cuándo mostrar cod_menu (ejemplo con 'T24')
-    if (value === 'T24') {
+    const selectedApplication = applications.find(app => app.ID_Aplicaciones === value);
+    if (selectedApplication && selectedApplication.Nombre === 'T24') {
       setCodMenuVisible(true);
     } else {
       setCodMenuVisible(false);
