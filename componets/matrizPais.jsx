@@ -928,6 +928,43 @@ function LandingPage() {
       ),
     },
     {
+      name: "Aplicación ",
+      selector: (row) => {
+        const aplicacionText = row.N_Aplicaciones || "";
+        const codMenuText = row.Cod_Menu || "";
+        return aplicacionText + (aplicacionText && codMenuText ? " - " : "") + codMenuText;
+      },
+      sortable: true,
+      minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "1000px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => (
+        editMode && editedRow?.id === row.id ? (
+          <>
+            <select value={editedRow.ID_Aplicaciones} onChange={(e) => handleEditChange(e, "ID_Aplicaciones")}>
+              {aplicacion.map((aplicacion) => (
+                <option key={aplicacion.id} value={aplicacion.id}>
+                  {aplicacion.N_Aplicaciones}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={editedRow.Cod_Menu}
+              onChange={(e) => handleEditChange(e, "Cod_Menu")}
+            />
+          </>
+        ) : (
+          <div>{showALLColumns ? (
+            <>
+              {row.N_Aplicaciones && <span>{row.N_Aplicaciones}</span>}
+              {row.N_Aplicaciones && row.Cod_Menu && <span> - </span>}
+              {row.Cod_Menu && <span>{row.Cod_Menu}</span>}
+            </>
+          ) : ""}</div>
+        )
+      ),
+    },
+    /*
       name: "Aplicación",
       selector: (row) => row.N_Aplicaciones && row.Cod_Menu,
       sortable: true,
@@ -945,8 +982,8 @@ function LandingPage() {
         ) : (
           <div>{showALLColumns ? row.N_Aplicaciones: "" && row.Cod_Menu }</div>
       ),
-    },
-    {
+    
+    
       name: "Codigo del menu",
       omit: !showColumns,
       selector: (row) => row.Cod_Menu,
@@ -963,7 +1000,8 @@ function LandingPage() {
         ) : (
           <div>{showALLColumns ? row.Cod_Menu: ""}</div>
       ),
-    },
+    },*/
+
     /*{
       name: "Ambiente",
       selector: (row) => row.N_Ambiente,
