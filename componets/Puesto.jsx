@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 import Sidebar from "./SideNavBar.jsx"; // Ajusta la ruta según la ubicación real de Sidebar.jsx
@@ -308,7 +309,6 @@ function Puesto() {
   const [modalValues, setModalValues] = useState({ ID_Pais: "", Codigo: "", N_Puesto: "", ID_RSocial: "", ID_Division: "", ID_Departamento: "", ID_CentroCostos: "" });
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [filteredRsocial, setFilteredRsocial] = useState([]);
 
 
   const [filters, setFilters] = useState({
@@ -323,7 +323,7 @@ function Puesto() {
 
   
 
-  useEffect((ID_Pais)=> {
+  useEffect(()=> {
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -370,15 +370,13 @@ function Puesto() {
         }
     };
     const fetchRsocial = async () =>{
-        try {
-          const response = await axios.get(`http://localhost:3000/rsocial/`);
-          const allRsiacial = response.data;
-          const filteredRsocial = allRsiacial.filter(rsocial => rsocial.ID_Pais === parseInt(ID_Pais, 10));
-          setRsocial(filteredRsocial)
-         } catch (error) {
-             console.error('Error al obtener la lista de razon social', error);
-         }
-     };
+      try {
+            const response = await axios.get(`http://localhost:3000/rsocial?ID_Pais=${modalValues.ID_Pais}`);
+           setRsocial(response.data.map((rs) => ({value: rs.ID_RSocial, label: rs.N_RSocial})));
+       } catch (error) {
+           console.error('Error al obtener la lista de razon social', error);
+       }
+   };
      const fetchDivision = async () =>{
         try {
              const response = await axios.get(`http://localhost:3000/division/`);
@@ -411,14 +409,13 @@ function Puesto() {
     fetchDivision();
     fetchDepartamento();
     fetchCentrocostos();
-  }, []);
 
-  useEffect(() => {
-    if (modalValues.ID_Pais){
-      const filtered = rsocial.filter(rs => rs.ID_Pais === modalValues.ID_Pais);
-      setFilteredRsocial(filtered);
+    if( modalValues.ID_Pais){
+      fetchRsocial();
     }
-  },[modalValues.ID_Pais, rsocial])
+  }, [modalValues.ID_Pais]);
+
+ 
 
  
 
@@ -982,15 +979,14 @@ function Puesto() {
 
             <Select
               value={modalValues.ID_RSocial}
-              onChange={handleModalChange}
-              name="ID_RSocial"
+              onChange={(e) => handleModalChange(e, "ID_RSocial")}
               error={errors.rsocial}
               required
             >
               <option value="">Seleccione una Razon Social</option>
-              {filteredRsocial.map((rs) => (
-                <option key={rs.id} value={rs.id}>
-                  {rs.N_RSocial}
+              {rsocial.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.N_RSocial}
                 </option>
               ))}
             </Select>
