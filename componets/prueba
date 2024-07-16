@@ -1,60 +1,21 @@
-import React, { useState } from 'react';
+const handleModalChange = (e, fieldName) => {
+  const value = e.target.value;
+  if (fieldName === 'ID_Aplicaciones') {
+    setModalValues((prevModalValues) => ({
+      ...prevModalValues,
+      [fieldName]: value,
+    }));
 
-const TuComponente = () => {
-  const [modalValues, setModalValues] = useState({
-    ID_Aplicaciones: '',
-    cod_menu: '', // Asegúrate de tener este campo en el estado si es necesario
-    // Otros valores de la modal
-  });
-  const [codMenuVisible, setCodMenuVisible] = useState(false); // Estado para controlar la visibilidad de cod_menu
-
-  const handleModalChange = (e, fieldName) => {
-    const value = e.target.value;
-    if (fieldName === 'ID_Aplicaciones') {
-      setModalValues({
-        ...modalValues,
-        [fieldName]: value,
-      });
-
-      // Determinar cuándo mostrar cod_menu (ejemplo con 'T24')
-      if (value === 'T24') {
-        setCodMenuVisible(true);
-      } else {
-        setCodMenuVisible(false);
-      }
+    // Determinar cuándo mostrar cod_menu (ejemplo con 'T24')
+    if (value === 'T24') {
+      setCodMenuVisible(true); // Aquí debes tener un estado codMenuVisible y su respectivo setter
+    } else {
+      setCodMenuVisible(false); // Si no es 'T24', ocultar cod_menu
     }
-  };
-
-  return (
-    <div>
-      <select
-        value={modalValues.ID_Aplicaciones}
-        onChange={(e) => handleModalChange(e, 'ID_Aplicaciones')}
-        required
-      >
-        <option value="">Seleccione una aplicación</option>
-        {aplicacion.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.N_Aplicaciones}
-          </option>
-        ))}
-      </select>
-
-      {/* Condición para mostrar cod_menu */}
-      {codMenuVisible && (
-        <div>
-          <label>Código de Menú:</label>
-          <input
-            type="text"
-            value={modalValues.cod_menu}
-            onChange={(e) => setModalValues({ ...modalValues, cod_menu: e.target.value })}
-          />
-        </div>
-      )}
-
-      {/* Otros campos de la modal */}
-    </div>
-  );
+  } else {
+    setModalValues((prevModalValues) => ({
+      ...prevModalValues,
+      [fieldName]: value,
+    }));
+  }
 };
-
-export default TuComponente;
