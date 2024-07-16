@@ -1,25 +1,25 @@
-const handleModalChange = (e, fieldName) => {
-  const value = e.target.value;
-
-  if (fieldName === 'ID_Aplicaciones') {
-    setModalValues((prevModalValues) => ({
-      ...prevModalValues,
-      [fieldName]: value,
-    }));
-
-    // Encontrar la aplicación seleccionada en la lista de aplicaciones
-    const selectedApplication = applications.find(app => app.ID_Aplicaciones === value);
-
-    // Mostrar u ocultar cod_menu basado en el nombre de la aplicación
-    if (selectedApplication && selectedApplication.Nombre === 'T24') {
-      setCodMenuVisible(true);
+ const handleModalChange = (e, fieldName) => {
+    const value = e.target.value;
+  
+    if (fieldName === 'ID_Aplicaciones') {
+      setModalValues((prevModalValues) => ({
+        ...prevModalValues,
+        [fieldName]: value,
+      }));
+  
+      // Encontrar la aplicación seleccionada en la lista de aplicaciones
+      const selectedApplication = aplicacion.find(app => app.ID_Aplicaciones === value);
+  
+      // Mostrar u ocultar cod_menu basado en el nombre de la aplicación
+      if (selectedApplication && selectedApplication.Nombre === 'T24') {
+        setT24(T24);
+      } else {
+        setT24(!T24);
+      }
     } else {
-      setCodMenuVisible(false);
+      setModalValues((prevModalValues) => ({
+        ...prevModalValues,
+        [fieldName]: value,
+      }));
     }
-  } else {
-    setModalValues((prevModalValues) => ({
-      ...prevModalValues,
-      [fieldName]: value,
-    }));
-  }
-};
+  };
