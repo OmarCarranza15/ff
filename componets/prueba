@@ -1,6 +1,10 @@
 {
   name: "Aplicación y Código del Menú",
-  selector: (row) => `${row.N_Aplicaciones} - ${row.Cod_Menu}`,
+  selector: (row) => {
+    const aplicacionText = row.N_Aplicaciones || "";
+    const codMenuText = row.Cod_Menu || "";
+    return aplicacionText + (aplicacionText && codMenuText ? " - " : "") + codMenuText;
+  },
   sortable: true,
   minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
   maxWidth: "1000px", // Ajusta el tamaño máximo según sea necesario
@@ -21,7 +25,13 @@
         />
       </>
     ) : (
-      <div>{showALLColumns ? `${row.N_Aplicaciones} - ${row.Cod_Menu}` : ""}</div>
+      <div>{showALLColumns ? (
+        <>
+          {row.N_Aplicaciones && <span>{row.N_Aplicaciones}</span>}
+          {row.N_Aplicaciones && row.Cod_Menu && <span> - </span>}
+          {row.Cod_Menu && <span>{row.Cod_Menu}</span>}
+        </>
+      ) : ""}</div>
     )
   ),
 }
