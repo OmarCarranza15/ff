@@ -1,64 +1,75 @@
-import React, { useState } from 'react';
+Sí, el método que estás utilizando debería funcionar correctamente siempre y cuando la tabla `Aplicacion` tenga una relación de llave foránea con la tabla `Perfil`. En tu código actual, estás usando el `ID_Aplicaciones` para seleccionar una aplicación específica y, según el nombre de la aplicación (`N_Aplicaciones`), estás determinando si debes mostrar el campo adicional (`Cod_Menu`).
 
-const MyComponent = ({ aplicacion, errors }) => {
-  const [modalValues, setModalValues] = useState({});
-  const [T24, setT24] = useState(false);
+Aquí tienes el código revisado nuevamente para asegurarme de que está correcto en el contexto de una relación de llave foránea:
 
-  const handleModalChange = (e, fieldName) => {
-    const value = e.target.value;
+1. **Inicialización del estado `T24` con `false` y mantenerlo consistente**.
+2. **Corrección del `if` para que lea correctamente la condición `N_Aplicaciones === 'T24'`**.
 
-    if (fieldName === 'ID_Aplicaciones') {
-      setModalValues((prevModalValues) => ({
-        ...prevModalValues,
-        [fieldName]: value,
-      }));
+```javascript
+const [T24, setT24] = useState(false);
 
-      // Encontrar la aplicación seleccionada en la lista de aplicaciones
-      const selectedApplication = aplicacion.find(app => app.id === value);
+const handleModalChange = (e, fieldName) => {
+  const value = e.target.value;
 
-      // Mostrar u ocultar cod_menu basado en el nombre de la aplicación
-      if (selectedApplication && selectedApplication.N_Aplicaciones === 'T24') {
-        setT24(true);
-      } else {
-        setT24(false);
-      }
+  if (fieldName === 'ID_Aplicaciones') {
+    setModalValues((prevModalValues) => ({
+      ...prevModalValues,
+      [fieldName]: value,
+    }));
+
+    // Encontrar la aplicación seleccionada en la lista de aplicaciones
+    const selectedApplication = aplicacion.find(app => app.id === value);
+
+    // Mostrar u ocultar cod_menu basado en el nombre de la aplicación
+    if (selectedApplication && selectedApplication.N_Aplicaciones === 'T24') {
+      setT24(true);
     } else {
-      setModalValues((prevModalValues) => ({
-        ...prevModalValues,
-        [fieldName]: value,
-      }));
+      setT24(false);
     }
-  };
-
-  return (
-    <div>
-      <Select
-        value={modalValues.ID_Aplicaciones || ''}
-        onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
-        error={errors.aplicacion}
-        required
-      >
-        <option value="">Seleccione una aplicacion</option>
-        {aplicacion.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.N_Aplicaciones}
-          </option>
-        ))}
-      </Select>
-      {errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
-      
-      {T24 && (
-        <ModalInput
-          type="text"
-          value={modalValues.Cod_Menu || ''}
-          onChange={(e) => handleEditChange(e, "Cod_Menu")}
-          placeholder="Codigo del Menu"
-          error={errors.Cod_Menu}
-          required
-        />
-      )}
-    </div>
-  );
+  } else {
+    setModalValues((prevModalValues) => ({
+      ...prevModalValues,
+      [fieldName]: value,
+    }));
+  }
 };
+```
 
-export default MyComponent;
+Asegúrate de que el ID de la aplicación (`app.id`) en tu base de datos coincida con el `ID_Aplicaciones` que estás seleccionando en tu formulario. Aquí está el código de tu formulario para asegurarte de que el valor de las opciones del `Select` sea correcto:
+
+```jsx
+<Select
+  value={modalValues.ID_Aplicaciones}
+  onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
+  error={errors.aplicacion}
+  required
+>
+  <option value="">Seleccione una aplicacion</option>
+  {aplicacion.map((p) => (
+    <option key={p.id} value={p.id}>
+      {p.N_Aplicaciones}
+    </option>
+  ))}
+</Select>
+{errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
+
+{T24 && (
+  <ModalInput
+    type="text"
+    value={modalValues.Cod_Menu}
+    onChange={(e) => handleEditChange(e, "Cod_Menu")}
+    placeholder="Codigo del Menu"
+    error={errors.Cod_Menu}
+    required
+  />
+)}
+```
+
+Con estas correcciones, el campo `Cod_Menu` debería aparecer solo cuando la aplicación seleccionada tenga `N_Aplicaciones` igual a `'T24'`.
+
+Si el problema persiste, verifica lo siguiente:
+1. Asegúrate de que el `ID_Aplicaciones` en `modalValues` esté siendo actualizado correctamente.
+2. Asegúrate de que el `ID_Aplicaciones` coincida con el `id` en la lista `aplicacion`.
+3. Asegúrate de que `N_Aplicaciones` en tu base de datos esté exactamente como `'T24'` (sin espacios adicionales, etc.).
+
+Si hay algún problema específico en la base de datos o en la forma en que los datos están estructurados, asegúrate de revisar esos detalles también.
