@@ -8,7 +8,11 @@ const handleModalChange = (e, fieldName) => {
     }));
 
     // Determinar cuándo mostrar cod_menu (ejemplo con 'T24')
-    setCodMenuVisible(value === 'T24');
+    if (value === 'T24') {
+      setCodMenuVisible(true);
+    } else {
+      setCodMenuVisible(false);
+    }
   } else {
     setModalValues((prevModalValues) => ({
       ...prevModalValues,
