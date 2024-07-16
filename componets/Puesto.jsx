@@ -2,12 +2,43 @@ import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 import Sidebar from "./SideNavBar.jsx"; // Ajusta la ruta según la ubicación real de Sidebar.jsx
 import TopBar from "./TopBar.jsx"; // Ajusta la ruta según la ubicación real de TopBar.jsx
-import styled from "styled-components";
+import {styled, keyframes} from "styled-components";
 import "../styles/DataTable.css"; // Importa el archivo CSS
 import axios from "axios";
-import { FaEdit, FaSave, FaTimes } from "react-icons/fa"; // Importa el ícono de edición
+import { FaEdit, FaSave, FaTimes, FaUndo, FaSearch, FaPlus } from "react-icons/fa"; // Importa los íconos necesarios
 
+const rotate360 = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
 
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+const Spinner = styled.div`
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;
+  animation: ${rotate360} 1s linear infinite;
+  transform: translateZ(0);
+  border-top: 2px solid grey;
+  border-right: 2px solid grey;
+  border-bottom: 2px solid grey;
+  border-left: 4px solid black;
+  background: transparent;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+`;
+
+const CustomLoader = () => (
+  <div style={{ padding: "54px" }}>
+    <Spinner />
+    <div>Cargando Registros...</div>
+  </div>
+);
 
 const MainContainer = styled.div`
   display: flex;
@@ -32,6 +63,8 @@ const HeaderContainer = styled.div`
 const Title = styled.h2`
   flex-grow: 1;
   text-align: center;
+  color:#083cac;
+  font-size: 30px;
 `;
 
 const FilterWrapper = styled.div`
@@ -89,6 +122,21 @@ const ButtonCancelar = styled.button`
   display: flex;
   align-items: center;
   gap: 5px;
+`;
+
+//Boton Limpiar filtros 
+const RedButton = styled(Button)`
+  background-color: #ff0000; /* Rojo */
+  font-size: 13px; 
+  padding: 2px 4px; 
+  border-radius: 5px; 
+  height: 35px; 
+  width: 120px; 
+`;
+
+//Boton de filtros
+const SearchButton = styled(Button)`
+  background-color: #008cba; /* Azul */
 `;
 
 const DataTableContainer = styled.div`
@@ -259,6 +307,7 @@ function Puesto() {
   const [errors, setErrors] = useState({ID_Pais: "", Codigo: "", N_Puesto: "", ID_RSocial: "", ID_Division: "", ID_Departamento: "", ID_CentroCostos: ""});
   const [modalValues, setModalValues] = useState({ ID_Pais: "", Codigo: "", N_Puesto: "", ID_RSocial: "", ID_Division: "", ID_Departamento: "", ID_CentroCostos: "" });
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
 
   const [filters, setFilters] = useState({
@@ -271,8 +320,11 @@ function Puesto() {
     Nombre: "",
   });
 
+  
+
   useEffect(()=> {
     const fetchData = async () => {
+      setLoading(true);
       try {
         const response = await axios.get(`http://localhost:3000/puesto/`);
         const data = response.data;
@@ -302,8 +354,10 @@ function Puesto() {
           })
         )
         setRecords(mappedData);
+        setLoading(false);
       } catch (error) {
         console.error ('Error al obtener los Puestos:', error);
+        setLoading(false);
       }
     };
     const fetchPais = async () =>{
@@ -785,6 +839,18 @@ function Puesto() {
     },
   ];
 
+  const resetFilters = () => {
+    setFilters({
+      N_Puesto: "",
+      Codigo: "",
+      N_Pais: "",
+      N_RSocial: "",
+      N_Division: "",
+      N_Departamento: "",
+      Nombre: "",
+    });
+  };
+
   return (
     <MainContainer>
       <TopBar />
@@ -792,12 +858,13 @@ function Puesto() {
         <Sidebar />
         <DataTableContainer>
           <HeaderContainer>
-            <Title><h2 className="Title">Puestos</h2></Title>
+            <Title>Puestos</Title>
             <ButtonGroup>
-              <Button primary onClick={toggleFilters}>
+            <SearchButton primary onClick={toggleFilters}>
+              <FaSearch />
                 {showFilters ? "Ocultar" : "Buscar"}
-              </Button>
-              <Button onClick={handleInsert}>Nuevo Puesto</Button>
+              </SearchButton>
+              <Button onClick={handleInsert}><FaPlus />Nuevo Puesto</Button>
             </ButtonGroup>
           </HeaderContainer>
           <FilterWrapper show={showFilters}>
@@ -844,14 +911,21 @@ function Puesto() {
               placeholder="Buscar por Puesto"
             />
             
+            <RedButton onClick={resetFilters}>
+              <FaUndo /> Limpiar Filtros
+            </RedButton>
           </FilterWrapper>
+          {loading ? (
+            <CustomLoader />
+          ) : (
           <StyledDataTable
             columns={columns}
             data={filteredData}
             pagination
-            paginationPerPage={30}
+            paginationPerPage={15}
             showFilters={showFilters}
           />
+        )}
         </DataTableContainer>
       </ContentContainer>
       {/* Modal para insertar una nuevo departamento */}
