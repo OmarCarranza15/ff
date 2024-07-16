@@ -8,7 +8,7 @@ const handleModalChange = (e, fieldName) => {
   }));
 
   // Encontrar la aplicación seleccionada en la lista de aplicaciones
-  const selectedApplication = aplicacion.find(app => app.id === value);
+  const selectedApplication = aplicacion.find(app => app.id === parseInt(value)); // Asegúrate de convertir a entero si es necesario
 
   // Verificar si la aplicación seleccionada es T24
   const isT24 = selectedApplication ? selectedApplication.N_Aplicaciones === 'T24' : false;
