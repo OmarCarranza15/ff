@@ -26,8 +26,11 @@ const Login = () => {
                 if (user.Estado === 1) {
                     // Si el usuario es nuevo, mostrar los campos para nueva contraseña
                     setIsNewUser(true);
+                } else if (user.Estado === 3) {
+                    // Si el usuario está suspendido, mostrar mensaje de expiración
+                    setError('Este usuario ha expirado');
                 } else {
-                    // Usuario no es nuevo, proceder al login normal
+                    // Usuario no es nuevo ni suspendido, proceder al login normal
                     localStorage.setItem('username', user.Nombre);
                     navigate('/landingPage');
                 }
@@ -40,60 +43,67 @@ const Login = () => {
         }
     }
 
-    const handlePasswordChange = async (e) => {
-        e.preventDefault();
+    const handlePasswordChange = async () => {
         if (newPassword !== confirmPassword) {
             setError('Las contraseñas no coinciden');
             return;
         }
+
         try {
-            // Actualizar la contraseña y el estado del usuario
-            await axios.put(`http://localhost:3000/usuarios/${username}`, {
+            // Actualizar la contraseña del usuario y cambiar el estado a 2 (En Servicio)
+            const updateResponse = await axios.put(`http://localhost:3000/usuarios/${username}`, {
                 Contrasenia: newPassword,
                 Estado: 2
             });
-            localStorage.setItem('username', username);
-            navigate('/landingPage');
+
+            if (updateResponse.status === 200) {
+                // Redirigir a la página principal después de cambiar la contraseña
+                localStorage.setItem('username', username);
+                navigate('/landingPage');
+            } else {
+                setError('Error al cambiar la contraseña');
+            }
         } catch (error) {
-            console.error('Error al intentar cambiar la contraseña', error);
-            setError('Error al intentar cambiar la contraseña');
+            console.error('Error al cambiar la contraseña', error);
+            setError('Error al cambiar la contraseña');
         }
     }
 
     return (
         <div className="login-container">
-            <form onSubmit={isNewUser ? handlePasswordChange : handleSubmit} className="login-form">
-                <h2 className="in-group">Inicio de Sesion</h2>
+            <form onSubmit={handleSubmit} className="login-form">
+                <h2 className="in-group">Inicio de Sesión</h2>
                 <label>Ingrese su Usuario de Red y Contraseña</label>
-                <br/>
-                <br/>
+                <br />
+                <br />
                 <div className="form-group">
                     <label>Usuario:</label>
-                    <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="form-control" required/>
+                    <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="form-control" required />
                 </div>
                 <div className="form-group">
                     <label>Contraseña:</label>
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-control" required/>
+                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-control" required />
                 </div>
                 {isNewUser && (
                     <>
                         <div className="form-group">
                             <label>Nueva Contraseña:</label>
-                            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="form-control" required/>
+                            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="form-control" required />
                         </div>
                         <div className="form-group">
                             <label>Confirmar Contraseña:</label>
-                            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="form-control" required/>
+                            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="form-control" required />
                         </div>
+                        <button type="button" className="btn btn-primary" onClick={handlePasswordChange}>Cambiar Contraseña</button>
                     </>
                 )}
-                <button type="submit" className="btn btn-primary">Iniciar Sesion</button>
-                <br/>
-                {error && <p style={{color: 'red'}}>{error}</p>}
+                {!isNewUser && <button type="submit" className="btn btn-primary">Iniciar Sesión</button>}
+                <br />
+                {error && <p style={{ color: 'red' }}>{error}</p>}
                 <div className="form-floating mb-3 mt-3">
-                    <a href="/Solicitud" style={{textDecoration: 'none'}}><span className="form-con">He olvidado mi contraseña</span></a>
+                    <a href="/Solicitud" style={{ textDecoration: 'none' }}><span className="form-con">He olvidado mi contraseña</span></a>
                 </div>
-                <br/>
+                <br />
             </form>
         </div>
     );
