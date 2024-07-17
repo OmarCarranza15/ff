@@ -1,44 +1,90 @@
-{
-  name: "Aplicación y Código del Menú",
-  selector: (row) => {
-    const aplicacionText = row.N_Aplicaciones || "";
-    const codMenuText = row.Cod_Menu || "";
-    return aplicacionText + (aplicacionText && codMenuText ? " - " : "") + codMenuText;
-  },
-  sortable: true,
-  minWidth: "350px",
-  maxWidth: "1000px",
-  cell: (row) => (
-    editMode && editedRow?.id === row.id ? (
-      <>
+Para lograr que la razón social (RSocial) se filtre de manera dinámica según el país seleccionado, debes seguir los siguientes pasos:
+
+1. **Obtener las razones sociales correspondientes al país seleccionado desde la API**.
+2. **Actualizar el estado del modal con las razones sociales obtenidas**.
+
+### Paso 1: Obtener las razones sociales desde la API
+
+En el evento de cambio del selector de país, realiza una solicitud a tu API para obtener las razones sociales correspondientes al país seleccionado.
+
+```jsx
+const handleModalChange = async (event, field) => {
+  const { value } = event.target;
+  setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
+
+  if (field === 'pais') {
+    try {
+      const response = await axios.get(`/api/razonesSociales?pais=${value}`);
+      setRazonesSociales(response.data);
+    } catch (error) {
+      console.error('Error fetching razones sociales:', error);
+    }
+  }
+};
+```
+
+### Paso 2: Actualizar el estado del modal con las razones sociales obtenidas
+
+Aquí tienes un ejemplo de cómo podrías implementar el componente del modal para que se actualicen las razones sociales dinámicamente según el país seleccionado:
+
+```jsx
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+const MyModal = () => {
+  const [modalValues, setModalValues] = useState({});
+  const [razonesSociales, setRazonesSociales] = useState([]);
+
+  const handleModalChange = async (event, field) => {
+    const { value } = event.target;
+    setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
+
+    if (field === 'pais') {
+      try {
+        const response = await axios.get(`/api/razonesSociales?pais=${value}`);
+        setRazonesSociales(response.data);
+      } catch (error) {
+        console.error('Error fetching razones sociales:', error);
+      }
+    }
+  };
+
+  return (
+    <div>
+      <label>
+        País:
         <select
-          value={editedRow.ID_Aplicaciones}
-          onChange={(e) => handleEditChange(e, "ID_Aplicaciones")}
+          value={modalValues.pais || ''}
+          onChange={(event) => handleModalChange(event, 'pais')}
         >
-          {aplicacion.map((aplicacion) => (
-            <option key={aplicacion.id} value={aplicacion.id}>
-              {aplicacion.N_Aplicaciones}
+          {/* Opciones de países */}
+        </select>
+      </label>
+
+      <label>
+        Razón Social:
+        <select
+          value={modalValues.razonSocial || ''}
+          onChange={(event) => handleModalChange(event, 'razonSocial')}
+        >
+          {razonesSociales.map((rs) => (
+            <option key={rs.id} value={rs.id}>
+              {rs.nombre}
             </option>
           ))}
         </select>
-        {editedRow.N_Aplicaciones === 'T24' && (
-          <input
-            type="text"
-            value={editedRow.Cod_Menu}
-            onChange={(e) => handleEditChange(e, "Cod_Menu")}
-          />
-        )}
-      </>
-    ) : (
-      <div>
-        {showALLColumns ? (
-          <>
-            {row.N_Aplicaciones && <span>{row.N_Aplicaciones}</span>}
-            {row.N_Aplicaciones && row.Cod_Menu && <span> - </span>}
-            {row.Cod_Menu && <span>{row.Cod_Menu}</span>}
-          </>
-        ) : ""}
-      </div>
-    )
-  ),
-}
+      </label>
+    </div>
+  );
+};
+
+export default MyModal;
+```
+
+### Explicación
+
+1. **Estado `modalValues`**: Mantiene los valores actuales de los campos del modal.
+2. **Estado `razonesSociales`**: Almacena las razones sociales filtradas según el país seleccionado.
+3. **`handleModalChange`**: Esta función se encarga de manejar los cambios en los campos del modal. Si el campo cambiado es el país (`pais`), se realiza una solicitud a la API para obtener las razones sociales correspondientes y se actualiza el estado `razonesSociales`.
+
+De esta manera, cuando el usuario seleccione un país en el modal, el campo de razón social se actualizará dinámicamente para mostrar solo las opciones relevantes.
