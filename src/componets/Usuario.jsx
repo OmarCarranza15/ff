@@ -297,7 +297,7 @@ const CustomLoader = () => (
 );
 
 
-function Puesto() {
+function Usuario() {
   //const [usuario] = useState([]);
   const [records, setRecords] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
@@ -1026,4 +1026,4 @@ function Puesto() {
 }
 
 
-export default Puesto;
+export default Usuario;
