@@ -1,36 +1,78 @@
-const startEdit = (row) => {
-  setEditedRow({ ...row });
-  setEditMode(row.id);
+Para generar automáticamente la contraseña y luego insertarla en tu base de datos al crear un nuevo usuario, puedes modificar tu función `SaveModal` de la siguiente manera:
 
-  // Filtrar razón social según el país seleccionado
-  const filteredRsocial = rsocial.filter((item) => item.ID_Pais === row.ID_Pais);
-  setFilteredRsocial(filteredRsocial);
+1. **Generación Automática de Contraseña:**
+   Puedes generar una contraseña aleatoria usando una función auxiliar. Aquí te muestro cómo podrías hacerlo:
 
-  // Filtrar división según el país seleccionado
-  const filteredDivision = division.filter((item) => item.ID_Pais === row.ID_Pais);
-  setFilteredDivision(filteredDivision);
+   ```javascript
+   const generateRandomPassword = () => {
+     const length = 8; // Longitud de la contraseña
+     const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // Caracteres permitidos
+     let password = "";
+     for (let i = 0; i < length; i++) {
+       const randomIndex = Math.floor(Math.random() * charset.length);
+       password += charset[randomIndex];
+     }
+     return password;
+   };
+   ```
 
-  // Filtrar departamento según el país seleccionado
-  const filteredDepartamento = departamento.filter((item) => item.ID_Pais === row.ID_Pais);
-  setFilteredDepartamento(filteredDepartamento);
+2. **Modificación de `SaveModal` para usar Contraseña Generada:**
+   En tu función `SaveModal`, puedes llamar a esta función para obtener una nueva contraseña antes de enviarla al servidor:
 
-  // Filtrar centro de costos según el país seleccionado
-  const filteredCentroCosto = centrocosto.filter((item) => item.ID_Pais === row.ID_Pais);
-  setFilteredCentroCosto(filteredCentroCosto);
-};
+   ```javascript
+   const SaveModal = async () => {
+     const newErrors = { Usuario: "", Nombre: "", Contrasenia: "", ID_PuestoIn: "", ID_RolUsuario: "", Fec_Creacion: "", Fec_Exp_Acceso: "", Fec_Ult_Conexion: "", Estado: "" };
 
-const handleEditChange = (event, field) => {
-  const { value } = event.target;
-  setEditedRow((prevState) => ({
-    ...prevState,
-    [field]: value,
-    ...(field === "ID_Pais" && { N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais }),
-    ...(field === "ID_Puesto" && { N_Puesto: puesto.find((p) => p.id === parseInt(value)).N_Puesto }),
-    ...(field === "ID_Puesto" && { Codigo: puesto.find((p) => p.id === parseInt(value)).Codigo }),
-    ...(field === "ID_RSocial" && { N_RSocial: filteredRsocial.find((p) => p.id === parseInt(value)).N_RSocial }),
-    ...(field === "ID_Division" && { N_Division: filteredDivision.find((p) => p.id === parseInt(value)).N_Division }),
-    ...(field === "ID_Departamento" && { N_Departamento: filteredDepartamento.find((p) => p.id === parseInt(value)).N_Departamento }),
-    ...(field === "ID_CentroCostos" && { Nombre: filteredCentroCosto.find((p) => p.id === parseInt(value)).Nombre }),
-  }));
-  validateInput(field, value);
-};
+     // Generar nueva contraseña
+     const newPassword = generateRandomPassword();
+
+     // Resto de la lógica de validación...
+
+     // Datos del nuevo usuario
+     const newUsuario = {
+       Usuario: modalValues.Usuario,
+       Nombre: modalValues.Nombre,
+       Contrasenia: newPassword, // Usar la contraseña generada
+       Fec_Creacion: "2024-05-24",
+       Fec_Exp_Acceso: modalValues.Fec_Exp_Acceso,
+       Fec_Ult_Conexion: "2024-10-30",
+       Estado: 1,
+       ID_RolUsuario: modalValues.ID_RolUsuario,
+       ID_PuestoIn: modalValues.ID_PuestoIn,
+     };
+
+     // Enviar solicitud POST para insertar el nuevo usuario
+     try {
+       const insertResponse = await axios.post(`http://localhost:3000/usuarios`, newUsuario);
+       console.log("Respuesta de inserción:", insertResponse.data);
+
+       // Actualizar la lista de usuarios con el nuevo usuario
+       const rolusuarioResponse = await axios.get(`http://localhost:3000/rolusuario/${modalValues.ID_RolUsuario}`);
+       const puestoinResponse = await axios.get(`http://localhost:3000/puestoin/${modalValues.ID_PuestoIn}`);
+
+       const updatedRecords = [
+         ...records,
+         {
+           id: insertResponse.data.id,
+           Usuario: modalValues.Usuario,
+           Nombre: modalValues.Nombre,
+           Contrasenia: newPassword, // Usar la contraseña generada
+           Fec_Exp_Acceso: modalValues.Fec_Exp_Acceso,
+           ID_RolUsuario: modalValues.ID_RolUsuario,
+           N_Rol: rolusuarioResponse.data.N_Rol,
+           ID_PuestoIn: modalValues.ID_PuestoIn,
+           N_PuestoIn: puestoinResponse.data.N_PuestoIn,
+         },
+       ];
+
+       setRecords(updatedRecords);
+       setShowModal(false); // Ocultar el modal después de guardar
+       setModalValues({ Usuario: "", Nombre: "", Contrasenia: "", ID_PuestoIn: "", ID_RolUsuario: "", Fec_Exp_Acceso: "" }); // Limpiar los valores del modal
+       window.location.reload();
+     } catch (error) {
+       console.error("Error al insertar un nuevo Usuario:", error);
+     }
+   };
+   ```
+
+Con estos cambios, cada vez que se cree un nuevo usuario, se generará automáticamente una contraseña aleatoria que se usará y luego se almacenará en la base de datos junto con los demás datos del usuario. Asegúrate de ajustar la longitud y los caracteres permitidos en la función `generateRandomPassword` según tus requisitos de seguridad.
