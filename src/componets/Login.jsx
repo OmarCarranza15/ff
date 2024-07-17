@@ -53,6 +53,14 @@ const Login = () => {
                     <label>Contraseña:</label>
                     <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-control" required/>
                 </div>
+                {/*<div className="form-group">
+                    <label>Nueva Contraseña:</label>
+                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-control" required/>
+                </div>
+                <div className="form-group">
+                    <label>Confirmar Contraseña:</label>
+                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-control" required/>
+                </div>*/}
                 <button type="submit" className="btn btn-primary">Iniciar Sesion</button>
                 <br/>
                 {error && <p style={{color: 'red'}}>{error}</p>}
