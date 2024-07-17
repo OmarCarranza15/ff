@@ -1,78 +1,102 @@
-Para generar automáticamente la contraseña y luego insertarla en tu base de datos al crear un nuevo usuario, puedes modificar tu función `SaveModal` de la siguiente manera:
+import { useState } from "react";
+import React from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import '../styles/login.css'
 
-1. **Generación Automática de Contraseña:**
-   Puedes generar una contraseña aleatoria usando una función auxiliar. Aquí te muestro cómo podrías hacerlo:
+const Login = () => {
+    const navigate = useNavigate();
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isNewUser, setIsNewUser] = useState(false);
 
-   ```javascript
-   const generateRandomPassword = () => {
-     const length = 8; // Longitud de la contraseña
-     const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // Caracteres permitidos
-     let password = "";
-     for (let i = 0; i < length; i++) {
-       const randomIndex = Math.floor(Math.random() * charset.length);
-       password += charset[randomIndex];
-     }
-     return password;
-   };
-   ```
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            // Hacer una solicitud para obtener el usuario por su nombre de Usuario
+            const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}`);
 
-2. **Modificación de `SaveModal` para usar Contraseña Generada:**
-   En tu función `SaveModal`, puedes llamar a esta función para obtener una nueva contraseña antes de enviarla al servidor:
+            // Verificar si se encontró un usuario y si la contraseña coincide
+            const user = response.data.find(user => user.Usuario === username && user.Contrasenia === password);
 
-   ```javascript
-   const SaveModal = async () => {
-     const newErrors = { Usuario: "", Nombre: "", Contrasenia: "", ID_PuestoIn: "", ID_RolUsuario: "", Fec_Creacion: "", Fec_Exp_Acceso: "", Fec_Ult_Conexion: "", Estado: "" };
+            if (user) {
+                if (user.Estado === 1) {
+                    // Si el usuario es nuevo, mostrar los campos para nueva contraseña
+                    setIsNewUser(true);
+                } else {
+                    // Usuario no es nuevo, proceder al login normal
+                    localStorage.setItem('username', user.Nombre);
+                    navigate('/landingPage');
+                }
+            } else {
+                setError('Usuario o contraseña incorrectos');
+            }
+        } catch (error) {
+            console.error('Error al intentar iniciar sesión', error);
+            setError('Usuario o contraseña incorrectos');
+        }
+    }
 
-     // Generar nueva contraseña
-     const newPassword = generateRandomPassword();
+    const handlePasswordChange = async (e) => {
+        e.preventDefault();
+        if (newPassword !== confirmPassword) {
+            setError('Las contraseñas no coinciden');
+            return;
+        }
+        try {
+            // Actualizar la contraseña y el estado del usuario
+            await axios.put(`http://localhost:3000/usuarios/${username}`, {
+                Contrasenia: newPassword,
+                Estado: 2
+            });
+            localStorage.setItem('username', username);
+            navigate('/landingPage');
+        } catch (error) {
+            console.error('Error al intentar cambiar la contraseña', error);
+            setError('Error al intentar cambiar la contraseña');
+        }
+    }
 
-     // Resto de la lógica de validación...
+    return (
+        <div className="login-container">
+            <form onSubmit={isNewUser ? handlePasswordChange : handleSubmit} className="login-form">
+                <h2 className="in-group">Inicio de Sesion</h2>
+                <label>Ingrese su Usuario de Red y Contraseña</label>
+                <br/>
+                <br/>
+                <div className="form-group">
+                    <label>Usuario:</label>
+                    <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="form-control" required/>
+                </div>
+                <div className="form-group">
+                    <label>Contraseña:</label>
+                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-control" required/>
+                </div>
+                {isNewUser && (
+                    <>
+                        <div className="form-group">
+                            <label>Nueva Contraseña:</label>
+                            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="form-control" required/>
+                        </div>
+                        <div className="form-group">
+                            <label>Confirmar Contraseña:</label>
+                            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="form-control" required/>
+                        </div>
+                    </>
+                )}
+                <button type="submit" className="btn btn-primary">Iniciar Sesion</button>
+                <br/>
+                {error && <p style={{color: 'red'}}>{error}</p>}
+                <div className="form-floating mb-3 mt-3">
+                    <a href="/Solicitud" style={{textDecoration: 'none'}}><span className="form-con">He olvidado mi contraseña</span></a>
+                </div>
+                <br/>
+            </form>
+        </div>
+    );
+};
 
-     // Datos del nuevo usuario
-     const newUsuario = {
-       Usuario: modalValues.Usuario,
-       Nombre: modalValues.Nombre,
-       Contrasenia: newPassword, // Usar la contraseña generada
-       Fec_Creacion: "2024-05-24",
-       Fec_Exp_Acceso: modalValues.Fec_Exp_Acceso,
-       Fec_Ult_Conexion: "2024-10-30",
-       Estado: 1,
-       ID_RolUsuario: modalValues.ID_RolUsuario,
-       ID_PuestoIn: modalValues.ID_PuestoIn,
-     };
-
-     // Enviar solicitud POST para insertar el nuevo usuario
-     try {
-       const insertResponse = await axios.post(`http://localhost:3000/usuarios`, newUsuario);
-       console.log("Respuesta de inserción:", insertResponse.data);
-
-       // Actualizar la lista de usuarios con el nuevo usuario
-       const rolusuarioResponse = await axios.get(`http://localhost:3000/rolusuario/${modalValues.ID_RolUsuario}`);
-       const puestoinResponse = await axios.get(`http://localhost:3000/puestoin/${modalValues.ID_PuestoIn}`);
-
-       const updatedRecords = [
-         ...records,
-         {
-           id: insertResponse.data.id,
-           Usuario: modalValues.Usuario,
-           Nombre: modalValues.Nombre,
-           Contrasenia: newPassword, // Usar la contraseña generada
-           Fec_Exp_Acceso: modalValues.Fec_Exp_Acceso,
-           ID_RolUsuario: modalValues.ID_RolUsuario,
-           N_Rol: rolusuarioResponse.data.N_Rol,
-           ID_PuestoIn: modalValues.ID_PuestoIn,
-           N_PuestoIn: puestoinResponse.data.N_PuestoIn,
-         },
-       ];
-
-       setRecords(updatedRecords);
-       setShowModal(false); // Ocultar el modal después de guardar
-       setModalValues({ Usuario: "", Nombre: "", Contrasenia: "", ID_PuestoIn: "", ID_RolUsuario: "", Fec_Exp_Acceso: "" }); // Limpiar los valores del modal
-       window.location.reload();
-     } catch (error) {
-       console.error("Error al insertar un nuevo Usuario:", error);
-     }
-   };
-   ```
-
-Con estos cambios, cada vez que se cree un nuevo usuario, se generará automáticamente una contraseña aleatoria que se usará y luego se almacenará en la base de datos junto con los demás datos del usuario. Asegúrate de ajustar la longitud y los caracteres permitidos en la función `generateRandomPassword` según tus requisitos de seguridad.
+export default Login;
