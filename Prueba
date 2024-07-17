@@ -1,39 +1,44 @@
-
-const handleEditChange = (event, field) => {
-  const { value } = event.target;
-  setEditedRow((prevState) => {
-    const updatedRow = {
-      ...prevState,
-      [field]: value,
-      ...(field === "ID_Aplicaciones" && {
-        N_Aplicaciones: aplicacion.find((p) => p.id === parseInt(value)).N_Aplicaciones,
-      }),
-      ...(field === "ID_Puesto" && {
-        N_Puesto: puestos.find((p) => p.id === parseInt(value)).N_Puesto,
-      }),
-      ...(field === "ID_Ambiente" && {
-        N_Ambiente: ambiente.find((p) => p.id === parseInt(value)).N_Ambiente,
-      }),
-      ...(field === "ID_RSocial" && {
-        N_RSocial: rsocial.find((p) => p.id === parseInt(value)).N_RSocial,
-      }),
-      ...(field === "ID_Division" && {
-        N_Division: division.find((p) => p.id === parseInt(value)).N_Division,
-      }),
-      ...(field === "ID_Departamento" && {
-        N_Departamento: departamento.find((p) => p.id === parseInt(value)).N_Departamento,
-      }),
-      ...(field === "ID_CentroCostos" && {
-        Nombre: centrocosto.find((p) => p.id === parseInt(value)).Nombre,
-      }),
-    };
-
-    // Si la aplicación no es T24, borrar el Cod_Menu
-    if (field === "ID_Aplicaciones" && updatedRow.N_Aplicaciones !== 'T24') {
-      updatedRow.Cod_Menu = "";
-    }
-
-    return updatedRow;
-  });
-  validateInput(field, value);
-};
+{
+  name: "Aplicación y Código del Menú",
+  selector: (row) => {
+    const aplicacionText = row.N_Aplicaciones || "";
+    const codMenuText = row.Cod_Menu || "";
+    return aplicacionText + (aplicacionText && codMenuText ? " - " : "") + codMenuText;
+  },
+  sortable: true,
+  minWidth: "350px",
+  maxWidth: "1000px",
+  cell: (row) => (
+    editMode && editedRow?.id === row.id ? (
+      <>
+        <select
+          value={editedRow.ID_Aplicaciones}
+          onChange={(e) => handleEditChange(e, "ID_Aplicaciones")}
+        >
+          {aplicacion.map((aplicacion) => (
+            <option key={aplicacion.id} value={aplicacion.id}>
+              {aplicacion.N_Aplicaciones}
+            </option>
+          ))}
+        </select>
+        {editedRow.N_Aplicaciones === 'T24' && (
+          <input
+            type="text"
+            value={editedRow.Cod_Menu}
+            onChange={(e) => handleEditChange(e, "Cod_Menu")}
+          />
+        )}
+      </>
+    ) : (
+      <div>
+        {showALLColumns ? (
+          <>
+            {row.N_Aplicaciones && <span>{row.N_Aplicaciones}</span>}
+            {row.N_Aplicaciones && row.Cod_Menu && <span> - </span>}
+            {row.Cod_Menu && <span>{row.Cod_Menu}</span>}
+          </>
+        ) : ""}
+      </div>
+    )
+  ),
+}
