@@ -5,10 +5,13 @@ const handlePasswordChange = async () => {
     }
 
     try {
+        console.log('userID:', userId); // Verifica que userID tenga el valor esperado
         const updateResponse = await axios.put(`http://localhost:3000/usuarios/${userId}`, {
             Contrasenia: newPassword,
             Estado: 2 // Asegúrate de que Estado se está enviando correctamente
         });
+
+        console.log('updateResponse:', updateResponse); // Verifica la respuesta del servidor
 
         if (updateResponse.status === 200) {
             localStorage.setItem('username', username);
@@ -18,6 +21,6 @@ const handlePasswordChange = async () => {
         }
     } catch (error) {
         console.error('Error al cambiar la contraseña', error);
-        setError('Error al cambiar la contraseña');
+        setError('Error al cambiar la contraseña. Por favor, intenta nuevamente.');
     }
 };
