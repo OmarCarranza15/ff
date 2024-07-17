@@ -309,6 +309,10 @@ function Puesto() {
   const [modalValues, setModalValues] = useState({ ID_Pais: "", Codigo: "", N_Puesto: "", ID_RSocial: "", ID_Division: "", ID_Departamento: "", ID_CentroCostos: "" });
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [filteredRsocial, setFilteredRsocial] = useState([]);
+  const [filteredDivision, setFilteredDivision] = useState([]);
+  const [filteredDepartamento, setFilteredDepartamento] = useState([]);
+  const [filteredCentroCosto, setFilteredCentroCosto] = useState([]);
 
 
   const [filters, setFilters] = useState({
@@ -370,17 +374,26 @@ function Puesto() {
         }
     };
     const fetchRsocial = async () =>{
-        try {
-             const response = await axios.get(`http://localhost:3000/rsocial/`);
-             setRsocial(response.data);
-         } catch (error) {
-             console.error('Error al obtener la lista de razon social', error);
-         }
+      try {
+        const response = await axios.get(`http://localhost:3000/rsocial/`);
+        setRsocial(response.data);
+        if (modalValues.ID_Pais) {
+          const filtered = response.data.filter((item) => item.ID_Pais === parseInt(modalValues.ID_Pais));
+          setFilteredRsocial(filtered);
+        }
+      } catch (error) {
+        console.error('Error al obtener la lista de razones sociales', error);
+      }
      };
+
      const fetchDivision = async () =>{
         try {
              const response = await axios.get(`http://localhost:3000/division/`);
              setDivision(response.data);
+             if (modalValues.ID_Pais) {
+              const filtered = response.data.filter((item) => item.ID_Pais === parseInt(modalValues.ID_Pais));
+              setFilteredDivision(filtered);
+             }
         } catch (error) {
              console.error('Error al obtener la lista de division', error);
         }
@@ -389,6 +402,10 @@ function Puesto() {
         try {
              const response = await axios.get(`http://localhost:3000/departamento/`);
              setDepartamento(response.data);
+             if (modalValues.ID_Pais) {
+              const filtered = response.data.filter((item) => item.ID_Pais === parseInt(modalValues.ID_Pais));
+              setFilteredDepartamento(filtered);
+             }
         } catch (error) {
              console.error('Error al obtener la lista de departamentos', error);
         }
@@ -398,6 +415,10 @@ function Puesto() {
         try {
              const response = await axios.get(`http://localhost:3000/centrocosto/`);
              setCentrocostos(response.data);
+             if (modalValues.ID_Pais) {
+              const filtered = response.data.filter((item) => item.ID_Pais === parseInt(modalValues.ID_Pais));
+              setFilteredCentroCosto(filtered);
+             }
         } catch (error) {
              console.error('Error al obtener la lista de centro de costos', error);
         }
@@ -409,7 +430,7 @@ function Puesto() {
     fetchDivision();
     fetchDepartamento();
     fetchCentrocostos();
-  }, []);
+  }, [modalValues.ID_Pais]);
 
  
 
@@ -435,6 +456,11 @@ function Puesto() {
   const handleModalChange = (event, field) => {
     const { value } = event.target;
     setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
+  
+    if (field === "ID_Pais") {
+      const filtered = rsocial.filter((item) => item.ID_Pais === parseInt(value));
+      setFilteredRsocial(filtered);
+    }
   };
 
   const SaveModal = async () => {
@@ -971,19 +997,18 @@ function Puesto() {
             </Select>
             {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
 
-            <Select
-              value={modalValues.ID_RSocial}
-              onChange={(e) => handleModalChange(e, "ID_RSocial")}
-              error={errors.rsocial}
-              required
-            >
-              <option value="">Seleccione una Razon Social</option>
-              {rsocial.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.N_RSocial}
-                </option>
-              ))}
-            </Select>
+            <Select 
+            value={modalValues.ID_RSocial} 
+            onChange={(e) => handleModalChange(e, "ID_RSocial")} 
+            error={errors.rsocial}
+            required>
+            <option value="">Seleccione una Razon Social</option>
+                 {filteredRsocial.map((rsocial) => (
+                    <option key={rsocial.id} value={rsocial.id}>
+                        {rsocial.N_RSocial}
+                    </option>
+                   ))}
+              </Select>
             {errors.rsocial && <ErrorMessage>{errors.rsocial}</ErrorMessage>}
 
             <Select
@@ -993,7 +1018,7 @@ function Puesto() {
               required
             >
               <option value="">Seleccione una Division</option>
-              {division.map((p) => (
+              {filteredDivision.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.N_Division}
                 </option>
@@ -1008,7 +1033,7 @@ function Puesto() {
               required
             >
               <option value="">Seleccione una Departamento</option>
-              {departamento.map((p) => (
+              {filteredDepartamento.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.N_Departamento}
                 </option>
@@ -1025,7 +1050,7 @@ function Puesto() {
               required
             >
               <option value="">Seleccione un Centro de Costos</option>
-              {centrocosto.map((p) => (
+              {filteredCentroCosto.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.Nombre}
                 </option>
