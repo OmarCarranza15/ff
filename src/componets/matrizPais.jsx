@@ -692,20 +692,43 @@ function LandingPage() {
 
   const handleEditChange = (event, field) => {
     const { value } = event.target;
-    setEditedRow((prevState) => ({
-      ...prevState,
-      [field]: value,
-      ...(field === "ID_Aplicaciones" && { N_Aplicaciones: aplicacion.find((p) => p.id === parseInt(value)).N_Aplicaciones }),
-      ...(field === "ID_Puesto" && { N_Puesto: puestos.find((p) => p.id === parseInt(value)).N_Puesto }),
-      ...(field === "ID_Ambiente" && { N_Ambiente: ambiente.find((p) => p.id === parseInt(value)).N_Ambiente }),
-      ...(field === "ID_RSocial" && { N_RSocial: rsocial.find((p) => p.id === parseInt(value)).N_RSocial }),
-      ...(field === "ID_Division" && { N_Division: division.find((p) => p.id === parseInt(value)).N_Division }),
-      ...(field === "ID_Departamento" && { N_Departamento: departamento.find((p) => p.id === parseInt(value)).N_Departamento }),
-      ...(field === "ID_CentroCostos" && { Nombre: centrocosto.find((p) => p.id === parseInt(value)).Nombre }),
-    } 
-    ));
+    setEditedRow((prevState) => {
+      const updatedRow = {
+        ...prevState,
+        [field]: value,
+        ...(field === "ID_Aplicaciones" && {
+          N_Aplicaciones: aplicacion.find((p) => p.id === parseInt(value)).N_Aplicaciones,
+        }),
+        ...(field === "ID_Puesto" && {
+          N_Puesto: puestos.find((p) => p.id === parseInt(value)).N_Puesto,
+        }),
+        ...(field === "ID_Ambiente" && {
+          N_Ambiente: ambiente.find((p) => p.id === parseInt(value)).N_Ambiente,
+        }),
+        ...(field === "ID_RSocial" && {
+          N_RSocial: rsocial.find((p) => p.id === parseInt(value)).N_RSocial,
+        }),
+        ...(field === "ID_Division" && {
+          N_Division: division.find((p) => p.id === parseInt(value)).N_Division,
+        }),
+        ...(field === "ID_Departamento" && {
+          N_Departamento: departamento.find((p) => p.id === parseInt(value)).N_Departamento,
+        }),
+        ...(field === "ID_CentroCostos" && {
+          Nombre: centrocosto.find((p) => p.id === parseInt(value)).Nombre,
+        }),
+      };
+  
+      // Si la aplicación no es T24, borrar el Cod_Menu
+      if (field === "ID_Aplicaciones" && updatedRow.N_Aplicaciones !== 'T24') {
+        updatedRow.Cod_Menu = "";
+      }
+  
+      return updatedRow;
+    });
     validateInput(field, value);
   };
+
   const validateInput = (field, value) => {
     let newErrors = { ...errors };
     if (field === "Ticket") {
@@ -950,17 +973,11 @@ function LandingPage() {
                 </option>
               ))}
             </select>
-            {editedRow.N_Aplicaciones === 'T24' ? (
+            {editedRow.N_Aplicaciones === 'T24' && (
               <input
                 type="text"
                 value={editedRow.Cod_Menu}
                 onChange={(e) => handleEditChange(e, "Cod_Menu")}
-              />
-            ) : (
-              <input
-                type="text"
-                value={editedRow.Cod_Menu}
-                readOnly // Establecer el campo como solo lectura si no es T24
               />
             )}
           </>
@@ -977,44 +994,7 @@ function LandingPage() {
         )
       ),
     },
-    /*
-      name: "Aplicación",
-      selector: (row) => row.N_Aplicaciones && row.Cod_Menu,
-      sortable: true,
-      minWidth: "150px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "600px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) => 
-        editMode && editedRow?.id === row.id ? (
-          <select value={editedRow.ID_Aplicaciones} onChange={(e) => handleEditChange(e, "ID_Aplicaciones")}>
-          {aplicacion.map((aplicacion) => (
-            <option key={aplicacion.id} value={aplicacion.id}>
-              {aplicacion.N_Aplicaciones}
-            </option>
-          ))}
-        </select>
-        ) : (
-          <div>{showALLColumns ? row.N_Aplicaciones: "" && row.Cod_Menu }</div>
-      ),
-    
-    
-      name: "Codigo del menu",
-      omit: !showColumns,
-      selector: (row) => row.Cod_Menu,
-      sortable: true,
-      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) => 
-        editMode && editedRow?.id === row.id ? (
-          <input
-            type="text"
-            value={editedRow.Cod_Menu}
-            onChange={(e) => handleEditChange(e, "Cod_Menu")}
-          />
-        ) : (
-          <div>{showALLColumns ? row.Cod_Menu: ""}</div>
-      ),
-    },*/
-
+   
     /*{
       name: "Ambiente",
       selector: (row) => row.N_Ambiente,
@@ -1150,8 +1130,6 @@ function LandingPage() {
           <HeaderContainer>
             <Title>Matriz de perfiles de {selectedCountry}</Title>
             <ButtonGroup>
-            {/*<Button primary onClick={handleToggleT24}>{
-              T24 ? "ocultar" : "mostrar"}</Button>*/}
               {showButtonB ?<Button primary onClick={toggleFilters}>{showFilters ? "Ocultar" : "Buscar"}</Button> : ''}
               <Button onClick={handleInsert}><FaPlus />Insertar Nuevo Perfil</Button>
             </ButtonGroup>
