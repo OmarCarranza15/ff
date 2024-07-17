@@ -12,24 +12,23 @@ const Login = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [isNewUser, setIsNewUser] = useState(false);
-    const [userId, setUserId] = useState(null); // Para almacenar el ID del usuario
+    const [userId, setUserId] = useState(null);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            // Hacer una solicitud para obtener el usuario por su nombre de Usuario
+            // Obtener el usuario por nombre de usuario
             const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}`);
 
-            // Verificar si se encontró un usuario y si la contraseña coincide
             const user = response.data.find(user => user.Usuario === username && user.Contrasenia === password);
 
             if (user) {
                 if (user.Estado === 1) {
-                    // Si el usuario es nuevo, mostrar los campos para nueva contraseña
+                    // Usuario es nuevo
                     setIsNewUser(true);
-                    setUserId(user.ID); // Almacenar el ID del usuario
+                    setUserId(user.ID);
                 } else if (user.Estado === 3) {
-                    // Si el usuario está suspendido, mostrar mensaje de expiración
+                    // Usuario está suspendido
                     setError('Este usuario ha expirado');
                 } else {
                     // Usuario no es nuevo ni suspendido, proceder al login normal
