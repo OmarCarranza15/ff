@@ -61,3 +61,12 @@
     color: #004ea1;
 }
 
+.bold-label {
+    font-weight: bold;
+    color: #01060c;
+}
+
+.input-error {
+    border-color: red;
+}
+
