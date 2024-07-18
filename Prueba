@@ -14,6 +14,7 @@ const Login = () => {
     const [isNewUser, setIsNewUser] = useState(false);
     const [userId, setUserId] = useState(null);
     const [userName, setUserName] = useState(''); 
+    const [userRole, setUserRole] = useState(null);
     const [isNewPasswordEmpty, setIsNewPasswordEmpty] = useState(false);
     const [isConfirmPasswordEmpty, setIsConfirmPasswordEmpty] = useState(false);
 
@@ -22,13 +23,14 @@ const Login = () => {
         try {
             const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}`);
 
-            console.log('response.data:', response.data);
+            console.log('response.data:', response.data); 
 
             const user = response.data.find(user => user.Usuario === username && user.Contrasenia === password);
 
             if (user) {
                 setUserId(user.ID); 
                 setUserName(user.Nombre); 
+                setUserRole(user.ID_RolUsuario);
 
                 if (user.Estado === 1) {
                     setIsNewUser(true);
@@ -86,7 +88,7 @@ const Login = () => {
 
             if (updateResponse.status === 200) {
                 localStorage.setItem('username', userName); 
-                localStorage.setItem('userRole', user.ID_RolUsuario); // Guardar el rol del usuario
+                localStorage.setItem('userRole', userRole); // Guardar el rol del usuario
                 navigate('/landingPage');
             } else {
                 setError('Error al cambiar la contraseña');
@@ -115,7 +117,7 @@ const Login = () => {
                 {isNewUser && (
                     <>
                         <div className="form-group">
-                            <label className={`bold-label ${isNewPasswordEmpty ? 'input-error' : ''}`}>Nueva Contraseña:</label>
+                            <label className="bold-label">Nueva Contraseña:</label>
                             <input 
                                 type="password" 
                                 value={newPassword} 
@@ -125,7 +127,7 @@ const Login = () => {
                             />
                         </div>
                         <div className="form-group">
-                            <label className={`bold-label ${isConfirmPasswordEmpty ? 'input-error' : ''}`}>Confirmar Contraseña:</label>
+                            <label className="bold-label">Confirmar Contraseña:</label>
                             <input 
                                 type="password" 
                                 value={confirmPassword} 
