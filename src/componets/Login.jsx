@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import React from "react";
 import axios from "axios";
@@ -13,18 +14,23 @@ const Login = () => {
     const [error, setError] = useState('');
     const [isNewUser, setIsNewUser] = useState(false);
     const [userId, setUserId] = useState(null);
+    const [userName, setUserName] = useState(''); 
+    const [isNewPasswordEmpty, setIsNewPasswordEmpty] = useState(false);
+    const [isConfirmPasswordEmpty, setIsConfirmPasswordEmpty] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}`);
 
-            console.log('response.data:', response.data); // Verifica la respuesta de la API en la consola
-            
+            console.log('response.data:', response.data); 
+
             const user = response.data.find(user => user.Usuario === username && user.Contrasenia === password);
 
             if (user) {
-                setUserId(user.id); // Asigna el ID del usuario encontrado
+                setUserId(user.ID); 
+                setUserName(user.Nombre); 
+
                 if (user.Estado === 1) {
                     setIsNewUser(true);
                 } else if (user.Estado === 3) {
@@ -43,9 +49,27 @@ const Login = () => {
     };
 
     const handlePasswordChange = async () => {
-       
+        if (newPassword === '') {
+            setIsNewPasswordEmpty(true);
+        } else {
+            setIsNewPasswordEmpty(false);
+        }
+
+        if (confirmPassword === '') {
+            setIsConfirmPasswordEmpty(true);
+        } else {
+            setIsConfirmPasswordEmpty(false);
+        }
+
         if (newPassword !== confirmPassword) {
             setError('Las contraseñas no coinciden');
+            return;
+        }
+
+        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{12,}$/;
+
+        if (!passwordRegex.test(newPassword)) {
+            setError('La nueva contraseña debe tener al menos 12 caracteres, una letra mayúscula, un número y un carácter especial.');
             return;
         }
 
@@ -54,13 +78,14 @@ const Login = () => {
                 setError('No se encontró el ID del usuario. Inicie sesión nuevamente.');
                 return;
             }
+
             const updateResponse = await axios.put(`http://localhost:3000/usuarios/${userId}`, {
                 Contrasenia: newPassword,
                 Estado: 2
             });
 
-            if (updateResponse.status === 200 ) {
-                localStorage.setItem('username', username);
+            if (updateResponse.status === 200) {
+                localStorage.setItem('username', userName); 
                 navigate('/landingPage');
             } else {
                 setError('Error al cambiar la contraseña');
@@ -89,12 +114,24 @@ const Login = () => {
                 {isNewUser && (
                     <>
                         <div className="form-group">
-                            <label>Nueva Contraseña:</label>
-                            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="form-control" required />
+                            <label className="bold-label">Nueva Contraseña:</label>
+                            <input 
+                                type="password" 
+                                value={newPassword} 
+                                onChange={(e) => setNewPassword(e.target.value)} 
+                                className={`form-control ${isNewPasswordEmpty ? 'input-error' : ''}`} 
+                                required 
+                            />
                         </div>
                         <div className="form-group">
-                            <label>Confirmar Contraseña:</label>
-                            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="form-control" required />
+                            <label className="bold-label">Confirmar Contraseña:</label>
+                            <input 
+                                type="password" 
+                                value={confirmPassword} 
+                                onChange={(e) => setConfirmPassword(e.target.value)} 
+                                className={`form-control ${isConfirmPasswordEmpty ? 'input-error' : ''}`} 
+                                required 
+                            />
                         </div>
                         <button type="button" className="btn btn-primary" onClick={handlePasswordChange}>Cambiar Contraseña</button>
                     </>
@@ -112,3 +149,5 @@ const Login = () => {
 };
 
 export default Login;
+
+
