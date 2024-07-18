@@ -13,25 +13,27 @@ const Login = () => {
     const [error, setError] = useState('');
     const [isNewUser, setIsNewUser] = useState(false);
     const [userId, setUserId] = useState(null);
+    const [userName, setUserName] = useState(''); // Nueva variable para el nombre del usuario
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}&Contrasenia=${password}`);
+            const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}`);
 
             console.log('response.data:', response.data); // Verifica la respuesta de la API en la consola
 
-            const user = response.data;
+            const user = response.data.find(user => user.Usuario === username && user.Contrasenia === password);
 
-            if (user && user.length > 0) {
-                setUserId(user[0].ID); // Asigna el ID del usuario encontrado
+            if (user) {
+                setUserId(user.ID); // Asigna el ID del usuario encontrado
+                setUserName(user.Nombre); // Asigna el nombre del usuario encontrado
 
-                if (user[0].Estado === 1) {
+                if (user.Estado === 1) {
                     setIsNewUser(true);
-                } else if (user[0].Estado === 3) {
+                } else if (user.Estado === 3) {
                     setError('Este usuario ha expirado');
                 } else {
-                    localStorage.setItem('username', user[0].Nombre);
+                    localStorage.setItem('username', user.Nombre);
                     navigate('/landingPage');
                 }
             } else {
@@ -61,7 +63,7 @@ const Login = () => {
             });
 
             if (updateResponse.status === 200) {
-                localStorage.setItem('username', username);
+                localStorage.setItem('username', userName); // Guarda el nombre del usuario
                 navigate('/landingPage');
             } else {
                 setError('Error al cambiar la contraseña');
