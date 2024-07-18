@@ -20,12 +20,11 @@ const Login = () => {
             const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}`);
 
             console.log('response.data:', response.data); // Verifica la respuesta de la API en la consola
-
+            
             const user = response.data.find(user => user.Usuario === username && user.Contrasenia === password);
 
             if (user) {
-                setUserId(user.ID); // Asigna el ID del usuario encontrado
-
+                setUserId(user.id); // Asigna el ID del usuario encontrado
                 if (user.Estado === 1) {
                     setIsNewUser(true);
                 } else if (user.Estado === 3) {
@@ -44,6 +43,7 @@ const Login = () => {
     };
 
     const handlePasswordChange = async () => {
+       
         if (newPassword !== confirmPassword) {
             setError('Las contraseñas no coinciden');
             return;
@@ -54,13 +54,12 @@ const Login = () => {
                 setError('No se encontró el ID del usuario. Inicie sesión nuevamente.');
                 return;
             }
-
             const updateResponse = await axios.put(`http://localhost:3000/usuarios/${userId}`, {
                 Contrasenia: newPassword,
                 Estado: 2
             });
 
-            if (updateResponse.status === 200) {
+            if (updateResponse.status === 200 ) {
                 localStorage.setItem('username', username);
                 navigate('/landingPage');
             } else {
