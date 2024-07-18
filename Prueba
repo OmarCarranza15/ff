@@ -1,3 +1,4 @@
+// Login.js
 import { useState } from "react";
 import React from "react";
 import axios from "axios";
@@ -13,22 +14,20 @@ const Login = () => {
     const [error, setError] = useState('');
     const [isNewUser, setIsNewUser] = useState(false);
     const [userId, setUserId] = useState(null);
-    const [userName, setUserName] = useState(''); 
-    const [userRole, setUserRole] = useState(''); 
-    const [isNewPasswordEmpty, setIsNewPasswordEmpty] = useState(false);
-    const [isConfirmPasswordEmpty, setIsConfirmPasswordEmpty] = useState(false);
+    const [userRole, setUserRole] = useState(null); // Nueva línea para el rol del usuario
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}`);
 
+            console.log('response.data:', response.data); // Verifica la respuesta de la API en la consola
+
             const user = response.data.find(user => user.Usuario === username && user.Contrasenia === password);
 
             if (user) {
-                setUserId(user.ID); 
-                setUserName(user.Nombre); 
-                setUserRole(user.Rol); // Almacena el rol del usuario
+                setUserId(user.ID); // Asigna el ID del usuario encontrado
+                setUserRole(user.ID_RolUsuario); // Asigna el rol del usuario encontrado
 
                 if (user.Estado === 1) {
                     setIsNewUser(true);
@@ -36,7 +35,7 @@ const Login = () => {
                     setError('Este usuario ha expirado');
                 } else {
                     localStorage.setItem('username', user.Nombre);
-                    localStorage.setItem('userRole', user.Rol); // Almacena el rol en el almacenamiento local
+                    localStorage.setItem('userRole', user.ID_RolUsuario); // Almacena el rol del usuario
                     navigate('/landingPage');
                 }
             } else {
@@ -49,27 +48,8 @@ const Login = () => {
     };
 
     const handlePasswordChange = async () => {
-        if (newPassword === '') {
-            setIsNewPasswordEmpty(true);
-        } else {
-            setIsNewPasswordEmpty(false);
-        }
-
-        if (confirmPassword === '') {
-            setIsConfirmPasswordEmpty(true);
-        } else {
-            setIsConfirmPasswordEmpty(false);
-        }
-
         if (newPassword !== confirmPassword) {
             setError('Las contraseñas no coinciden');
-            return;
-        }
-
-        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{12,}$/;
-
-        if (!passwordRegex.test(newPassword)) {
-            setError('La nueva contraseña debe tener al menos 12 caracteres, una letra mayúscula, un número y un carácter especial.');
             return;
         }
 
@@ -85,8 +65,7 @@ const Login = () => {
             });
 
             if (updateResponse.status === 200) {
-                localStorage.setItem('username', userName); 
-                localStorage.setItem('userRole', userRole); // Almacena el rol en el almacenamiento local
+                localStorage.setItem('username', username);
                 navigate('/landingPage');
             } else {
                 setError('Error al cambiar la contraseña');
@@ -115,24 +94,12 @@ const Login = () => {
                 {isNewUser && (
                     <>
                         <div className="form-group">
-                            <label className="bold-label">Nueva Contraseña:</label>
-                            <input 
-                                type="password" 
-                                value={newPassword} 
-                                onChange={(e) => setNewPassword(e.target.value)} 
-                                className={`form-control ${isNewPasswordEmpty ? 'input-error' : ''}`} 
-                                required 
-                            />
+                            <label>Nueva Contraseña:</label>
+                            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="form-control" required />
                         </div>
                         <div className="form-group">
-                            <label className="bold-label">Confirmar Contraseña:</label>
-                            <input 
-                                type="password" 
-                                value={confirmPassword} 
-                                onChange={(e) => setConfirmPassword(e.target.value)} 
-                                className={`form-control ${isConfirmPasswordEmpty ? 'input-error' : ''}`} 
-                                required 
-                            />
+                            <label>Confirmar Contraseña:</label>
+                            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="form-control" required />
                         </div>
                         <button type="button" className="btn btn-primary" onClick={handlePasswordChange}>Cambiar Contraseña</button>
                     </>
