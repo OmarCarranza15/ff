@@ -14,7 +14,6 @@ const Login = () => {
     const [error, setError] = useState('');
     const [isNewUser, setIsNewUser] = useState(false);
     const [userId, setUserId] = useState(null);
-    const [userRole, setUserRole] = useState(null); // Nueva línea para el rol del usuario
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -27,7 +26,6 @@ const Login = () => {
 
             if (user) {
                 setUserId(user.ID); // Asigna el ID del usuario encontrado
-                setUserRole(user.ID_RolUsuario); // Asigna el rol del usuario encontrado
 
                 if (user.Estado === 1) {
                     setIsNewUser(true);
@@ -35,7 +33,7 @@ const Login = () => {
                     setError('Este usuario ha expirado');
                 } else {
                     localStorage.setItem('username', user.Nombre);
-                    localStorage.setItem('userRole', user.ID_RolUsuario); // Almacena el rol del usuario
+                    localStorage.setItem('userRole', user.ID_RolUsuario); // Guardar el rol del usuario
                     navigate('/landingPage');
                 }
             } else {
@@ -53,6 +51,11 @@ const Login = () => {
             return;
         }
 
+        if (!/^.*(?=.{12,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+}{":;'?/>.<,]).*$/.test(newPassword)) {
+            setError('La contraseña debe tener al menos 12 caracteres, una letra mayúscula, un número y un carácter especial.');
+            return;
+        }
+
         try {
             if (!userId) {
                 setError('No se encontró el ID del usuario. Inicie sesión nuevamente.');
@@ -66,6 +69,7 @@ const Login = () => {
 
             if (updateResponse.status === 200) {
                 localStorage.setItem('username', username);
+                localStorage.setItem('userRole', user.ID_RolUsuario); // Guardar el rol del usuario
                 navigate('/landingPage');
             } else {
                 setError('Error al cambiar la contraseña');
@@ -94,12 +98,12 @@ const Login = () => {
                 {isNewUser && (
                     <>
                         <div className="form-group">
-                            <label>Nueva Contraseña:</label>
-                            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="form-control" required />
+                            <label style={{ fontWeight: 'bold', color: newPassword === '' ? 'red' : 'black' }}>Nueva Contraseña:</label>
+                            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="form-control" required style={{ borderColor: newPassword === '' ? 'red' : 'initial' }} />
                         </div>
                         <div className="form-group">
-                            <label>Confirmar Contraseña:</label>
-                            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="form-control" required />
+                            <label style={{ fontWeight: 'bold', color: confirmPassword === '' ? 'red' : 'black' }}>Confirmar Contraseña:</label>
+                            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="form-control" required style={{ borderColor: confirmPassword === '' ? 'red' : 'initial' }} />
                         </div>
                         <button type="button" className="btn btn-primary" onClick={handlePasswordChange}>Cambiar Contraseña</button>
                     </>
