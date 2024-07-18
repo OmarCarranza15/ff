@@ -51,6 +51,13 @@ const Login = () => {
             return;
         }
 
+        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{12,}$/;
+
+        if (!passwordRegex.test(newPassword)) {
+            setError('La nueva contraseña debe tener al menos 12 caracteres, una letra mayúscula, un número y un carácter especial.');
+            return;
+        }
+
         try {
             if (!userId) {
                 setError('No se encontró el ID del usuario. Inicie sesión nuevamente.');
