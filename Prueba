@@ -75,6 +75,12 @@ const Login = () => {
             return;
         }
 
+        // Validar que la nueva contraseña no sea igual a la anterior
+        if (newPassword === password) {
+            setError('La nueva contraseña no puede ser igual a la contraseña anterior.');
+            return;
+        }
+
         try {
             if (!userId) {
                 setError('No se encontró el ID del usuario. Inicie sesión nuevamente.');
