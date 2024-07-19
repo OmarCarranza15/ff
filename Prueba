@@ -1,73 +1,146 @@
-Parece que el problema es que los IDs de ambiente se están mostrando en lugar de los nombres. Para solucionar esto, debes asegurarte de que cuando se edita un registro, los nombres de los ambientes se muestren correctamente en el modal y en la tabla. Aquí está el código modificado para el componente `Aplicacion`:
+Para asegurarte de que se muestren los nombres en lugar de los IDs, debes ajustar dos cosas:
 
-1. **Modificación en `startEdit`:** Asegúrate de convertir los nombres de los ambientes a sus IDs para que se muestren correctamente al editar.
+1. **Cuando guardes los cambios, asegúrate de convertir los IDs seleccionados de vuelta a nombres.**
 
-2. **Modificación en `handleEditChange`:** Asegúrate de actualizar los nombres de los ambientes correctamente cuando se editan.
+2. **Asegúrate de que los nombres se muestren correctamente en la tabla después de guardar los cambios.**
 
-Aquí está el código modificado:
+Aquí está el código modificado para garantizar que se muestren los nombres de los ambientes después de guardar:
+
+1. **Modificación en `saveChanges`:** Convierte los IDs de vuelta a nombres después de guardar los cambios.
+
+2. **Ajusta el estado de `records` para reflejar correctamente los nombres de los ambientes.**
+
+Aquí está el código actualizado para estas partes:
+
+### Modificación en `saveChanges`
 
 ```javascript
-const startEdit = (row) => {
-  const ambienteIds = row.Ambientes.map((nombre) => {
-    const ambienteObj = ambiente.find((a) => a.N_Ambiente === nombre);
-    return ambienteObj ? ambienteObj.id : null;
-  }).filter((id) => id !== null);
-  
-  setEditedRow({ ...row, Ambientes: ambienteIds });
-  setEditMode(row.id);
-};
+const saveChanges = async (id) => {
+  try {
+    const updateRow = {
+      ...editedRow,
+      Ambientes: editedRow.Ambientes.join(", "),
+    };
 
-const handleEditChange = (event, field) => {
-  if (field === "Ambientes") {
-    const selectedOptions = Array.from(event.target.selectedOptions, option => option.value);
-    setEditedRow((prevState) => ({
-      ...prevState,
-      Ambientes: selectedOptions,
-    }));
-  } else {
-    const { value } = event.target;
-    setEditedRow((prevState) => ({
-      ...prevState,
-      [field]: value,
-      ...(field === "ID_Pais" && {
-        N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais,
-      }),
-    }));
-    validateInput(field, value);
+    await axios.put(`http://localhost:3000/aplicacion/${id}`, updateRow);
+
+    // Convierte los IDs de ambientes de vuelta a nombres
+    const updatedRow = {
+      ...editedRow,
+      Ambientes: editedRow.Ambientes.map(id => ambiente.find(a => a.id === id)?.N_Ambiente || id),
+    };
+
+    const updatedRecords = records.map((row) =>
+      row.id === id ? updatedRow : row
+    );
+
+    setRecords(updatedRecords);
+    setEditedRow(null);
+    setEditMode(null);
+
+    console.log("Cambios guardados correctamente");
+  } catch (error) {
+    console.error("Error al guardar los cambios", error);
   }
 };
-
-// En el componente de la tabla
-{
-  name: "Ambientes",
-  selector: (row) => row.Ambientes.join(", "),
-  sortable: true,
-  minWidth: "330px",
-  maxWidth: "50px",
-  cell: (row) =>
-    editMode && editedRow?.id === row.id ? (
-      <Select
-        isMulti
-        value={editedRow.Ambientes.map((id) => ({
-          value: id,
-          label: ambiente.find((a) => a.id === id)?.N_Ambiente,
-        }))}
-        options={ambiente.map((a) => ({
-          value: a.id,
-          label: a.N_Ambiente,
-        }))}
-        onChange={(selectedOptions) => {
-          const selectedValues = selectedOptions.map(option => option.value);
-          setEditedRow((prevState) => ({
-            ...prevState,
-            Ambientes: selectedValues,
-          }));
-        }}
-      />
-    ) : (
-      <div>{row.Ambientes.join(', ')}</div>
-    )
-}
 ```
 
-Estas modificaciones aseguran que los nombres de los ambientes se muestren correctamente durante la edición y se actualicen correctamente al guardar los cambios.
+### Ajuste en la tabla
+
+Para asegurarte de que los nombres se muestren en lugar de los IDs en la tabla:
+
+```javascript
+const columns = [
+  {
+    name: "Pais",
+    selector: (row) => row.N_Pais,
+    sortable: true,
+    minWidth: "200px",
+    maxWidth: "500px",
+    cell: (row) =>
+      editMode && editedRow?.id === row.id ? (
+        <select
+          value={editedRow.ID_Pais}
+          onChange={(e) => handleEditChange(e, "ID_Pais")}
+        >
+          {pais.map((pais) => (
+            <option key={pais.id} value={pais.id}>
+              {pais.N_Pais}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <div>{row.N_Pais}</div>
+      ),
+  },
+  {
+    name: "Aplicacion",
+    selector: (row) => row.N_Aplicaciones,
+    sortable: true,
+    minWidth: "330px",
+    maxWidth: "50px",
+    cell: (row) =>
+      editMode && editedRow?.id === row.id ? (
+        <input
+          type="text"
+          value={editedRow.N_Aplicaciones}
+          onChange={(e) => handleEditChange(e, "N_Aplicaciones")}
+        />
+      ) : (
+        <div>{row.N_Aplicaciones}</div>
+      ),
+  },
+  {
+    name: "Ambientes",
+    selector: (row) => row.Ambientes.join(", "),
+    sortable: true,
+    minWidth: "330px",
+    maxWidth: "50px",
+    cell: (row) =>
+      editMode && editedRow?.id === row.id ? (
+        <Select
+          isMulti
+          value={editedRow.Ambientes.map((id) => ({
+            value: id,
+            label: ambiente.find((a) => a.id === id)?.N_Ambiente,
+          }))}
+          options={ambiente.map((a) => ({
+            value: a.id,
+            label: a.N_Ambiente,
+          }))}
+          onChange={(selectedOptions) => {
+            const selectedValues = selectedOptions.map(option => option.value);
+            setEditedRow((prevState) => ({
+              ...prevState,
+              Ambientes: selectedValues,
+            }));
+          }}
+        />
+      ) : (
+        <div>{row.Ambientes.join(', ')}</div>
+      )
+  },
+  {
+    name: "Acciones",
+    cell: (row) =>
+      editMode === row.id ? (
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <Button onClick={() => saveChanges(row.id)}>
+            <FaSave />
+          </Button>
+          <ButtonCancelar cancel onClick={cancelEdit}>
+            <FaTimes />
+          </ButtonCancelar>
+        </div>
+      ) : (
+        <Button onClick={() => startEdit(row)}>
+          <FaEdit />
+        </Button>
+      ),
+  },
+];
+```
+
+### Nota
+
+Asegúrate de que el endpoint `PUT` de la API esté configurado para aceptar la lista de IDs en formato de cadena separada por comas y que el frontend esté enviando los IDs correctamente al servidor. Además, el código de conversión de IDs a nombres se realiza después de obtener los datos de la API, por lo que los nombres deberían mostrarse correctamente en la interfaz.
