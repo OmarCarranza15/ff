@@ -1,63 +1,183 @@
-Para asegurarte de que solo el registro en modo de edición pueda tener sus checkboxes interactuables, necesitas condicionar la habilitación de los checkboxes en función del estado de edición. Aquí te dejo el ajuste necesario:
+El problema principal parece ser la carga y el rendimiento, especialmente debido a las múltiples llamadas a la API en `useEffect`. Aquí hay algunas optimizaciones que podrían mejorar el rendimiento:
 
-### 1. **Columnas para `Insertar` y `Editar`**
-Ajusta las columnas para que los checkboxes solo sean interactivos cuando el registro está en modo de edición:
+### 1. Optimización de las llamadas a la API
 
-```javascript
-{
-  name: "Insertar",
-  selector: (row) => (row.Insertar === 1 ? "Activo" : "Inactivo"),
-  cell: (row) =>
-    editMode && editedRow?.id === row.id ? (
-      <CustomCheckbox
-        checked={editedRow.Insertar}
-        onChange={(e) => handleEditChange(e, "Insertar")}
-      />
-    ) : (
-      <CustomCheckbox
-        checked={row.Insertar === 1}
-        disabled={!editMode || editedRow?.id !== row.id}
-        onChange={(e) => handleStaticCheckboxChange(e, row.id, "Insertar")}
-      />
-    ),
-},
-{
-  name: "Editar",
-  selector: (row) => (row.Editar === 1 ? "Activo" : "Inactivo"),
-  cell: (row) =>
-    editMode && editedRow?.id === row.id ? (
-      <CustomCheckbox
-        checked={editedRow.Editar}
-        onChange={(e) => handleEditChange(e, "Editar")}
-      />
-    ) : (
-      <CustomCheckbox
-        checked={row.Editar === 1}
-        disabled={!editMode || editedRow?.id !== row.id}
-        onChange={(e) => handleStaticCheckboxChange(e, row.id, "Editar")}
-      />
-    ),
-}
+**Problema:** Hacer múltiples llamadas a la API para obtener nombres de países dentro de un bucle puede ser muy costoso y lento.
+
+**Solución:** Obtener todos los países de una vez y luego mapear los IDs localmente.
+
+```jsx
+useEffect(() => {
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [rolesResponse, paisResponse] = await Promise.all([
+        axios.get(`http://localhost:3000/rolusuario/`),
+        axios.get(`http://localhost:3000/pais/`)
+      ]);
+
+      const rolesData = rolesResponse.data;
+      const paisData = paisResponse.data;
+
+      const paisMap = paisData.reduce((map, pais) => {
+        map[pais.id] = pais.N_Pais;
+        return map;
+      }, {});
+
+      const mappedData = rolesData.map((rolusuario) => {
+        const paisIds = rolusuario.Paises.split(',').map(Number);
+        const paisNombres = paisIds.map((id) => paisMap[id]);
+        return {
+          id: rolusuario.id,
+          N_Rol: rolusuario.N_Rol,
+          Des_Rol: rolusuario.Des_Rol,
+          Fec_Creacion: rolusuario.Fec_Creacion,
+          Insertar: rolusuario.Insertar,
+          Editar: rolusuario.Editar,
+          Paises: paisNombres,
+        };
+      });
+
+      setRecords(mappedData);
+      setPais(paisData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error al obtener los Roles:", error);
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
 ```
 
-### 2. **CustomCheckbox Componente**
-Asegúrate de que el componente `CustomCheckbox` acepte y maneje la propiedad `disabled`:
+### 2. Evitar `window.location.reload`
 
-```javascript
-import React from 'react';
+**Problema:** La recarga de la página (`window.location.reload()`) es costosa y reinicia todo el estado de la aplicación.
 
-const CustomCheckbox = ({ checked, onChange, disabled }) => {
-  return (
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={onChange}
-      disabled={disabled}
-    />
-  );
+**Solución:** Actualiza el estado local en lugar de recargar la página.
+
+```jsx
+const SaveModal = async () => {
+  const newErrors = { pais: "", rolusuario: "" };
+
+  if (!modalValues.Paises.length) {
+    newErrors.pais = "El campo Pais es obligatorio";
+  }
+
+  if (!modalValues.N_Rol.trim()) {
+    newErrors.rolusuario = "El campo Rol es obligatorio";
+  }
+  setErrors(newErrors);
+
+  if (Object.values(newErrors).every((error) => error === "")) {
+    try {
+      const response = await axios.get(`http://localhost:3000/rolusuario`);
+      const rolusuarioExists = response.data.some(
+        (rolusuario) =>
+          rolusuario.N_Rol.toLowerCase() ===
+          modalValues.N_Rol.toLowerCase()
+      );
+      if (rolusuarioExists) {
+        setErrors({ rolusuario: "El Rol ya existe" });
+        return;
+      }
+
+      const newRolUsuario = {
+        N_Rol: modalValues.N_Rol,
+        Des_Rol: modalValues.Des_Rol,
+        Fec_Creacion: new Date(),
+        Insertar: modalValues.Insertar ? 1 : 2,
+        Editar: modalValues.Editar ? 1 : 2,
+        Paises: modalValues.Paises.join(","),
+      };
+
+      const insertResponse = await axios.post(
+        `http://localhost:3000/rolusuario`,
+        newRolUsuario
+      );
+
+      const updatedRecords = [
+        ...records,
+        {
+          id: insertResponse.data.id,
+          N_Rol: newRolUsuario.N_Rol,
+          Des_Rol: newRolUsuario.Des_Rol,
+          Fec_Creacion: newRolUsuario.Fec_Creacion,
+          Insertar: newRolUsuario.Insertar,
+          Editar: newRolUsuario.Editar,
+          Paises: modalValues.Paises.map(id => pais.find(a => a.id === id)?.N_Pais),
+        },
+      ];
+
+      setRecords(updatedRecords);
+      setShowModal(false);
+      setModalValues({ N_Rol: "", Des_Rol: "", Paises: [] });
+    } catch (error) {
+      console.error("Error al insertar un nuevo Rol:", error);
+    }
+  }
 };
-
-export default CustomCheckbox;
 ```
 
-Este ajuste asegurará que los checkboxes sean deshabilitados para todos los registros excepto el que está actualmente en modo de edición.
+### 3. Evitar cálculos innecesarios en `saveChanges`
+
+**Problema:** La función `saveChanges` podría estar realizando cálculos y actualizaciones innecesarias.
+
+**Solución:** Solo actualiza los registros necesarios.
+
+```jsx
+const saveChanges = async (id) => {
+  try {
+    const updateRow = {
+      ...editedRow,
+      Insertar: editedRow.Insertar ? 1 : 2,
+      Editar: editedRow.Editar ? 1 : 2,
+      Paises: editedRow.Paises.join(","),
+    };
+
+    await axios.put(`http://localhost:3000/rolusuario/${id}`, updateRow);
+
+    const updatedRecords = records.map((row) =>
+      row.id === id ? { ...row, ...updateRow, Paises: updateRow.Paises.split(",").map(id => pais.find(a => a.id === Number(id))?.N_Pais) } : row
+    );
+
+    setRecords(updatedRecords);
+    setEditedRow(null);
+    setEditMode(null);
+
+    console.log("Cambios guardados correctamente");
+  } catch (error) {
+    console.error("Error al guardar los cambios", error);
+  }
+};
+```
+
+### 4. Mejorar la lógica de filtro
+
+**Problema:** La lógica de filtrado podría ser mejorada para evitar recalcular los datos cada vez que se renderiza el componente.
+
+**Solución:** Usa `useMemo` para memorizar los datos filtrados.
+
+```jsx
+const filteredData = useMemo(() => {
+  return records.filter((row) => {
+    return (
+      (filters.N_Pais === "" ||
+        row.N_Pais.toLowerCase().includes(filters.N_Pais.toLowerCase())) &&
+      (filters.N_Rol === "" ||
+        row.N_Rol.toLowerCase().includes(
+          filters.N_Rol.toLowerCase()
+        ))
+    );
+  });
+}, [records, filters]);
+```
+
+### 5. Reducir el número de re-renders
+
+**Problema:** El uso innecesario de `useState` puede causar re-renders adicionales.
+
+**Solución:** Agrupa el estado relacionado o usa un `useReducer` para manejar el estado complejo.
+
+Con estos cambios, deberías notar una mejora en el rendimiento de tu aplicación, especialmente al cargar y editar los datos.
