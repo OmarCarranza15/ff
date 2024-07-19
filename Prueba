@@ -1,26 +1,11 @@
-Claro, aquí están las partes específicas del código que debes cambiar:
+Para mostrar los checkboxes antes de entrar en el modo de edición, puedes ajustar el código para que siempre se muestren como checkboxes, y no solo en el modo de edición. Aquí tienes cómo hacerlo:
 
 ### 1. **Función `startEdit`**
-Actualiza la función `startEdit` para que configure correctamente los valores de `Insertar` y `Editar` al entrar en modo de edición:
-```javascript
-const startEdit = (row) => {
-  const paisIds = row.Paises.map((nombre) => {
-    const paisObj = pais.find((a) => a.N_Pais === nombre);
-    return paisObj ? paisObj.id : null;
-  }).filter((id) => id !== null);
-
-  setEditedRow({ 
-    ...row, 
-    Paises: paisIds,
-    Insertar: row.Insertar === 1,
-    Editar: row.Editar === 1
-  });
-  setEditMode(row.id);
-};
-```
+Deja la función `startEdit` como está, no necesitas hacer cambios adicionales aquí.
 
 ### 2. **Columnas para `Insertar` y `Editar`**
-Asegúrate de que las columnas de `Insertar` y `Editar` utilizan `CustomCheckbox` y manejan correctamente los estados:
+Actualiza las columnas para que siempre se muestren como checkboxes:
+
 ```javascript
 {
   name: "Insertar",
@@ -32,7 +17,10 @@ Asegúrate de que las columnas de `Insertar` y `Editar` utilizan `CustomCheckbox
         onChange={(e) => handleEditChange(e, "Insertar")}
       />
     ) : (
-      <div>{row.Insertar === 1 ? "Activo" : "Inactivo"}</div>
+      <CustomCheckbox
+        checked={row.Insertar === 1}
+        onChange={(e) => handleStaticCheckboxChange(e, row.id, "Insertar")}
+      />
     ),
 },
 {
@@ -45,13 +33,36 @@ Asegúrate de que las columnas de `Insertar` y `Editar` utilizan `CustomCheckbox
         onChange={(e) => handleEditChange(e, "Editar")}
       />
     ) : (
-      <div>{row.Editar === 1 ? "Activo" : "Inactivo"}</div>
+      <CustomCheckbox
+        checked={row.Editar === 1}
+        onChange={(e) => handleStaticCheckboxChange(e, row.id, "Editar")}
+      />
     ),
 }
 ```
 
-### 3. **Guardar Cambios**
-Actualiza `saveChanges` para convertir los valores de `Insertar` y `Editar` a números antes de guardarlos:
+### 3. **Manejadores de Eventos**
+Agrega un nuevo manejador para los cambios en los checkboxes cuando no estés en modo de edición:
+
+```javascript
+const handleStaticCheckboxChange = (e, id, field) => {
+  const updatedRecords = records.map((row) => {
+    if (row.id === id) {
+      return {
+        ...row,
+        [field]: e.target.checked ? 1 : 2
+      };
+    }
+    return row;
+  });
+
+  setRecords(updatedRecords);
+};
+```
+
+### 4. **Guardar Cambios**
+Mantén la función `saveChanges` como antes para que convierta los valores de `Insertar` y `Editar` a números antes de guardarlos:
+
 ```javascript
 const saveChanges = async (id) => {
   try {
@@ -80,4 +91,4 @@ const saveChanges = async (id) => {
 };
 ```
 
-Estas son las partes específicas del código que necesitas actualizar para que los checkboxes de `Insertar` y `Editar` reflejen correctamente el estado actual al entrar en modo de edición.
+Este ajuste asegura que los checkboxes se muestren tanto en el modo de edición como en el modo de visualización. Cuando se hacen cambios en los checkboxes en el modo de visualización, estos cambios se reflejan directamente en el estado de los registros.
