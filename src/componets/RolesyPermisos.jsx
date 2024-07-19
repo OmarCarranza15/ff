@@ -332,6 +332,17 @@ const Checkbox = styled.input`
   }
 `;
 
+const CustomCheckbox = ({ checked, onChange, disabled }) => {
+  return (
+    <Checkbox
+      type="checkbox"
+      checked={checked}
+      onChange={onChange}
+      disabled={disabled}
+    />
+  );
+};
+
 
 
 function Roles() {
@@ -428,14 +439,6 @@ function Roles() {
     setShowModal(true);
   };
 
-  const CustomCheckbox = ({ checked, onChange }) => (
-    <Checkbox
-      type="checkbox"
-      checked={checked}
-      onChange={onChange}
-    />
-  );
-
   const handleCloseModal = () => {
     setShowModal(false);
     setModalValues({ pais: [], rolusuario: "" });
@@ -518,7 +521,12 @@ function Roles() {
       return paisObj ? paisObj.id : null;
     }).filter((id) => id !== null);
   
-    setEditedRow({ ...row, Paises: paisIds });
+    setEditedRow({ 
+      ...row, 
+      Paises: paisIds,
+      Insertar: row.Insertar === 1,
+      Editar: row.Editar === 1
+    });
     setEditMode(row.id);
   };
   
@@ -548,6 +556,19 @@ function Roles() {
   }
 
   };
+  const handleStaticCheckboxChange = (e, id, field) => {
+    const updatedRecords = records.map((row) => {
+      if (row.id === id) {
+        return {
+          ...row,
+          [field]: e.target.checked ? 1 : 2
+        };
+      }
+      return row;
+    });
+  
+    setRecords(updatedRecords);
+  };
 
   
 
@@ -576,6 +597,7 @@ function Roles() {
       console.error("Error al guardar los cambios", error);
     }
   };
+  
 
   const cancelEdit = () => {
     setEditedRow(null);
@@ -640,7 +662,7 @@ function Roles() {
       selector: (row) => row.Fec_Creacion,
       sortable: true,
       minWidth: "150px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "50px", // Ajusta el tamaño máximo según sea necesario
+      maxWidth: "550px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
           <input
@@ -653,11 +675,8 @@ function Roles() {
         ),
     },
     {
-      name: "Permiso de Insertar",
-      selector: (row) => row.Insertar,
-      sortable: true,
-      minWidth: "170px",
-      maxWidth: "50px",
+      name: "Insertar",
+      selector: (row) => (row.Insertar === 1 ? "Activo" : "Inactivo"),
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
           <CustomCheckbox
@@ -667,16 +686,14 @@ function Roles() {
         ) : (
           <CustomCheckbox
             checked={row.Insertar === 1}
-            disabled
+            disabled={!editMode || editedRow?.id !== row.id}
+            onChange={(e) => handleStaticCheckboxChange(e, row.id, "Insertar")}
           />
         ),
     },
     {
-      name: "Permiso de Editar",
-      selector: (row) => row.Editar,
-      sortable: true,
-      minWidth: "170px",
-      maxWidth: "50px",
+      name: "Editar",
+      selector: (row) => (row.Editar === 1 ? "Activo" : "Inactivo"),
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
           <CustomCheckbox
@@ -686,7 +703,8 @@ function Roles() {
         ) : (
           <CustomCheckbox
             checked={row.Editar === 1}
-            disabled
+            disabled={!editMode || editedRow?.id !== row.id}
+            onChange={(e) => handleStaticCheckboxChange(e, row.id, "Editar")}
           />
         ),
     },
