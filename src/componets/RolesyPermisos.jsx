@@ -1,13 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 import Sidebar from "./SideNavBar.jsx"; // Ajusta la ruta según la ubicación real de Sidebar.jsx
 import TopBar from "./TopBar.jsx"; // Ajusta la ruta según la ubicación real de TopBar.jsx
-import { styled } from "styled-components";
-import { FaSave, FaTimes, FaUndo, FaSearch, FaPlus } from "react-icons/fa"; // Importa los íconos necesarios
-import Multiselect from "multiselect-react-dropdown";
+import { styled, keyframes } from "styled-components";
+import "../styles/DataTable.css"; // Importa el archivo CSS
+import axios from "axios";
 import Select from "react-select";
 
-/*
+import {
+  FaEdit,
+  FaSave,
+  FaTimes,
+  FaUndo,
+  FaSearch,
+  FaPlus,
+} from "react-icons/fa"; // Importa los íconos necesarios
+
 const rotate360 = keyframes`
   from {
     transform: rotate(0deg);
@@ -39,7 +47,7 @@ const CustomLoader = () => (
     <Spinner />
     <div>Cargando Registros...</div>
   </div>
-);*/
+);
 
 const MainContainer = styled.div`
   display: flex;
@@ -69,7 +77,7 @@ const Title = styled.h2`
 `;
 
 const FilterWrapper = styled.div`
-  position: relative;
+  position: relative; /* Cambiado de 'absolute' a 'relative' */
   right: 9px;
   padding: 10px;
   background-color: #ffffff;
@@ -79,6 +87,7 @@ const FilterWrapper = styled.div`
   z-index: 100;
   display: ${(props) => (props.show ? "flex" : "none")};
   flex-wrap: wrap;
+  margin: 0% 20%;
 `;
 
 const FilterInput = styled.input`
@@ -88,6 +97,9 @@ const FilterInput = styled.input`
   border: 1px solid #ccc;
   border-radius: 3px;
   font-size: 14px;
+  justify-content: center;
+  flex: 1;
+  display: flex;
 `;
 
 const ButtonGroup = styled.div`
@@ -95,8 +107,23 @@ const ButtonGroup = styled.div`
   gap: 10px;
 `;
 
+//Estilos de Boton de Buscar y de Insertar un nuevo perfil
 const Button = styled.button`
   background-color: ${(props) => (props.primary ? "#008cba" : "#4caf50")};
+  color: #ffffff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+`;
+
+//Estilos del Boton cancelar
+const ButtonCancelar = styled.button`
+  background-color: ${(props) =>
+    props.primary ? "#008cba" : props.cancel ? "#bf1515" : "#4caf50"};
   color: #ffffff;
   padding: 10px 20px;
   border: none;
@@ -134,6 +161,9 @@ const DataTableContainer = styled.div`
 const StyledDataTable = styled(DataTable)`
   border-collapse: collapse;
   width: 100%;
+  position: relative;
+  margin: center;
+  //margin: 0% 20%;
 
   th,
   td {
@@ -143,7 +173,6 @@ const StyledDataTable = styled(DataTable)`
     white-space: normal;
     word-break: break-word;
     overflow-wrap: break-word;
-    responsive: true;
   }
 
   th {
@@ -154,6 +183,7 @@ const StyledDataTable = styled(DataTable)`
   td {
     min-width: 200px;
     max-width: 500px;
+    text-align: center;
   }
 
   @media (max-width: 768px) {
@@ -171,7 +201,6 @@ const StyledDataTable = styled(DataTable)`
   }
 `;
 
-/////////////////////////MODAL//////////////////////////////////
 const ModalBackground = styled.div`
   position: fixed;
   top: 0;
@@ -214,12 +243,11 @@ const ModalTitle = styled.h3`
 
 const ModalInput = styled.input`
   width: 100%;
-  text-align: left;
   padding: 12px;
   margin-bottom: 15px;
   border: 1px solid ${(props) => (props.error ? "red" : "#ccc")};
   border-radius: 5px;
-  font-size: 14px;
+  font-size: 16px;
   outline: none;
   box-sizing: border-box;
   transition: border-color 0.3s ease;
@@ -232,8 +260,8 @@ const ModalInput = styled.input`
 
 const ErrorMessage = styled.p`
   color: red;
-  font-size: 14px;
-  margin-bottom: 8px;
+  font-size: 12px;
+  margin-bottom: 10px;
 `;
 
 const ModalButtonGroup = styled.div`
@@ -261,280 +289,102 @@ const ModalButton = styled.button`
   }
 `;
 
+
 const GuardarButton = styled(ModalButton)`
   background-color: #4caf50;
 `;
-const StyledMultiselect = styled(Multiselect)`
-  font-size: 14px;
-  width: auto; /* Agregué width: auto para que el input se ajuste automáticamente al tamaño del texto del placeholder */
-  text-align: left;
-  margin-bottom: 15px;
-  padding: 10px;
 
-  ::placeholder {
-    font-size: 14px;
-    white-space: nowrap; /* Agregué white-space: nowrap para que el texto no se corte */
-  }
+/*const customStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    border: state.isFocused ? '1px solid #80bdff' : '1px solid #ced4da',
+    boxShadow: state.isFocused ? '0 0 0 0.2rem rgba(0,123,255,.25' : null,
+    '&:hover': {
+      border: state.isFocused ? '1px solid #80bdff' : '1px solid #adb5bd',
+    }
+  })
+};*/
 
-  &:focus {
-    box-shadow: 0 0 5px rgba(0, 140, 186, 0.5);
-  }
-`;
-
-function RolesyPermisos() {
-  const [records, setRecords] = useState([
-    {
-      id: 1,
-      nombrerol: "Admin",
-      desrol: "Administrador del sistema",
-      permisoconsultar: 1,
-      permisoinsertar: 1,
-      permisoeditar: 1,
-      permisoadmin: 1,
-      pais: "Honduras, Panama, Guatemala, Nicaragua",
-      fechacreacion: "05/05/2024",
-      fechamodificacion: "05/05/2024",
-    },
-    {
-      id: 2,
-      nombrerol: "Mesa",
-      desrol: "Area de mesa de servicio",
-      permisoconsultar: 1,
-      permisoinsertar: 2,
-      permisoeditar: 2,
-      permisoadmin: 2,
-      pais: "Honduras",
-      fechacreacion: "05/05/2024",
-      fechamodificacion: "05/05/2024",
-    },
-    {
-      id: 3,
-      nombrerol: "Oficial de Seguridad",
-      desrol: "Rol para oficial de seguridad",
-      permisoconsultar: 1,
-      permisoinsertar: 2,
-      permisoeditar: 2,
-      permisoadmin: 2,
-      pais: 2,
-      fechacreacion: "05/05/2024",
-      fechamodificacion: "05/05/2024",
-    },
-  ]);
+function Roles() {
+  const [records, setRecords] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editedRow, setEditedRow] = useState({
+    id: null,
+    Paises: [],
+    N_Rol: "",
+    Des_Rol: "",
+    Insertar: false,
+    Editar: false,
+  });
+  const [pais, setPais] = useState([]);
+  const [errors, setErrors] = useState({
+    pais: "",
+    rolusuario: "",
+  }); //validaciones para insertar una nueva razon social
+  const [modalValues, setModalValues] = useState({
+    Paises: [],
+    N_Rol: "",
+    Des_Rol: "",
+    Insertar: false,
+    Editar: false,
+  });
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false); // Estado para mostrar/ocultar el modal
 
   const [filters, setFilters] = useState({
-    nombrerol: "",
-    desrol: "",
+    N_Rol: "",
+    N_Pais: "",
+    N_Ambiente: "",
   });
 
-  const [showFilters, setShowFilters] = useState(false);
-  const [showModal, setShowModal] = useState(false); // Estado para mostrar/ocultar el modal
-  const [editedRow, setEditedRow] = useState(null); // Estado para la fila en edición
-  const [editedRowData, setEditedRowData] = useState({});
-  const [errors, setErrors] = useState({
-    nombrerol: "",
-    desrol: "",
-    permisoconsultar: "",
-    permisoinsertar: "",
-    permisoeditar: "",
-    permisoadmin: "",
-    pais: "",
-  }); //validaciones para insertar un nuevo puesto
-  const [selectedCountries, setSelectedCountries] = useState([]);
-  const [modalValues, setModalValues] = useState({
-    nombrerol: "",
-    desrol: "",
-    permisoconsultar: "",
-    permisoinsertar: "",
-    permisoeditar: "",
-    permisoadmin: "",
-    pais: "",
-  });
-  const [showEditModal, setShowEditModal] = useState(false);
-  //const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(`http://localhost:3000/rolusuario/`);
+        const data = response.data;
+        const mappedData = await Promise.all(
+          data.map(async (rolusuario) => {
+            const paisIds = rolusuario.Paises.split(',').map(Number);
+            const paisNombres = await Promise.all(
+              paisIds.map(async (id) => {
+                const paisResponse = await axios.get(
+                  `http://localhost:3000/pais/${id}`
+                );
+                return paisResponse.data.N_Pais;
+              })
+            );
+            return {
+              id: rolusuario.id,
+              N_Rol: rolusuario.N_Rol,
+              Des_Rol: rolusuario.Des_Rol,
+              Fec_Creacion: rolusuario.Fec_Creacion,
+              Insertar: rolusuario.Insertar,
+              Editar: rolusuario.Editar,
+              Paises: paisNombres,
+            };
+          })
+        );
+        setRecords(mappedData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error al obtener los Roles:", error);
+        setLoading(false);
+      }
+    };;
+    const fetchPais = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/pais/`);
+        setPais(response.data);
+      } catch (error) {
+        console.error("Error al obtener la lista de Paises", error);
+      }
+    };
 
-  const columns = [
-    {
-      name: "Nombre del Rol",
-      selector: (row) => row.nombrerol,
-      sortable: true,
-      minWidth: "200px",
-      maxWidth: "500px",
-      cell: (row) =>
-        editedRow && editedRow.id === row.id ? (
-          <input
-            type="text"
-            value={editedRow.nombrerol}
-            onChange={(e) => handleEditChange(e, "nombrerol")}
-            style={{
-              padding: "8px",
-              fontSize: "12px",
-              borderRadius: "5px",
-            }}
-          />
-        ) : (
-          <div>{row.nombrerol}</div>
-        ),
-    },
-    {
-      name: "Descripción del Rol",
-      selector: (row) => row.desrol,
-      sortable: true,
-      minWidth: "200px",
-      maxWidth: "500px",
-      cell: (row) =>
-        editedRow && editedRow.id === row.id ? (
-          <input
-            type="text"
-            value={editedRow.desrol}
-            onChange={(e) => handleEditChange(e, "desrol")}
-            style={{
-              padding: "8px",
-              fontSize: "12px",
-              borderRadius: "5px",
-            }}
-          />
-        ) : (
-          <div>{row.desrol}</div>
-        ),
-    },
-    {
-      name: "Consultar",
-      selector: (row) => row.permisoconsultar,
-      sortable: true,
-      minWidth: "100px",
-      maxWidth: "500px",
-      cell: (row) => (
-        <input
-          type="checkbox"
-          checked={row.permisoconsultar === 1}
-          onChange={(e) =>
-            handleEditChange(e, "permisoconsultar", e.target.checked ? 1 : 2)
-          }
-          style={{
-            width: "20px",
-            height: "20px",
-            cursor: "pointer",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-            boxShadow: "0 0 5px rgba(0,0,0,0.2)",
-            color: "blue",
-          }}
-          disabled={!editedRow} // Aquí se condiciona la propiedad disabled para que se pueda editar
-        />
-      ),
-    },
-    {
-      name: "Insertar",
-      selector: (row) => row.permisoinsertar,
-      sortable: true,
-      minWidth: "100px",
-      maxWidth: "500px",
-      cell: (row) => (
-        <input
-          type="checkbox"
-          checked={row.permisoinsertar === 1}
-          onChange={(e) =>
-            handleEditChange(e, "permisoinsertar", e.target.checked ? 1 : 2)
-          }
-          style={{
-            width: "20px",
-            height: "20px",
-            cursor: "pointer",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-            boxShadow: "0 0 5px rgba(0,0,0,0.2)",
-          }}
-          disabled={!editedRow} // Aquí se condiciona la propiedad disabled para que se pueda editar
-        />
-      ),
-    },
-    {
-      name: "Editar",
-      selector: (row) => row.permisoeditar,
-      sortable: true,
-      minWidth: "50px",
-      maxWidth: "100px",
-      cell: (row) => (
-        <input
-          type="checkbox"
-          checked={row.permisoeditar === 1}
-          onChange={(e) =>
-            handleEditChange(e, "permisoeditar", e.target.checked ? 1 : 2)
-          }
-          style={{
-            width: "20px",
-            height: "20px",
-            cursor: "pointer",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-            boxShadow: "0 0 5px rgba(0,0,0,0.2)",
-          }}
-          disabled={!editedRow} // Aquí se condiciona la propiedad disabled para que se pueda editar
-        />
-      ),
-    },
-    {
-      name: "País",
-      selector: (row) => row.pais,
-      sortable: true,
-      minWidth: "300px",
-      maxWidth: "600px",
-      cell: (row) =>
-        editedRow && editedRow.id === row.id ? (
-          <Select
-            placeholder="Seleccione uno o mas paises"
-            value={selectedCountries.map((value) => ({ value, label: value }))}
-            onChange={(options) => {
-              setSelectedCountries(options.map((option) => option.value));
-              setEditedRow({
-                ...editedRow,
-                pais: options.map((option) => option.value).join(","),
-              });
-              handleEditChange(editedRow, "pais");
-            }}
-            isMulti
-            options={[
-              { value: "Honduras", label: "Honduras" },
-              { value: "Guatemala", label: "Guatemala" },
-              { value: "Panama", label: "Panama" },
-              { value: "Nicaragua", label: "Nicaragua" },
-            ]}
-            components={{ Option }}
-            closeMenuOnSelect={false}
-            isSearchable={true}
-            noOptionsMessage={() => "No hay más opciones"}
-          />
-        ) : (
-          <div>{row.pais}</div>
-        ),
-    },
-    {
-      name: "Fecha de Creación",
-      selector: (row) => row.fechacreacion,
-      sortable: true,
-      minWidth: "100px",
-      maxWidth: "500px",
-    },
-    {
-      name: "Fecha de Modificación",
-      selector: (row) => row.fechamodificacion,
-      sortable: true,
-      minWidth: "100px",
-      maxWidth: "500px",
-    },
-    {
-      name: "Acciones",
-      cell: (row) => (
-        <div>
-          <Button onClick={() => handleEdit(row)}>Editar</Button>
-        </div>
-      ),
-    },
-  ];
-  const handleEdit = (row) => {
-    setEditedRowData(row);
-    setShowEditModal(true);
-  };
+    fetchData();
+    fetchPais();
+  }, []);
 
   const handleFilterChange = (event, column) => {
     const { value } = event.target;
@@ -551,151 +401,300 @@ function RolesyPermisos() {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setModalValues({
-      nombrerol: "",
-      desrol: "",
-      permisoconsultar: "",
-      permisoinsertar: "",
-      permisoeditar: "",
-      permisoadmin: "",
-      pais: "",
-    });
-
-    setErrors({
-      nombrerol: "",
-      desrol: "",
-      permisoconsultar: "",
-      permisoinsertar: "",
-      permisoeditar: "",
-      permisoadmin: "",
-      pais: "",
-    });
+    setModalValues({ pais: [], rolusuario: "" });
+    setErrors({ pais: "", rolusuario: "", });
   };
 
   const handleModalChange = (event, field) => {
-    const { value, checked } = event.target;
-    if (event.target.type === "checkbox") {
-      setModalValues((prevValues) => ({
-        ...prevValues,
-        [field]: checked ? 1 : 2,
-      }));
-    } else {
-      setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
-    }
+    const { value, type, checked } = event.target;
+    setModalValues((prevValues) => ({
+      ...prevValues,
+      [field]: type === "checkbox" ? checked : value,
+    }));
   };
+  
 
-  const SaveModal = () => {
-    const newErrors = {
-      nombrerol: "",
-      desrol: "",
-      permisoconsultar: "",
-      permisoinsertar: "",
-      permisoeditar: "",
-      permisoadmin: "",
-      pais: "",
-    };
-
-    if (!modalValues.nombrerol.trim()) {
-      newErrors.nombrerol = "El nombre del rol es obligatorio.";
+  const SaveModal = async () => {
+    const newErrors = { pais: "", rolusuario: ""};
+  
+    if (!modalValues.Paises.length) {
+      newErrors.ambientes = "El campo Ambiente es obligatorio";
     }
-
-    if (!modalValues.desrol.trim()) {
-      newErrors.desrol = "La descripción del rol es un campo obligatorio.";
+  
+    if (!modalValues.rolusuario.trim()) {
+      newErrors.rolusuario = "El campo aplicacion es obligatorio";
     }
-
     setErrors(newErrors);
-
+  
     if (Object.values(newErrors).every((error) => error === "")) {
-      // Ingresar un rol y permiso
-      console.log("Nuevo puesto:", modalValues.codempleado);
-      const updatedRecords = [
-        ...records,
-        {
-          id: records.length + 1,
-          nombrerol: modalValues.nombrerol,
-          desrol: modalValues.desrol,
-          permisoconsultar: modalValues.permisoconsultar,
-          permisoinsertar: modalValues.permisoinsertar,
-          permisoeditar: modalValues.permisoeditar,
-          permisoadmin: modalValues.permisoadmin,
-          pais: modalValues.pais,
-        },
-      ];
-      setRecords(updatedRecords);
-      setShowModal(false); // Ocultar el modal después de guardar
-      setModalValues({
-        nombrerol: "",
-        desrol: "",
-        permisoconsultar: "",
-        permisoinsertar: "",
-        permisoeditar: "",
-        permisoadmin: "",
-        pais: "",
-      }); // Limpiar los valores del modal
+      try {
+        const response = await axios.get(`http://localhost:3000/rolusuario`);
+        const rolusuarioExists = response.data.some(
+          (rolusuario) =>
+            rolusuario.N_Rol.toLowerCase() ===
+            modalValues.rolusuario.toLowerCase()
+        );
+        if (rolusuarioExists) {
+          setErrors({ rolusuario: "El Rol ya existe" });
+          return;
+        }
+  
+        const newRolUsuario = {
+          N_Rol: modalValues.N_Rol,
+          Des_Rol: modalValues.Des_Rol,
+          Fec_Creacion: new Date(),
+          Insertar: modalValues.Insertar ? 1 : 2,
+          Editar: modalValues.Editar ? 1 : 2,
+          Paises: modalValues.Paises.join(","),
+        };
+        
+        const insertResponse = await axios.post(
+          `http://localhost:3000/rolusuario`,
+          newRolUsuario
+        );
+        const updatedRecords = [
+          ...records,
+          {
+            id: insertResponse.data.id,
+            N_Rol: newRolUsuario.N_Rol,
+            Des_Rol: newRolUsuario.Des_Rol,
+            Fec_Creacion: newRolUsuario.Fec_Creacion,
+            Insertar: newRolUsuario.Insertar,
+            Editar: newRolUsuario.Editar,
+            Paises: newRolUsuario.Paises.map(id => pais.find(a => a.id === id)?.N_Pais),
+          },
+        ];
+
+        setRecords(updatedRecords);
+        setShowModal(false); 
+        setModalValues({ rolusuario: "", Paises: [] }); 
+        window.location.reload();
+      } catch (error) {
+        console.error("Error al insertar un nuevo Ambiente:", error);
+      }
     }
   };
+
+  const startEdit = (row) => {
+    const paisIds = row.Paises.map((nombre) => {
+      const paisObj = pais.find((a) => a.N_Pais === nombre);
+      return paisObj ? paisObj.id : null;
+    }).filter((id) => id !== null);
+  
+    setEditedRow({ ...row, Paises: paisIds });
+    setEditMode(row.id);
+  };
+  
 
   const handleEditChange = (event, field) => {
-    const { value } = event.target;
-    setEditedRow((prevState) => ({
-      ...prevState,
-      [field]: value,
-    }));
-    validateInput(field, value);
+    if (field === "Paises") {
+      const selectedOptions = Array.from(event.target.selectedOptions, option => option.value);
+      const { value, type, checked } = event.target;
+      setEditedRow((prevState) => ({
+        ...prevState,
+        Paises: selectedOptions,
+        [field]: type === "checkbox" ? checked : value,
+      }))
+    } else {
+      
+    }
   };
 
-  const validateInput = (field, value) => {
-    let newErrors = { ...errors };
-    if (field === "nombrerol") {
-      if (!value.trim()) {
-        newErrors.nombrerol = "El nombre del rol es obligatorio.";
-      } else {
-        newErrors.nombrerol = "";
-      }
-    } else if (field === "desrol") {
-      if (!value.trim()) {
-        newErrors.desrol = "La descripcion del rol es obligatoria.";
-      } else {
-        newErrors.desrol = "";
-      }
+  
+
+  const saveChanges = async (id) => {
+    try {
+      const updateRow = {
+        ...editedRow,
+        Insertar: editedRow.Insertar ? 1 : 2,
+        Editar: editedRow.Editar ? 1 : 2,
+        Paises: editedRow.Paises.join(", "),
+      };
+
+      await axios.put(`http://localhost:3000/rolusuario/${id}`, updateRow);
+
+      const updatedRecords = records.map((row) =>
+        row.id === id ? { ...editedRow } : row
+      );
+
+      //setRecords(updatedRecordsPuesto);
+      setRecords(updatedRecords);
+      setEditedRow(null);
+      setEditMode(null);
+
+      console.log("Cambios guardados correctamente");
+      window.location.reload();
+    } catch (error) {
+      console.error("Error al guardar los cambios", error);
     }
-    setErrors(newErrors);
+  };
+
+  const cancelEdit = () => {
+    setEditedRow(null);
+    setEditMode(null);
   };
 
   const filteredData = records.filter((row) => {
     return (
-      (filters.nombrerol === "" ||
-        row.nombrerol
-          .toLowerCase()
-          .includes(filters.nombrerol.toLowerCase())) &&
-      (filters.desrol === "" ||
-        row.desrol.toLowerCase().includes(filters.desrol.toLowerCase()))
+      (filters.N_Pais === "" ||
+        row.N_Pais.toLowerCase().includes(filters.N_Pais.toLowerCase())) &&
+      (filters.N_Rol === "" ||
+        row.N_Rol.toLowerCase().includes(
+          filters.N_Rol.toLowerCase()
+        ))
     );
   });
 
   const resetFilters = () => {
     setFilters({
-      nombrerol: "",
-      desrol: "",
-      permisoconsultar: "",
-      permisoinsertar: "",
-      permisoeditar: "",
-      permisoadmin: "",
-      pais: "",
+      N_Aplicaciones: "",
+      N_Pais: "",
+      N_Ambiente: "",
     });
   };
-
-  const SaveEditModal = () => {
-    // Lógica para guardar los cambios del rol y permisos
-  };
-
-  const handleCloseEditModal = () => {
-    setShowEditModal(false);
-  };
-
-  const handleModalEdit = (field, value) => {
-    setEditedRowData({ ...editedRowData, [field]: value });
-  };
+  const columns = [
+    {
+      name: "Roles",
+      selector: (row) => row.N_Rol,
+      sortable: true,
+      minWidth: "330px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "50px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.N_Rol}
+            onChange={(e) => handleEditChange(e, "N_Rol")}
+          />
+        ) : (
+          <div>{row.N_Rol}</div>
+        ),
+    },
+    {
+      name: "Descripcion",
+      selector: (row) => row.Des_Rol,
+      sortable: true,
+      minWidth: "330px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "50px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.Des_Rol}
+            onChange={(e) => handleEditChange(e, "Des_Rol")}
+          />
+        ) : (
+          <div>{row.Des_Rol}</div>
+        ),
+    },
+    {
+      name: "Fecha de Creacion",
+      selector: (row) => row.Fec_Creacion,
+      sortable: true,
+      minWidth: "150px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "50px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="text"
+            value={editedRow.Fec_Creacion}
+            onChange={(e) => handleEditChange(e, "Fec_Creacion")}
+          />
+        ) : (
+          <div>{row.Fec_Creacion}</div>
+        ),
+    },
+    {
+      name: "Permiso de Insertar",
+      selector: (row) => row.Insertar,
+      sortable: true,
+      minWidth: "170px",
+      maxWidth: "50px",
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="checkbox"
+            checked={editedRow.Insertar}
+            onChange={(e) => handleEditChange(e, "Insertar")}
+          />
+        ) : (
+          <input
+            type="checkbox"
+            checked={row.Insertar === 1}
+            disabled
+          />
+        ),
+    },
+    {
+      name: "Permiso de Editar",
+      selector: (row) => row.Editar,
+      sortable: true,
+      minWidth: "170px",
+      maxWidth: "50px",
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <input
+            type="checkbox"
+            checked={editedRow.Editar}
+            onChange={(e) => handleEditChange(e, "Editar")}
+          />
+        ) : (
+          <input
+            type="checkbox"
+            checked={row.Editar === 1}
+            disabled
+          />
+        ),
+    },
+    {
+      name: "Paises",
+      selector: (row) => row.Paises.join(", "),
+      sortable: true,
+      minWidth: "330px",
+      maxWidth: "50px",
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <Select
+            isMulti
+            value={editedRow.Paises.map((id) => ({
+              value: id,
+              label: pais.find((a) => a.id === id)?.N_Pais,
+            }))}
+            options={pais.map((a) => ({
+              value: a.id,
+              label: a.N_Pais,
+            }))}
+            onChange={(selectedOptions) => {
+              const selectedValues = selectedOptions.map(option => option.value);
+              setEditedRow((prevState) => ({
+                ...prevState,
+                Paises: selectedValues,
+              }));
+            }}
+          />
+        ) : (
+          <div>{row.Paises.join(', ')}</div>
+        )
+    },
+    {
+      name: "Acciones",
+      cell: (row) =>
+        editMode === row.id ? (
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <Button onClick={() => saveChanges(row.id)}>
+              <FaSave />
+            </Button>
+            <ButtonCancelar cancel onClick={cancelEdit}>
+              <FaTimes />
+            </ButtonCancelar>
+          </div>
+        ) : (
+          <Button onClick={() => startEdit(row)}>
+            <FaEdit />
+          </Button>
+        ),
+    },
+  ];
 
   return (
     <MainContainer>
@@ -710,371 +709,112 @@ function RolesyPermisos() {
                 <FaSearch />
                 {showFilters ? "Ocultar" : "Buscar"}
               </SearchButton>
+
               <Button onClick={handleInsert}>
                 <FaPlus />
-                Nuevo Rol
+                Nueva Aplicacion
               </Button>
             </ButtonGroup>
           </HeaderContainer>
           <FilterWrapper show={showFilters}>
             <FilterInput
               type="text"
-              value={filters.nombrerol}
-              onChange={(e) => handleFilterChange(e, "nombrerol")}
-              placeholder="Nombre del Rol"
+              value={filters.N_Pais}
+              onChange={(e) => handleFilterChange(e, "N_Pais")}
+              placeholder="Buscar por Pais"
             />
             <FilterInput
               type="text"
-              value={filters.desrol}
-              onChange={(e) => handleFilterChange(e, "desrol")}
-              placeholder="Descripción del Rol"
+              value={filters.N_Aplicaciones}
+              onChange={(e) => handleFilterChange(e, "N_Aplicaciones")}
+              placeholder="Buscar por Aplicacion"
+            />
+            <FilterInput
+              type="text"
+              value={filters.N_Ambiente}
+              onChange={(e) => handleFilterChange(e, "N_Ambiente")}
+              placeholder="Buscar por Ambiente"
             />
 
             <RedButton onClick={resetFilters}>
               <FaUndo /> Limpiar Filtros
             </RedButton>
           </FilterWrapper>
-          <StyledDataTable
-            columns={columns}
-            data={filteredData}
-            pagination
-            paginationPerPage={30}
-            noHeader
-          />
+          {loading ? (
+            <CustomLoader />
+          ) : (
+            <StyledDataTable
+              columns={columns}
+              data={filteredData}
+              pagination
+              paginationPerPage={30}
+              showFilters={showFilters}
+            />
+          )}
         </DataTableContainer>
       </ContentContainer>
-
-      {/* Modal para insertar una nuevo rol y permisos */}
+      {/* Modal para insertar una nueva aplicacion */}
       {showModal && (
-        <ModalBackground>
-          <ModalWrapper>
-            <ModalTitle>Nuevo Rol</ModalTitle>
-            <ModalInput
-              type="text"
-              value={modalValues.nombrerol}
-              onChange={(e) => handleModalChange(e, "nombrerol")}
-              placeholder="Nombre del Rol"
-              error={errors.nombrerol}
-              required
-            />
-            {errors.nombrerol && (
-              <ErrorMessage>{errors.nombrerol}</ErrorMessage>
-            )}
+  <ModalBackground>
+    <ModalWrapper>
+      <ModalTitle>Nueva Aplicación</ModalTitle>
+      
+      <Select
+        isMulti
+        value={modalValues.Paises.map((id) => ({
+          value: id,
+          label: pais.find((a) => a.id === id)?.N_Pais,
+        }))}
+        options={pais.map((a) => ({
+          value: a.id,
+          label: a.N_Pais,
+        }))}
+        onChange={(selectedOptions) => {
+          const selectedValues = selectedOptions.map(option => option.value);
+          setModalValues((prevValues) => ({
+            ...prevValues,
+            Paises: selectedValues,
+          }));
+        }}
+        placeholder="Selecciona Paises"
+      />
+      {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
+      <br/>
 
-            <ModalInput
-              type="text"
-              value={modalValues.desrol}
-              onChange={(e) => handleModalChange(e, "desrol")}
-              placeholder="Descripción del Rol"
-              error={errors.desrol}
-              required
-            />
-            {errors.desrol && <ErrorMessage>{errors.desrol}</ErrorMessage>}
-            <h3>Permisos por País</h3>
-            <StyledMultiselect
-              isObject={false}
-              placeholder="Seleccione uno o mas paises"
-              emptyRecordMsg="No hay mas opciones"
-              hidePlaceholder={true}
-              onKeyPressFn={function noRefCheck() {}}
-              onRemove={function noRefCheck() {}}
-              onSearch={function noRefCheck() {}}
-              onSelect={function noRefCheck() {}}
-              options={["Honduras", "Guatemala", "Panama", "Nicaragua"]} //options={pais}
-              selected={editedRowData.pais || []}
-              onChange={(values) =>
-                handleModalEdit({ target: { value: values } }, "pais")
-              }
-            />
-            <h3>Permisos</h3>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "left",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  marginBottom: 10,
-                }}
-              >
-                <span style={{ width: 200, textAlign: "left" }}>
-                  Permiso de Consultar
-                </span>
-                <ModalInput
-                  type="checkbox"
-                  checked={modalValues.permisoconsultar === 1}
-                  onChange={(e) => handleModalChange(e, "permisoconsultar")}
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    cursor: "pointer",
-                    borderRadius: "5px",
-                    border: "1px solid #ccc",
-                    boxShadow: "0 0 5px rgba(0,0,0,0.2)",
-                  }}
-                />
-              </div>
+      <ModalInput
+  type="text"
+  value={modalValues.N_Rol}
+  onChange={(e) => handleModalChange(e, "N_Rol")}
+  placeholder="Roles"
+  error={errors.N_Rol}
+  required
+/>
+{errors.N_Rol && (
+  <ErrorMessage>{errors.N_Rol}</ErrorMessage>
+)}
 
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  marginBottom: 10,
-                }}
-              >
-                <span style={{ width: 200, textAlign: "left" }}>
-                  Permiso de Insertar
-                </span>
-                <ModalInput
-                  type="checkbox"
-                  checked={modalValues.permisoinsertar === 1}
-                  onChange={(e) => handleModalChange(e, "permisoinsertar")}
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    cursor: "pointer",
-                    borderRadius: "5px",
-                    border: "1px solid #ccc",
-                    boxShadow: "0 0 5px rgba(0,0,0,0.2)",
-                  }}
-                />
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  marginBottom: 10,
-                }}
-              >
-                <span style={{ width: 200, textAlign: "left" }}>
-                  Permiso de Editar
-                </span>
-                <ModalInput
-                  type="checkbox"
-                  checked={modalValues.permisoeditar === 1}
-                  onChange={(e) => handleModalChange(e, "permisoeditar")}
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    cursor: "pointer",
-                    borderRadius: "5px",
-                    border: "1px solid #ccc",
-                    boxShadow: "0 0 5px rgba(0,0,0,0.2)",
-                  }}
-                />
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <span style={{ width: 200, textAlign: "left" }}>
-                  Permiso de Administrador
-                </span>
-                <ModalInput
-                  type="checkbox"
-                  checked={modalValues.permisoadmin === 1}
-                  onChange={(e) => handleModalChange(e, "permisoadmin")}
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    cursor: "pointer",
-                    borderRadius: "5px",
-                    border: "1px solid #ccc",
-                    boxShadow: "0 0 5px rgba(0,0,0,0.2)",
-                  }}
-                />
-              </div>
-            </div>
-            <div>
-              <ModalButtonGroup>
-                <GuardarButton onClick={SaveModal}>
-                  <FaSave /> Guardar
-                </GuardarButton>
-                <ModalButton cancel onClick={handleCloseModal}>
-                  <FaTimes /> Cancelar
-                </ModalButton>
-              </ModalButtonGroup>
-            </div>
-          </ModalWrapper>
-        </ModalBackground>
-      )}
-
-      {/* Modal para editar un rol y permisos */}
-      {showEditModal && (
-        <ModalBackground>
-          <ModalWrapper>
-            <ModalTitle>Editar Rol</ModalTitle>
-            <ModalInput
-              type="text"
-              value={editedRowData.nombrerol || ""}
-              onChange={(e) => handleModalEdit("nombrerol", e.target.value)}
-              placeholder="Nombre del Rol"
-              error={errors.nombrerol}
-              required
-            />
-            {errors.nombrerol && (
-              <ErrorMessage>{errors.nombrerol}</ErrorMessage>
-            )}
-
-            <ModalInput
-              type="text"
-              value={editedRowData.desrol || ""}
-              onChange={(e) => handleModalEdit("desrol", e.target.value)}
-              placeholder="Descripción del Rol"
-              error={errors.desrol}
-              required
-            />
-            {errors.desrol && <ErrorMessage>{errors.desrol}</ErrorMessage>}
-
-            <h3>Permisos por País</h3>
-            <StyledMultiselect
-              isObject={false}
-              placeholder="Seleccione uno o mas paises"
-              emptyRecordMsg="No hay mas opciones"
-              hidePlaceholder={true}
-              onKeyPressFn={function noRefCheck() {}}
-              onRemove={function noRefCheck() {}}
-              onSearch={function noRefCheck() {}}
-              onSelect={function noRefCheck() {}}
-              options={["Honduras", "Guatemala", "Panama", "Nicaragua"]} //options={pais}
-              value={editedRowData.pais || []}
-              selectedValues={selectedCountries}
-              onChange={(values) =>
-                handleModalEdit({ target: { value: values } }, "pais")
-              }
-            />
-            <h3>Permisos</h3>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "left",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  marginBottom: 10,
-                }}
-              >
-                <span style={{ width: 200, textAlign: "left" }}>
-                  Permiso de Consultar
-                </span>
-                <ModalInput
-                  type="checkbox"
-                  checked={!!editedRowData.permisoconsultar} // Convert to boolean
-                  onChange={(e) => {
-                    handleModalEdit(
-                      "permisoconsultar",
-                      e.target.checked ? 1 : 0
-                    ); // Update value
-                  }}
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    cursor: "pointer",
-                    borderRadius: "5px",
-                    border: "1px solid #ccc",
-                    boxShadow: "0 0 5px rgba(0,0,0,0.2)",
-                  }}
-                />
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  marginBottom: 10,
-                }}
-              >
-                <span style={{ width: 200, textAlign: "left" }}>
-                  Permiso de Insertar
-                </span>
-                <ModalInput
-                  type="checkbox"
-                  checked={!!editedRowData.permisoinsertar} // Convert to boolean
-                  onChange={(e) => {
-                    handleModalEdit(
-                      "permisoinsertar",
-                      e.target.checked ? 1 : 0
-                    ); // Update value
-                  }}
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    cursor: "pointer",
-                    borderRadius: "5px",
-                    border: "1px solid #ccc",
-                    boxShadow: "0 0 5px rgba(0,0,0,0.2)",
-                  }}
-                />
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  marginBottom: 10,
-                }}
-              >
-                <span style={{ width: 200, textAlign: "left" }}>
-                  Permiso de Editar
-                </span>
-                <ModalInput
-                  type="checkbox"
-                  checked={!!editedRowData.permisoeditar} // Convert to boolean
-                  onChange={(e) => {
-                    handleModalEdit("permisoeditar", e.target.checked ? 1 : 0); // Update value
-                  }}
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    cursor: "pointer",
-                    borderRadius: "5px",
-                    border: "1px solid #ccc",
-                    boxShadow: "0 0 5px rgba(0,0,0,0.2)",
-                  }}
-                />
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <span style={{ width: 200, textAlign: "left" }}>
-                  Permiso de Administrador
-                </span>
-                <ModalInput
-                  type="checkbox"
-                  checked={!!editedRowData.permisoadmin} // Convert to boolean
-                  onChange={(e) => {
-                    handleModalEdit("permisoadmin", e.target.checked ? 1 : 0); // Update value
-                  }}
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    cursor: "pointer",
-                    borderRadius: "5px",
-                    border: "1px solid #ccc",
-                    boxShadow: "0 0 5px rgba(0,0,0,0.2)",
-                  }}
-                />
-              </div>
-            </div>
-            <div>
-              <ModalButtonGroup>
-                <GuardarButton onClick={SaveEditModal}>
-                  <FaSave /> Guardar
-                </GuardarButton>
-                <ModalButton cancel onClick={handleCloseEditModal}>
-                  <FaTimes /> Cancelar
-                </ModalButton>
-              </ModalButtonGroup>
-            </div>
-          </ModalWrapper>
-        </ModalBackground>
-      )}
+<ModalInput
+  type="text"
+  value={modalValues.Des_Rol}
+  onChange={(e) => handleModalChange(e, "Des_Rol")}
+  placeholder="Descripción del Rol"
+/>
+{errors.Des_Rol && (
+  <ErrorMessage>{errors.Des_Rol}</ErrorMessage>
+)}
+      <ModalButtonGroup>
+        <GuardarButton onClick={SaveModal}>
+          <FaSave /> Guardar
+        </GuardarButton>
+        <ModalButton cancel onClick={handleCloseModal}>
+          <FaTimes /> Cancelar
+        </ModalButton>
+      </ModalButtonGroup>
+    </ModalWrapper>
+  </ModalBackground>
+)}
     </MainContainer>
   );
 }
-export default RolesyPermisos;
+
+export default Roles;
