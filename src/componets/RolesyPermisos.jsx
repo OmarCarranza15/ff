@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 import Sidebar from "./SideNavBar.jsx"; // Ajusta la ruta según la ubicación real de Sidebar.jsx
@@ -305,6 +306,34 @@ const GuardarButton = styled(ModalButton)`
   })
 };*/
 
+const Checkbox = styled.input`
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid #007bff;
+  background-color: ${(props) => (props.checked ? '#007bff' : '#fff')};
+  cursor: pointer;
+  position: relative;
+  outline: none;
+
+  &:checked::after {
+    content: '✓';
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+  }
+
+  &:hover {
+    border-color: #0056b3;
+  }
+`;
+
+
+
 function Roles() {
   const [records, setRecords] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
@@ -399,6 +428,14 @@ function Roles() {
     setShowModal(true);
   };
 
+  const CustomCheckbox = ({ checked, onChange }) => (
+    <Checkbox
+      type="checkbox"
+      checked={checked}
+      onChange={onChange}
+    />
+  );
+
   const handleCloseModal = () => {
     setShowModal(false);
     setModalValues({ pais: [], rolusuario: "" });
@@ -415,14 +452,14 @@ function Roles() {
   
 
   const SaveModal = async () => {
-    const newErrors = { pais: "", rolusuario: ""};
-  
+    const newErrors = { pais: "", rolusuario: "" };
+    
     if (!modalValues.Paises.length) {
-      newErrors.ambientes = "El campo Ambiente es obligatorio";
+      newErrors.pais = "El campo Pais es obligatorio";
     }
   
-    if (!modalValues.rolusuario.trim()) {
-      newErrors.rolusuario = "El campo aplicacion es obligatorio";
+    if (!modalValues.N_Rol.trim()) {
+      newErrors.rolusuario = "El campo Rol es obligatorio";
     }
     setErrors(newErrors);
   
@@ -432,7 +469,7 @@ function Roles() {
         const rolusuarioExists = response.data.some(
           (rolusuario) =>
             rolusuario.N_Rol.toLowerCase() ===
-            modalValues.rolusuario.toLowerCase()
+            modalValues.N_Rol.toLowerCase()
         );
         if (rolusuarioExists) {
           setErrors({ rolusuario: "El Rol ya existe" });
@@ -461,16 +498,16 @@ function Roles() {
             Fec_Creacion: newRolUsuario.Fec_Creacion,
             Insertar: newRolUsuario.Insertar,
             Editar: newRolUsuario.Editar,
-            Paises: newRolUsuario.Paises.map(id => pais.find(a => a.id === id)?.N_Pais),
+            Paises: modalValues.Paises.map(id => pais.find(a => a.id === id)?.N_Pais),
           },
         ];
-
+  
         setRecords(updatedRecords);
         setShowModal(false); 
-        setModalValues({ rolusuario: "", Paises: [] }); 
+        setModalValues({ N_Rol: "", Des_Rol: "", Paises: [] }); 
         window.location.reload();
       } catch (error) {
-        console.error("Error al insertar un nuevo Ambiente:", error);
+        console.error("Error al insertar un nuevo Rol:", error);
       }
     }
   };
@@ -489,15 +526,27 @@ function Roles() {
   const handleEditChange = (event, field) => {
     if (field === "Paises") {
       const selectedOptions = Array.from(event.target.selectedOptions, option => option.value);
-      const { value, type, checked } = event.target;
       setEditedRow((prevState) => ({
         ...prevState,
         Paises: selectedOptions,
-        [field]: type === "checkbox" ? checked : value,
       }))
     } else {
       
     }
+
+    const { value, type, checked } = event.target;
+  if (type === "checkbox") {
+    setEditedRow((prevState) => ({
+      ...prevState,
+      [field]: checked,
+    }));
+  } else {
+    setEditedRow((prevState) => ({
+      ...prevState,
+      [field]: value,
+    }));
+  }
+
   };
 
   
@@ -510,18 +559,17 @@ function Roles() {
         Editar: editedRow.Editar ? 1 : 2,
         Paises: editedRow.Paises.join(", "),
       };
-
+  
       await axios.put(`http://localhost:3000/rolusuario/${id}`, updateRow);
-
+  
       const updatedRecords = records.map((row) =>
-        row.id === id ? { ...editedRow } : row
+        row.id === id ? { ...updateRow } : row
       );
-
-      //setRecords(updatedRecordsPuesto);
+  
       setRecords(updatedRecords);
       setEditedRow(null);
       setEditMode(null);
-
+  
       console.log("Cambios guardados correctamente");
       window.location.reload();
     } catch (error) {
@@ -612,14 +660,12 @@ function Roles() {
       maxWidth: "50px",
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
-          <input
-            type="checkbox"
+          <CustomCheckbox
             checked={editedRow.Insertar}
             onChange={(e) => handleEditChange(e, "Insertar")}
           />
         ) : (
-          <input
-            type="checkbox"
+          <CustomCheckbox
             checked={row.Insertar === 1}
             disabled
           />
@@ -633,14 +679,12 @@ function Roles() {
       maxWidth: "50px",
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
-          <input
-            type="checkbox"
+          <CustomCheckbox
             checked={editedRow.Editar}
             onChange={(e) => handleEditChange(e, "Editar")}
           />
         ) : (
-          <input
-            type="checkbox"
+          <CustomCheckbox
             checked={row.Editar === 1}
             disabled
           />
