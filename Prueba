@@ -1,107 +1,167 @@
-Aquí está el código específico para solucionar los dos errores mencionados:
+Claro, aquí tienes un estilo para mostrar "Permisos" seguido de los checkboxes para "Permitir Insertar" y "Permitir Editar", utilizando `styled-components`.
 
-1. **Error 1: Mostrar nombres de checkbox en el modal**  
-   Para que aparezca "Permisos" antes de los checkboxes en el modal, modifica el contenido del modal añadiendo un título y los nombres de los checkboxes.
+Primero, asegúrate de tener `styled-components` instalado. Luego, define los estilos para el modal:
 
-   **Código actualizado del modal:**
-   ```jsx
-   {/* Modal para insertar una nueva aplicacion */}
-   {showModal && (
-     <ModalBackground>
-       <ModalWrapper>
-         <ModalTitle>Nuevo Rol de Usuario</ModalTitle>
+```jsx
+import styled from 'styled-components';
 
-         <ModalInput
-           type="text"
-           value={modalValues.N_Rol}
-           onChange={(e) => handleModalChange(e, "N_Rol")}
-           placeholder="Roles"
-           error={errors.rolusuario}
-           required
-         />
-         {errors.rolusuario && <ErrorMessage>{errors.rolusuario}</ErrorMessage>}
-         
-         <ModalInput
-           type="text"
-           value={modalValues.Des_Rol}
-           onChange={(e) => handleModalChange(e, "Des_Rol")}
-           placeholder="Descripción del Rol"
-         />
+// Estilo para el contenedor del modal
+const ModalWrapper = styled.div`
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 0 auto;
+`;
 
-         <Select
-           isMulti
-           value={modalValues.Paises.map((id) => ({
-             value: id,
-             label: pais.find((a) => a.id === id)?.N_Pais,
-           }))}
-           options={pais.map((a) => ({
-             value: a.id,
-             label: a.N_Pais,
-           }))}
-           onChange={(selectedOptions) => {
-             const selectedValues = selectedOptions.map(option => option.value);
-             setModalValues((prevValues) => ({
-               ...prevValues,
-               Paises: selectedValues,
-             }));
-           }}
-           placeholder="Selecciona Paises"
-         />
-         {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
+// Estilo para el título del modal
+const ModalTitle = styled.h2`
+  margin-bottom: 20px;
+  font-size: 1.5em;
+  color: #333;
+`;
 
-         <div>
-           <ModalLabel>Permisos</ModalLabel>
-           <ModalCheckbox
-             type="checkbox"
-             checked={modalValues.Insertar}
-             onChange={(e) => handleModalChange(e, "Insertar")}
-           />
-           <ModalLabel>Permitir Insertar</ModalLabel>
-           <ModalCheckbox
-             type="checkbox"
-             checked={modalValues.Editar}
-             onChange={(e) => handleModalChange(e, "Editar")}
-           />
-           <ModalLabel>Permitir Editar</ModalLabel>
-         </div>
+// Estilo para la sección de permisos
+const PermissionsSection = styled.div`
+  margin-top: 20px;
+`;
 
-         <ModalButtonGroup>
-           <GuardarButton onClick={SaveModal}>
-             <FaSave /> Guardar
-           </GuardarButton>
-           <ModalButton cancel onClick={handleCloseModal}>
-             <FaTimes /> Cancelar
-           </ModalButton>
-         </ModalButtonGroup>
-       </ModalWrapper>
-     </ModalBackground>
-   )}
-   ```
+// Estilo para las etiquetas de los checkboxes
+const PermissionLabel = styled.label`
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 1em;
+`;
 
-   **Código CSS para el nuevo estilo:**
-   ```css
-   /* Agregar estos estilos en tu archivo CSS */
-   .modal-label {
-     margin-right: 10px;
-   }
-   ```
+// Estilo para los checkboxes
+const PermissionCheckbox = styled.input`
+  margin-right: 10px;
+`;
 
-2. **Error 2: Pantalla en blanco después de cancelar**  
-   Para evitar que la pantalla se quede en blanco después de cancelar, asegúrate de que el estado `showModal` se restablezca correctamente al cerrar el modal. Esto puede implicar que también debes asegurarte de que el estado `modalValues` se restablezca adecuadamente.
+// Estilo para los botones del modal
+const ModalButtonGroup = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+`;
 
-   **Código actualizado de `handleCloseModal`:**
-   ```jsx
-   const handleCloseModal = () => {
-     setShowModal(false);
-     setModalValues({
-       Paises: [],
-       N_Rol: "",
-       Des_Rol: "",
-       Insertar: false,
-       Editar: false,
-     });
-     setErrors({ pais: "", rolusuario: "" });
-   };
-   ```
+const GuardarButton = styled.button`
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 10px;
+  font-size: 1em;
+`;
 
-Estos cambios deberían resolver los problemas descritos.
+const CancelButton = styled.button`
+  background: #f44336;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+`;
+
+const ErrorMessage = styled.div`
+  color: #f44336;
+  font-size: 0.875em;
+`;
+
+const ModalBackground = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+```
+
+Luego, usa estos estilos en el componente del modal:
+
+```jsx
+{showModal && (
+  <ModalBackground>
+    <ModalWrapper>
+      <ModalTitle>Nuevo Rol de Usuario</ModalTitle>
+
+      <ModalInput
+        type="text"
+        value={modalValues.N_Rol}
+        onChange={(e) => handleModalChange(e, "N_Rol")}
+        placeholder="Roles"
+        error={errors.rolusuario}
+        required
+      />
+      {errors.rolusuario && <ErrorMessage>{errors.rolusuario}</ErrorMessage>}
+      
+      <ModalInput
+        type="text"
+        value={modalValues.Des_Rol}
+        onChange={(e) => handleModalChange(e, "Des_Rol")}
+        placeholder="Descripción del Rol"
+      />
+
+      <Select
+        isMulti
+        value={modalValues.Paises.map((id) => ({
+          value: id,
+          label: pais.find((a) => a.id === id)?.N_Pais,
+        }))}
+        options={pais.map((a) => ({
+          value: a.id,
+          label: a.N_Pais,
+        }))}
+        onChange={(selectedOptions) => {
+          const selectedValues = selectedOptions.map(option => option.value);
+          setModalValues((prevValues) => ({
+            ...prevValues,
+            Paises: selectedValues,
+          }));
+        }}
+        placeholder="Selecciona Paises"
+      />
+      {errors.pais && <ErrorMessage>{errors.pais}</ErrorMessage>}
+
+      <PermissionsSection>
+        <PermissionLabel>
+          <PermissionCheckbox
+            type="checkbox"
+            checked={modalValues.Insertar}
+            onChange={(e) => handleModalChange(e, "Insertar")}
+          />
+          Permitir Insertar
+        </PermissionLabel>
+        <PermissionLabel>
+          <PermissionCheckbox
+            type="checkbox"
+            checked={modalValues.Editar}
+            onChange={(e) => handleModalChange(e, "Editar")}
+          />
+          Permitir Editar
+        </PermissionLabel>
+      </PermissionsSection>
+
+      <ModalButtonGroup>
+        <GuardarButton onClick={SaveModal}>
+          <FaSave /> Guardar
+        </GuardarButton>
+        <CancelButton onClick={handleCloseModal}>
+          <FaTimes /> Cancelar
+        </CancelButton>
+      </ModalButtonGroup>
+    </ModalWrapper>
+  </ModalBackground>
+)}
+```
+
+Este código define y aplica estilos a los componentes de tu modal, asegurando que los checkboxes y sus etiquetas se presenten correctamente con un diseño claro.
