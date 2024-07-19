@@ -1,10 +1,7 @@
-Para mostrar los checkboxes antes de entrar en el modo de edición, puedes ajustar el código para que siempre se muestren como checkboxes, y no solo en el modo de edición. Aquí tienes cómo hacerlo:
+Para asegurarte de que solo el registro en modo de edición pueda tener sus checkboxes interactuables, necesitas condicionar la habilitación de los checkboxes en función del estado de edición. Aquí te dejo el ajuste necesario:
 
-### 1. **Función `startEdit`**
-Deja la función `startEdit` como está, no necesitas hacer cambios adicionales aquí.
-
-### 2. **Columnas para `Insertar` y `Editar`**
-Actualiza las columnas para que siempre se muestren como checkboxes:
+### 1. **Columnas para `Insertar` y `Editar`**
+Ajusta las columnas para que los checkboxes solo sean interactivos cuando el registro está en modo de edición:
 
 ```javascript
 {
@@ -19,6 +16,7 @@ Actualiza las columnas para que siempre se muestren como checkboxes:
     ) : (
       <CustomCheckbox
         checked={row.Insertar === 1}
+        disabled={!editMode || editedRow?.id !== row.id}
         onChange={(e) => handleStaticCheckboxChange(e, row.id, "Insertar")}
       />
     ),
@@ -35,60 +33,31 @@ Actualiza las columnas para que siempre se muestren como checkboxes:
     ) : (
       <CustomCheckbox
         checked={row.Editar === 1}
+        disabled={!editMode || editedRow?.id !== row.id}
         onChange={(e) => handleStaticCheckboxChange(e, row.id, "Editar")}
       />
     ),
 }
 ```
 
-### 3. **Manejadores de Eventos**
-Agrega un nuevo manejador para los cambios en los checkboxes cuando no estés en modo de edición:
+### 2. **CustomCheckbox Componente**
+Asegúrate de que el componente `CustomCheckbox` acepte y maneje la propiedad `disabled`:
 
 ```javascript
-const handleStaticCheckboxChange = (e, id, field) => {
-  const updatedRecords = records.map((row) => {
-    if (row.id === id) {
-      return {
-        ...row,
-        [field]: e.target.checked ? 1 : 2
-      };
-    }
-    return row;
-  });
+import React from 'react';
 
-  setRecords(updatedRecords);
+const CustomCheckbox = ({ checked, onChange, disabled }) => {
+  return (
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={onChange}
+      disabled={disabled}
+    />
+  );
 };
+
+export default CustomCheckbox;
 ```
 
-### 4. **Guardar Cambios**
-Mantén la función `saveChanges` como antes para que convierta los valores de `Insertar` y `Editar` a números antes de guardarlos:
-
-```javascript
-const saveChanges = async (id) => {
-  try {
-    const updateRow = {
-      ...editedRow,
-      Insertar: editedRow.Insertar ? 1 : 2,
-      Editar: editedRow.Editar ? 1 : 2,
-      Paises: editedRow.Paises.join(", "),
-    };
-
-    await axios.put(`http://localhost:3000/rolusuario/${id}`, updateRow);
-
-    const updatedRecords = records.map((row) =>
-      row.id === id ? { ...updateRow } : row
-    );
-
-    setRecords(updatedRecords);
-    setEditedRow(null);
-    setEditMode(null);
-
-    console.log("Cambios guardados correctamente");
-    window.location.reload();
-  } catch (error) {
-    console.error("Error al guardar los cambios", error);
-  }
-};
-```
-
-Este ajuste asegura que los checkboxes se muestren tanto en el modo de edición como en el modo de visualización. Cuando se hacen cambios en los checkboxes en el modo de visualización, estos cambios se reflejan directamente en el estado de los registros.
+Este ajuste asegurará que los checkboxes sean deshabilitados para todos los registros excepto el que está actualmente en modo de edición.
