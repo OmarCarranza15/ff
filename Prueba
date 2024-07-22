@@ -1,60 +1,154 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+Si el código sigue sin funcionar, es crucial depurar de manera efectiva para identificar el problema. Aquí hay una estrategia sistemática para solucionar el problema:
 
-const PermissionsModule = () => {
-  const [permissions, setPermissions] = useState({ insert: false, edit: false });
+1. **Verifica el Almacenamiento en `localStorage`**:
 
-  useEffect(() => {
-    const fetchPermissions = async () => {
-      try {
-        const userId = localStorage.getItem('userId');
-        console.log('User ID from localStorage:', userId);
+   Abre la consola de tu navegador y revisa `localStorage` para asegurarte de que `userId` se esté almacenando correctamente después del inicio de sesión. Puedes hacer esto en la pestaña "Aplicación" o "Storage" del panel de herramientas de desarrollo.
 
-        if (!userId) {
-          console.error('User ID not found in localStorage');
-          return;
-        }
+   ```javascript
+   console.log('Stored userId:', localStorage.getItem('userId'));
+   ```
 
-        const response = await axios.get(`http://localhost:3000/roles/${userId}`);
-        const roleData = response.data;
+2. **Revisa la Respuesta de la API**:
 
-        console.log('Role Data:', roleData);
+   Verifica que la respuesta de la API sea la esperada. Asegúrate de que el `userId` sea válido y que el endpoint `http://localhost:3000/roles/${userId}` esté devolviendo datos correctamente.
 
-        setPermissions({
-          insert: roleData.Insertar === 1,
-          edit: roleData.Editar === 1
-        });
-      } catch (error) {
-        console.error('Error fetching permissions:', error);
-      }
-    };
+   ```javascript
+   const fetchPermissions = async () => {
+     try {
+       const userId = localStorage.getItem('userId');
+       console.log('User ID from localStorage:', userId);
 
-    fetchPermissions();
-  }, []);
+       if (!userId) {
+         console.error('User ID not found in localStorage');
+         return;
+       }
 
-  const handleInsert = () => {
-    // Lógica para insertar
-    console.log('Insert button clicked');
-  };
+       const response = await axios.get(`http://localhost:3000/roles/${userId}`);
+       console.log('API response:', response.data);
 
-  const handleEdit = () => {
-    // Lógica para editar
-    console.log('Edit button clicked');
-  };
+       const roleData = response.data;
 
-  return (
-    <div>
-      <h2>Permissions Module</h2>
-      <div>
-        {permissions.insert && (
-          <button onClick={handleInsert}>Insertar</button>
-        )}
-        {permissions.edit && (
-          <button onClick={handleEdit}>Editar</button>
-        )}
-      </div>
-    </div>
-  );
-};
+       setPermissions({
+         insert: roleData.Insertar === 1,
+         edit: roleData.Editar === 1
+       });
+     } catch (error) {
+       console.error('Error fetching permissions:', error);
+     }
+   };
+   ```
 
-export default PermissionsModule;
+3. **Revisa el Código de `Login`**:
+
+   Asegúrate de que `userId` se está almacenando correctamente después de iniciar sesión. Puedes añadir `console.log` en el `handleSubmit` para verificar esto.
+
+   ```javascript
+   const handleSubmit = async (e) => {
+     e.preventDefault();
+     try {
+       const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}`);
+       const user = response.data.find(user => user.Usuario === username && user.Contrasenia === password);
+
+       if (user) {
+         setUserId(user.id);
+         setUserName(user.Nombre);
+         setUserRole(user.ID_RolUsuario);
+
+         // Obtener permisos y países del rol del usuario
+         const roleResponse = await axios.get(`http://localhost:3000/roles/${user.ID_RolUsuario}`);
+         const roleData = roleResponse.data;
+
+         // Guardar permisos
+         setUserPermissions({
+           insert: roleData.Insertar === 1,
+           edit: roleData.Editar === 1
+         });
+
+         // Guardar países
+         setUserCountries(roleData.Paises.split(',').map(paisId => parseInt(paisId, 10)));
+
+         if (user.Estado === 1) {
+           setIsNewUser(true);
+         } else if (user.Estado === 3) {
+           setError('Este usuario ha expirado');
+         } else {
+           // Guardar datos en localStorage
+           localStorage.setItem('userId', user.id);
+           localStorage.setItem('username', user.Nombre);
+           localStorage.setItem('userRole', user.ID_RolUsuario);
+           localStorage.setItem('userPermissions', JSON.stringify(userPermissions));
+           localStorage.setItem('userCountries', JSON.stringify(userCountries));
+           navigate('/landingPage');
+         }
+       } else {
+         setError('Usuario o contraseña incorrectos');
+       }
+     } catch (error) {
+       console.error('Error al intentar iniciar sesión', error);
+       setError('Usuario o contraseña incorrectos');
+     }
+   };
+   ```
+
+4. **Depuración de `PermissionsModule`**:
+
+   Añade `console.log` para depurar el estado y los props en `PermissionsModule`:
+
+   ```javascript
+   import React, { useState, useEffect } from 'react';
+   import axios from 'axios';
+
+   const PermissionsModule = () => {
+     const [permissions, setPermissions] = useState({ insert: false, edit: false });
+
+     useEffect(() => {
+       const fetchPermissions = async () => {
+         try {
+           const userId = localStorage.getItem('userId');
+           console.log('User ID from localStorage:', userId);
+
+           if (!userId) {
+             console.error('User ID not found in localStorage');
+             return;
+           }
+
+           const response = await axios.get(`http://localhost:3000/roles/${userId}`);
+           console.log('API response:', response.data);
+
+           const roleData = response.data;
+
+           setPermissions({
+             insert: roleData.Insertar === 1,
+             edit: roleData.Editar === 1
+           });
+         } catch (error) {
+           console.error('Error fetching permissions:', error);
+         }
+       };
+
+       fetchPermissions();
+     }, []);
+
+     return (
+       <div>
+         <h2>Permissions Module</h2>
+         <div>
+           {permissions.insert && (
+             <button onClick={() => console.log('Insert button clicked')}>Insertar</button>
+           )}
+           {permissions.edit && (
+             <button onClick={() => console.log('Edit button clicked')}>Editar</button>
+           )}
+         </div>
+       </div>
+     );
+   };
+
+   export default PermissionsModule;
+   ```
+
+5. **Verifica Configuración del Servidor**:
+
+   Asegúrate de que el servidor esté funcionando y que los endpoints `http://localhost:3000/usuarios/` y `http://localhost:3000/roles/${userId}` estén operativos y devuelvan los datos correctos.
+
+Si sigues teniendo problemas, podría ser útil revisar cualquier error en la consola de tu navegador o en la red, y asegurarte de que el backend esté configurado correctamente para devolver los datos esperados.
