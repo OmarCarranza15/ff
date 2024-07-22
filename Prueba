@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   GrTable,
@@ -42,6 +41,7 @@ const SideNavBar = () => {
 
     const fetchPaises = async () => {
       try {
+        // Obtener la lista de países desde el servidor
         const response = await axios.get(`http://localhost:3000/pais/`);
         setPaises(response.data);
       } catch (error) {
