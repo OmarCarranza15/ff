@@ -1,87 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlus } from 'react-icons/fa';
 import styled from 'styled-components';
 
-// Define your styled-components if needed
-const MainContainer = styled.div``;
-const TopBar = styled.div``;
-const ContentContainer = styled.div``;
-const Sidebar = styled.div``;
-const DataTableContainer = styled.div``;
-const HeaderContainer = styled.div``;
-const Title = styled.h1``;
-const ButtonGroup = styled.div``;
-const Button = styled.button``;
-const FilterWrapper = styled.div``;
+// Define tus styled-components si es necesario
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 10px;
+`;
 
-const LandingPage = () => {
-  const [userPermissions, setUserPermissions] = useState({ Insertar: 0, Editar: 0 });
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState(''); // Adjust based on your logic
+const Button = styled.button`
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+`;
+
+const PermissionsModule = () => {
+  const [permissions, setPermissions] = useState({ Insertar: 2, Editar: 2 });
 
   useEffect(() => {
-    const fetchUserPermissions = async () => {
+    const fetchPermissions = async () => {
       try {
         const response = await fetch('http://localhost:3000/rolusuario/');
         const data = await response.json();
-
-        // Suponiendo que el ID del usuario está disponible como userId
-        // Ajusta esto según la forma en que identificas al usuario
+        
+        // Suponiendo que tienes un ID de usuario disponible
         const userId = 1; // Reemplaza esto con el ID del usuario actual
 
         const userPermission = data.find(permission => permission.ID === userId);
-
         if (userPermission) {
-          setUserPermissions({
+          setPermissions({
             Insertar: userPermission.Insertar,
             Editar: userPermission.Editar
           });
         }
       } catch (error) {
-        console.error('Error fetching user permissions:', error);
+        console.error('Error fetching permissions:', error);
       }
     };
 
-    fetchUserPermissions();
+    fetchPermissions();
   }, []);
 
   const handleInsert = () => {
-    // Lógica para insertar nuevo perfil
+    // Lógica para insertar
+    console.log('Insertar nuevo elemento');
   };
 
-  const toggleFilters = () => {
-    setShowFilters(!showFilters);
+  const handleEdit = () => {
+    // Lógica para editar
+    console.log('Editar elemento existente');
   };
 
   return (
-    <MainContainer>
-      <TopBar />
-      <ContentContainer>
-        <Sidebar />
-        <DataTableContainer>
-          <HeaderContainer>
-            <Title>Matriz de perfiles de {selectedCountry}</Title>
-            <ButtonGroup>
-              {userPermissions.Insertar === 1 && (
-                <Button onClick={handleInsert}>
-                  <FaPlus /> Insertar Nuevo Perfil
-                </Button>
-              )}
-              {userPermissions.Editar === 1 && (
-                <Button primary onClick={toggleFilters}>
-                  {showFilters ? "Ocultar" : "Buscar"}
-                </Button>
-              )}
-            </ButtonGroup>
-          </HeaderContainer>
-          <FilterWrapper show={showFilters}>
-            {/* Contenido del filtro */}
-          </FilterWrapper>
-          {/* Contenido de la tabla */}
-        </DataTableContainer>
-      </ContentContainer>
-    </MainContainer>
+    <ButtonGroup>
+      {permissions.Insertar === 1 && (
+        <Button onClick={handleInsert}>Insertar</Button>
+      )}
+      {permissions.Editar === 1 && (
+        <Button onClick={handleEdit}>Editar</Button>
+      )}
+    </ButtonGroup>
   );
 };
 
-export default LandingPage;
+export default PermissionsModule;
