@@ -1,0 +1,44 @@
+.top-bar {
+    background-color: var(--dark); /* Color de fondo ajustado */
+    color: var(--light);
+    height: 50px; /* Altura ajustada */
+    display: flex;
+    justify-content: flex-end; /* Alineación a la derecha */
+    align-items: center;
+    padding: 0 20px;
+}
+
+.top-bar-right {
+    display: flex;
+    align-items: center;
+}
+
+.user-name {
+    margin-right: 50px; /* Espacio entre el nombre de usuario y el icono */
+    font-size: 1.2em;
+}
+
+.user-icon {
+    width: 20px; /* Tamaño del icono de usuario */
+    height: 30px;
+    margin-right: 10px;
+    color: var(--light); /* Color del icono ajustado */
+    cursor: pointer;
+}
+.nav {
+    width: 2.5%;
+    margin-left: 1px;
+    color: var(--light);
+    align-items: center;
+  }
+
+.nav-brand {
+    margin-right: auto;
+    color: var(--light);
+    align-items: center;
+  }
+
+.icon {
+    color: white;
+}
+
