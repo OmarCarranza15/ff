@@ -41,7 +41,7 @@ const SideNavBar = () => {
     const fetchUserRole = async () => {
       try {
         const response = await axios.get(`http://localhost:3000/rolusuario/${role}`);
-        const paisesPermitidos = JSON.parse(response.data.Paises || '[]'); // Asegúrate de que Paises esté en formato JSON
+        const paisesPermitidos = response.data.Paises ? response.data.Paises.split(',').map(id => id.trim()) : [];
         setUserCountries(paisesPermitidos);
         console.log("Países permitidos:", paisesPermitidos);
       } catch (error) {
@@ -82,7 +82,7 @@ const SideNavBar = () => {
         },
       ].concat(
         paises
-          .filter(pais => userCountries.includes(pais.id)) // Filtrar según los países del usuario
+          .filter(pais => userCountries.includes(pais.id.toString())) // Filtrar según los países del usuario
           .map((pais) => ({
             title: pais.N_Pais,
             icon: <Banderas src={require(`../imgs/${pais.N_Pais}.png`)} alt="Flag image" />, // Imagen de bandera
