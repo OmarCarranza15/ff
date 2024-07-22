@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import React from "react";
 import axios from "axios";
@@ -35,7 +36,7 @@ const Login = () => {
                 setUserRole(user.ID_RolUsuario);
 
                 // Obtener permisos y países del rol del usuario
-                const roleResponse = await axios.get(`http://localhost:3000/roles/${user.ID_RolUsuario}`);
+                const roleResponse = await axios.get(`http://localhost:3000/rolusuario/${user.ID_RolUsuario}`);
                 const roleData = roleResponse.data;
 
                 // Guardar permisos
