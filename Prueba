@@ -61,4 +61,4 @@ const PermissionsModule = () => {
   );
 };
 
-export default PermissionsModule;
+export default PermissionsModule; 
