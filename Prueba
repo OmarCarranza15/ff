@@ -33,15 +33,27 @@ const SideNavBar = () => {
   const [userCountries, setUserCountries] = useState([]);
 
   useEffect(() => {
-    // Leer el rol del usuario y países permitidos desde localStorage
+    // Leer el rol del usuario desde localStorage
     const role = localStorage.getItem('userRole');
-    const countries = JSON.parse(localStorage.getItem('userCountries')) || [];
     setUserRole(role);
-    setUserCountries(countries);
 
+    // Obtener países permitidos del RolUsuario
+    const fetchUserRole = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/rolusuario/${role}`);
+        const paisesPermitidos = JSON.parse(response.data.Paises || '[]'); // Asegúrate de que Paises esté en formato JSON
+        setUserCountries(paisesPermitidos);
+        console.log("Países permitidos:", paisesPermitidos);
+      } catch (error) {
+        console.error("Error al obtener el rol del usuario", error);
+      }
+    };
+
+    fetchUserRole();
+
+    // Obtener la lista de todos los países
     const fetchPaises = async () => {
       try {
-        // Obtener la lista de países desde el servidor
         const response = await axios.get(`http://localhost:3000/pais/`);
         setPaises(response.data);
         console.log("Lista de países:", response.data); // Verifica los países obtenidos
