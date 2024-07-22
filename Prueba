@@ -44,12 +44,19 @@ const SideNavBar = () => {
         // Obtener la lista de países desde el servidor
         const response = await axios.get(`http://localhost:3000/pais/`);
         setPaises(response.data);
+        console.log("Lista de países:", response.data); // Verifica los países obtenidos
       } catch (error) {
         console.error("Error al obtener la lista de paises", error);
       }
     };
     fetchPaises();
   }, []);
+
+  // Verifica los países que se están filtrando
+  useEffect(() => {
+    console.log("Paises disponibles:", paises);
+    console.log("Paises del usuario:", userCountries);
+  }, [paises, userCountries]);
 
   const menuItems = [
     {
