@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   GrTable,
@@ -29,16 +30,12 @@ const SideNavBar = () => {
   const [isExpanded, setExpandState] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
   const [paises, setPaises] = useState([]);
-  const [userPermissions, setUserPermissions] = useState({ insert: false, edit: false });
-  const [userCountries, setUserCountries] = useState([]);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    // Leer permisos y países desde localStorage
-    const permissions = JSON.parse(localStorage.getItem('userPermissions'));
-    const countries = JSON.parse(localStorage.getItem('userCountries'));
-
-    setUserPermissions(permissions);
-    setUserCountries(countries);
+    // Leer el rol del usuario desde localStorage
+    const role = localStorage.getItem('userRole');
+    setUserRole(role);
 
     const fetchPaises = async () => {
       try {
@@ -61,15 +58,12 @@ const SideNavBar = () => {
           path: "/reportes",
           icon: <GrDocumentDownload />, // Icono de reporte
         },
-      ]
-      .concat(
-        paises
-          .filter(pais => userCountries.includes(pais.id)) // Filtrar países según permisos
-          .map((pais) => ({
-            title: pais.N_Pais,
-            icon: <Banderas src={require(`../imgs/${pais.N_Pais}.png`)} alt="Flag image" />, // Imagen de bandera
-            path: `/matrizPais?pais=${encodeURIComponent(pais.id)}&Nombre=${pais.N_Pais}`,
-          }))
+      ].concat(
+        paises.map((pais) => ({
+          title: pais.N_Pais,
+          icon: <Banderas src={require(`../imgs/${pais.N_Pais}.png`)} alt="Flag image" />, // Imagen de bandera
+          path: `/matrizPais?pais=${encodeURIComponent(pais.id)}&Nombre=${pais.N_Pais}`,
+        }))
       ),
     },
     {
@@ -116,7 +110,7 @@ const SideNavBar = () => {
           path: "/puesto",
           icon: <LiaUserTieSolid />, // Icono de Puesto
         },
-      ].filter(item => userPermissions.edit || item.title === "Paises"), // Filtrar según permisos
+      ],
     },
     {
       title: "Gestión de Usuarios",
@@ -168,7 +162,7 @@ const SideNavBar = () => {
       <div className="nav-upper">
         <div className="nav-menu">
           {menuItems
-            .filter(item => userPermissions.edit || item.title === "Matriz de Perfiles") // Filtrar según permisos
+            .filter(item => userRole === '1' || item.title === "Matriz de Perfiles") // Filtrar según el rol del usuario
             .map((menuItem, index) => (
               <div key={index}>
                 <button
