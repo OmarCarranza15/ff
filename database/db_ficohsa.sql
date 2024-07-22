@@ -107,29 +107,17 @@ CREATE TABLE PuestoIn (
 	updatedAt DATETIME2 DEFAULT GETDATE()
 );
 
-CREATE TABLE Permisos (
-	ID INT PRIMARY KEY IDENTITY,
-	P_Consulta INT,
-	P_Insertar INT,
-	P_Editar INT,
-	P_Desactivar INT,
-	P_Administrador INT,
-	P_Paises INT,
-	createdAt DATETIME2 DEFAULT GETDATE(),
-	updatedAt DATETIME2 DEFAULT GETDATE(),
-	FOREIGN KEY (P_Paises) REFERENCES Pais(ID)
-);
-
 CREATE TABLE RolUsuario (
 	ID INT PRIMARY KEY IDENTITY,
 	N_Rol NVARCHAR(100)NOT NULL,
 	Des_Rol NVARCHAR(500),
 	Fec_Creacion DATE,
 	Fec_Modificacion Date,
+	Paises NVARCHAR(MAX),
+	Insertar INT,
+	Editar INT,
 	createdAt DATETIME2 DEFAULT GETDATE(),
 	updatedAt DATETIME2 DEFAULT GETDATE(),
-	ID_Permisos INT,
-	FOREIGN KEY (ID_Permisos) REFERENCES Permisos (ID)
 );
 
 CREATE TABLE Usuario (
