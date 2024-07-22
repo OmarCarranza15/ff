@@ -30,15 +30,14 @@ const SideNavBar = () => {
   const [isExpanded, setExpandState] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
   const [paises, setPaises] = useState([]);
-  const [userPermissions, setUserPermissions] = useState({ insert: false, edit: false });
+  const [userRole, setUserRole] = useState(null);
   const [userCountries, setUserCountries] = useState([]);
 
   useEffect(() => {
-    // Leer permisos y países desde localStorage
-    const permissions = JSON.parse(localStorage.getItem('userPermissions'));
-    const countries = JSON.parse(localStorage.getItem('userCountries'));
-
-    setUserPermissions(permissions);
+    // Leer el rol del usuario y países permitidos desde localStorage
+    const role = localStorage.getItem('userRole');
+    const countries = JSON.parse(localStorage.getItem('userCountries')) || [];
+    setUserRole(role);
     setUserCountries(countries);
 
     const fetchPaises = async () => {
@@ -62,10 +61,9 @@ const SideNavBar = () => {
           path: "/reportes",
           icon: <GrDocumentDownload />, // Icono de reporte
         },
-      ]
-      .concat(
+      ].concat(
         paises
-          .filter(pais => userCountries.includes(pais.id)) // Filtrar países según permisos
+          .filter(pais => userCountries.includes(pais.id)) // Filtrar según los países del usuario
           .map((pais) => ({
             title: pais.N_Pais,
             icon: <Banderas src={require(`../imgs/${pais.N_Pais}.png`)} alt="Flag image" />, // Imagen de bandera
@@ -117,7 +115,7 @@ const SideNavBar = () => {
           path: "/puesto",
           icon: <LiaUserTieSolid />, // Icono de Puesto
         },
-      ].filter(item => userPermissions.edit || item.title === "Paises"), // Filtrar según permisos
+      ],
     },
     {
       title: "Gestión de Usuarios",
@@ -169,7 +167,7 @@ const SideNavBar = () => {
       <div className="nav-upper">
         <div className="nav-menu">
           {menuItems
-            .filter(item => userPermissions.edit || item.title === "Matriz de Perfiles") // Filtrar según permisos
+            .filter(item => userRole === '1' || item.title === "Matriz de Perfiles") // Filtrar según el rol del usuario
             .map((menuItem, index) => (
               <div key={index}>
                 <button
