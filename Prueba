@@ -1,36 +1,29 @@
-// PermissionsModule.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import styled from 'styled-components';
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 10px;
-`;
-
-const Button = styled.button`
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
-`;
 
 const PermissionsModule = () => {
   const [permissions, setPermissions] = useState({ insert: false, edit: false });
-
+  
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
-        const userId = localStorage.getItem('userId'); // Obtener el ID del usuario del localStorage
+        const userId = localStorage.getItem('userId');
+        console.log('User ID:', userId);
 
-        if (userId) {
-          const response = await axios.get(`http://localhost:3000/roles/${userId}`);
-          const roleData = response.data;
-
-          setPermissions({
-            insert: roleData.Insertar === 1,
-            edit: roleData.Editar === 1
-          });
+        if (!userId) {
+          console.error('User ID not found in localStorage');
+          return;
         }
+
+        const response = await axios.get(`http://localhost:3000/roles/${userId}`);
+        const roleData = response.data;
+
+        console.log('Role Data:', roleData);
+
+        setPermissions({
+          insert: roleData.Insertar === 1,
+          edit: roleData.Editar === 1
+        });
       } catch (error) {
         console.error('Error fetching permissions:', error);
       }
@@ -41,24 +34,27 @@ const PermissionsModule = () => {
 
   const handleInsert = () => {
     // Lógica para insertar
-    console.log('Insertar nuevo elemento');
+    console.log('Insert button clicked');
   };
 
   const handleEdit = () => {
     // Lógica para editar
-    console.log('Editar elemento existente');
+    console.log('Edit button clicked');
   };
 
   return (
-    <ButtonGroup>
-      {permissions.insert && (
-        <Button onClick={handleInsert}>Insertar</Button>
-      )}
-      {permissions.edit && (
-        <Button onClick={handleEdit}>Editar</Button>
-      )}
-    </ButtonGroup>
+    <div>
+      <h2>Permissions Module</h2>
+      <div>
+        {permissions.insert && (
+          <button onClick={handleInsert}>Insertar</button>
+        )}
+        {permissions.edit && (
+          <button onClick={handleEdit}>Editar</button>
+        )}
+      </div>
+    </div>
   );
 };
 
-export default PermissionsModule; 
+export default PermissionsModule;
