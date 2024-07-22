@@ -13,8 +13,10 @@ const Login = () => {
     const [error, setError] = useState('');
     const [isNewUser, setIsNewUser] = useState(false);
     const [userId, setUserId] = useState(null);
-    const [userName, setUserName] = useState(''); 
+    const [userName, setUserName] = useState('');
     const [userRole, setUserRole] = useState(null);
+    const [userPermissions, setUserPermissions] = useState({ insert: false, edit: false });
+    const [userCountries, setUserCountries] = useState([]);
     const [isNewPasswordEmpty, setIsNewPasswordEmpty] = useState(false);
     const [isConfirmPasswordEmpty, setIsConfirmPasswordEmpty] = useState(false);
 
@@ -23,22 +25,38 @@ const Login = () => {
         try {
             const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}`);
 
-            console.log('response.data:', response.data); 
+            console.log('response.data:', response.data);
 
             const user = response.data.find(user => user.Usuario === username && user.Contrasenia === password);
 
             if (user) {
-                setUserId(user.id); 
-                setUserName(user.Nombre); 
+                setUserId(user.id);
+                setUserName(user.Nombre);
                 setUserRole(user.ID_RolUsuario);
+
+                // Obtener permisos y países del rol del usuario
+                const roleResponse = await axios.get(`http://localhost:3000/roles/${user.ID_RolUsuario}`);
+                const roleData = roleResponse.data;
+
+                // Guardar permisos
+                setUserPermissions({
+                    insert: roleData.Insertar === 1,
+                    edit: roleData.Editar === 1
+                });
+
+                // Guardar países
+                setUserCountries(roleData.Paises.split(',').map(paisId => parseInt(paisId, 10)));
 
                 if (user.Estado === 1) {
                     setIsNewUser(true);
                 } else if (user.Estado === 3) {
                     setError('Este usuario ha expirado');
                 } else {
+                    // Guardar datos en localStorage
                     localStorage.setItem('username', user.Nombre);
                     localStorage.setItem('userRole', user.ID_RolUsuario); // Guardar el rol del usuario
+                    localStorage.setItem('userPermissions', JSON.stringify(userPermissions));
+                    localStorage.setItem('userCountries', JSON.stringify(userCountries));
                     navigate('/landingPage');
                 }
             } else {
@@ -93,8 +111,10 @@ const Login = () => {
             });
 
             if (updateResponse.status === 200) {
-                localStorage.setItem('username', userName); 
+                localStorage.setItem('username', userName);
                 localStorage.setItem('userRole', userRole); // Guardar el rol del usuario
+                localStorage.setItem('userPermissions', JSON.stringify(userPermissions));
+                localStorage.setItem('userCountries', JSON.stringify(userCountries));
                 navigate('/landingPage');
             } else {
                 setError('Error al cambiar la contraseña');
