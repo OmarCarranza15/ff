@@ -1,154 +1,184 @@
-Si el código sigue sin funcionar, es crucial depurar de manera efectiva para identificar el problema. Aquí hay una estrategia sistemática para solucionar el problema:
+import { useState } from "react";
+import React from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import '../styles/login.css';
 
-1. **Verifica el Almacenamiento en `localStorage`**:
+const Login = () => {
+    const navigate = useNavigate();
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isNewUser, setIsNewUser] = useState(false);
+    const [userId, setUserId] = useState(null);
+    const [userName, setUserName] = useState('');
+    const [userRole, setUserRole] = useState(null);
+    const [userPermissions, setUserPermissions] = useState({ insert: false, edit: false });
+    const [userCountries, setUserCountries] = useState([]);
+    const [isNewPasswordEmpty, setIsNewPasswordEmpty] = useState(false);
+    const [isConfirmPasswordEmpty, setIsConfirmPasswordEmpty] = useState(false);
 
-   Abre la consola de tu navegador y revisa `localStorage` para asegurarte de que `userId` se esté almacenando correctamente después del inicio de sesión. Puedes hacer esto en la pestaña "Aplicación" o "Storage" del panel de herramientas de desarrollo.
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}`);
+            console.log('response.data:', response.data);
 
-   ```javascript
-   console.log('Stored userId:', localStorage.getItem('userId'));
-   ```
+            const user = response.data.find(user => user.Usuario === username && user.Contrasenia === password);
 
-2. **Revisa la Respuesta de la API**:
+            if (user) {
+                setUserId(user.id);
+                setUserName(user.Nombre);
+                setUserRole(user.ID_RolUsuario);
 
-   Verifica que la respuesta de la API sea la esperada. Asegúrate de que el `userId` sea válido y que el endpoint `http://localhost:3000/roles/${userId}` esté devolviendo datos correctamente.
+                // Obtener permisos y países del rol del usuario
+                const roleResponse = await axios.get(`http://localhost:3000/rolusuario/${user.ID_RolUsuario}`);
+                const roleData = roleResponse.data;
 
-   ```javascript
-   const fetchPermissions = async () => {
-     try {
-       const userId = localStorage.getItem('userId');
-       console.log('User ID from localStorage:', userId);
+                // Guardar permisos
+                setUserPermissions({
+                    insert: roleData.Insertar === 1,
+                    edit: roleData.Editar === 1
+                });
 
-       if (!userId) {
-         console.error('User ID not found in localStorage');
-         return;
-       }
+                // Guardar países
+                setUserCountries(roleData.Paises.split(',').map(paisId => parseInt(paisId, 10)));
 
-       const response = await axios.get(`http://localhost:3000/roles/${userId}`);
-       console.log('API response:', response.data);
+                if (user.Estado === 1) {
+                    setIsNewUser(true);
+                } else if (user.Estado === 3) {
+                    setError('Este usuario ha expirado');
+                } else {
+                    // Guardar datos en localStorage
+                    localStorage.setItem('userId', user.id); // Guardar ID del usuario
+                    localStorage.setItem('username', user.Nombre);
+                    localStorage.setItem('userRole', user.ID_RolUsuario);
+                    localStorage.setItem('userPermissions', JSON.stringify({
+                        insert: roleData.Insertar === 1,
+                        edit: roleData.Editar === 1
+                    }));
+                    localStorage.setItem('userCountries', JSON.stringify(userCountries));
+                    navigate('/landingPage');
+                }
+            } else {
+                setError('Usuario o contraseña incorrectos');
+            }
+        } catch (error) {
+            console.error('Error al intentar iniciar sesión', error);
+            setError('Usuario o contraseña incorrectos');
+        }
+    };
 
-       const roleData = response.data;
+    const handlePasswordChange = async () => {
+        if (newPassword === '') {
+            setIsNewPasswordEmpty(true);
+        } else {
+            setIsNewPasswordEmpty(false);
+        }
 
-       setPermissions({
-         insert: roleData.Insertar === 1,
-         edit: roleData.Editar === 1
-       });
-     } catch (error) {
-       console.error('Error fetching permissions:', error);
-     }
-   };
-   ```
+        if (confirmPassword === '') {
+            setIsConfirmPasswordEmpty(true);
+        } else {
+            setIsConfirmPasswordEmpty(false);
+        }
 
-3. **Revisa el Código de `Login`**:
+        if (newPassword !== confirmPassword) {
+            setError('Las contraseñas no coinciden');
+            return;
+        }
 
-   Asegúrate de que `userId` se está almacenando correctamente después de iniciar sesión. Puedes añadir `console.log` en el `handleSubmit` para verificar esto.
+        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{12,}$/;
 
-   ```javascript
-   const handleSubmit = async (e) => {
-     e.preventDefault();
-     try {
-       const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}`);
-       const user = response.data.find(user => user.Usuario === username && user.Contrasenia === password);
+        if (!passwordRegex.test(newPassword)) {
+            setError('La nueva contraseña debe tener al menos 12 caracteres, una letra mayúscula, un número y un carácter especial.');
+            return;
+        }
 
-       if (user) {
-         setUserId(user.id);
-         setUserName(user.Nombre);
-         setUserRole(user.ID_RolUsuario);
+        // Validar que la nueva contraseña no sea igual a la anterior
+        if (newPassword === password) {
+            setError('La nueva contraseña no puede ser igual a la contraseña anterior.');
+            return;
+        }
 
-         // Obtener permisos y países del rol del usuario
-         const roleResponse = await axios.get(`http://localhost:3000/roles/${user.ID_RolUsuario}`);
-         const roleData = roleResponse.data;
+        try {
+            if (!userId) {
+                setError('No se encontró el ID del usuario. Inicie sesión nuevamente.');
+                return;
+            }
 
-         // Guardar permisos
-         setUserPermissions({
-           insert: roleData.Insertar === 1,
-           edit: roleData.Editar === 1
-         });
+            const updateResponse = await axios.put(`http://localhost:3000/usuarios/${userId}`, {
+                Contrasenia: newPassword,
+                Estado: 2
+            });
 
-         // Guardar países
-         setUserCountries(roleData.Paises.split(',').map(paisId => parseInt(paisId, 10)));
+            if (updateResponse.status === 200) {
+                localStorage.setItem('username', userName);
+                localStorage.setItem('userRole', userRole); // Guardar el rol del usuario
+                localStorage.setItem('userPermissions', JSON.stringify(userPermissions));
+                localStorage.setItem('userCountries', JSON.stringify(userCountries));
+                navigate('/landingPage');
+            } else {
+                setError('Error al cambiar la contraseña');
+            }
+        } catch (error) {
+            console.error('Error al cambiar la contraseña', error);
+            setError('Error al cambiar la contraseña');
+        }
+    };
 
-         if (user.Estado === 1) {
-           setIsNewUser(true);
-         } else if (user.Estado === 3) {
-           setError('Este usuario ha expirado');
-         } else {
-           // Guardar datos en localStorage
-           localStorage.setItem('userId', user.id);
-           localStorage.setItem('username', user.Nombre);
-           localStorage.setItem('userRole', user.ID_RolUsuario);
-           localStorage.setItem('userPermissions', JSON.stringify(userPermissions));
-           localStorage.setItem('userCountries', JSON.stringify(userCountries));
-           navigate('/landingPage');
-         }
-       } else {
-         setError('Usuario o contraseña incorrectos');
-       }
-     } catch (error) {
-       console.error('Error al intentar iniciar sesión', error);
-       setError('Usuario o contraseña incorrectos');
-     }
-   };
-   ```
+    return (
+        <div className="login-container">
+            <form onSubmit={handleSubmit} className="login-form">
+                <h2 className="in-group">Inicio de Sesión</h2>
+                <label>Ingrese su Usuario de Red y Contraseña</label>
+                <br />
+                <br />
+                <div className="form-group">
+                    <label>Usuario:</label>
+                    <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="form-control" required />
+                </div>
+                <div className="form-group">
+                    <label>Contraseña:</label>
+                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-control" required />
+                </div>
+                {isNewUser && (
+                    <>
+                        <p className="message">Debe cambiar su contraseña actual.</p>
+                        <div className="form-group">
+                            <label className="bold-label">Nueva Contraseña:</label>
+                            <input 
+                                type="password" 
+                                value={newPassword} 
+                                onChange={(e) => setNewPassword(e.target.value)} 
+                                className={`form-control ${isNewPasswordEmpty ? 'input-error' : ''}`} 
+                                required 
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="bold-label">Confirmar Contraseña:</label>
+                            <input 
+                                type="password" 
+                                value={confirmPassword} 
+                                onChange={(e) => setConfirmPassword(e.target.value)} 
+                                className={`form-control ${isConfirmPasswordEmpty ? 'input-error' : ''}`} 
+                                required 
+                            />
+                        </div>
+                        <button type="button" className="btn btn-primary" onClick={handlePasswordChange}>Cambiar Contraseña</button>
+                    </>
+                )}
+                {!isNewUser && <button type="submit" className="btn btn-primary">Iniciar Sesión</button>}
+                <br />
+                {error && <p style={{ color: 'red' }}>{error}</p>}
+                <div className="form-floating mb-3 mt-3">
+                    <a href="/Solicitud" style={{ textDecoration: 'none' }}><span className="form-con">He olvidado mi contraseña</span></a>
+                </div>
+                <br />
+            </form>
+        </div>
+    );
+};
 
-4. **Depuración de `PermissionsModule`**:
-
-   Añade `console.log` para depurar el estado y los props en `PermissionsModule`:
-
-   ```javascript
-   import React, { useState, useEffect } from 'react';
-   import axios from 'axios';
-
-   const PermissionsModule = () => {
-     const [permissions, setPermissions] = useState({ insert: false, edit: false });
-
-     useEffect(() => {
-       const fetchPermissions = async () => {
-         try {
-           const userId = localStorage.getItem('userId');
-           console.log('User ID from localStorage:', userId);
-
-           if (!userId) {
-             console.error('User ID not found in localStorage');
-             return;
-           }
-
-           const response = await axios.get(`http://localhost:3000/roles/${userId}`);
-           console.log('API response:', response.data);
-
-           const roleData = response.data;
-
-           setPermissions({
-             insert: roleData.Insertar === 1,
-             edit: roleData.Editar === 1
-           });
-         } catch (error) {
-           console.error('Error fetching permissions:', error);
-         }
-       };
-
-       fetchPermissions();
-     }, []);
-
-     return (
-       <div>
-         <h2>Permissions Module</h2>
-         <div>
-           {permissions.insert && (
-             <button onClick={() => console.log('Insert button clicked')}>Insertar</button>
-           )}
-           {permissions.edit && (
-             <button onClick={() => console.log('Edit button clicked')}>Editar</button>
-           )}
-         </div>
-       </div>
-     );
-   };
-
-   export default PermissionsModule;
-   ```
-
-5. **Verifica Configuración del Servidor**:
-
-   Asegúrate de que el servidor esté funcionando y que los endpoints `http://localhost:3000/usuarios/` y `http://localhost:3000/roles/${userId}` estén operativos y devuelvan los datos correctos.
-
-Si sigues teniendo problemas, podría ser útil revisar cualquier error en la consola de tu navegador o en la red, y asegurarte de que el backend esté configurado correctamente para devolver los datos esperados.
+export default Login;
