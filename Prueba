@@ -1,17 +1,36 @@
 import React, { useState, useEffect } from 'react';
-// Importaciones adicionales
+import { FaPlus } from 'react-icons/fa';
+import styled from 'styled-components';
+
+// Define your styled-components if needed
+const MainContainer = styled.div``;
+const TopBar = styled.div``;
+const ContentContainer = styled.div``;
+const Sidebar = styled.div``;
+const DataTableContainer = styled.div``;
+const HeaderContainer = styled.div``;
+const Title = styled.h1``;
+const ButtonGroup = styled.div``;
+const Button = styled.button``;
+const FilterWrapper = styled.div``;
 
 const LandingPage = () => {
-  const [userPermissions, setUserPermissions] = useState({ Insertar: 0, Editar: 0 }); // Estado para permisos del usuario
+  const [userPermissions, setUserPermissions] = useState({ Insertar: 0, Editar: 0 });
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState(''); // Adjust based on your logic
 
   useEffect(() => {
-    // Simulación de obtención de permisos del usuario
     const fetchUserPermissions = async () => {
       try {
         const response = await fetch('http://localhost:3000/rolusuario/');
         const data = await response.json();
-        // Suponiendo que data es un array y necesitas encontrar el permiso específico para el usuario actual
-        const userPermission = data.find(permission => permission.ID === userId); // Ajusta userId según sea necesario
+
+        // Suponiendo que el ID del usuario está disponible como userId
+        // Ajusta esto según la forma en que identificas al usuario
+        const userId = 1; // Reemplaza esto con el ID del usuario actual
+
+        const userPermission = data.find(permission => permission.ID === userId);
+
         if (userPermission) {
           setUserPermissions({
             Insertar: userPermission.Insertar,
@@ -25,6 +44,14 @@ const LandingPage = () => {
 
     fetchUserPermissions();
   }, []);
+
+  const handleInsert = () => {
+    // Lógica para insertar nuevo perfil
+  };
+
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
 
   return (
     <MainContainer>
