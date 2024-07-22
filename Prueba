@@ -3,12 +3,12 @@ import axios from 'axios';
 
 const PermissionsModule = () => {
   const [permissions, setPermissions] = useState({ insert: false, edit: false });
-  
+
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
         const userId = localStorage.getItem('userId');
-        console.log('User ID:', userId);
+        console.log('User ID from localStorage:', userId);
 
         if (!userId) {
           console.error('User ID not found in localStorage');
