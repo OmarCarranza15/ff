@@ -1,7 +1,8 @@
+// PermissionsModule.js
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import styled from 'styled-components';
 
-// Define tus styled-components si es necesario
 const ButtonGroup = styled.div`
   display: flex;
   gap: 10px;
@@ -14,22 +15,20 @@ const Button = styled.button`
 `;
 
 const PermissionsModule = () => {
-  const [permissions, setPermissions] = useState({ Insertar: 2, Editar: 2 });
+  const [permissions, setPermissions] = useState({ insert: false, edit: false });
 
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
-        const response = await fetch('http://localhost:3000/rolusuario/');
-        const data = await response.json();
-        
-        // Suponiendo que tienes un ID de usuario disponible
-        const userId = 1; // Reemplaza esto con el ID del usuario actual
+        const userId = localStorage.getItem('userId'); // Obtener el ID del usuario del localStorage
 
-        const userPermission = data.find(permission => permission.ID === userId);
-        if (userPermission) {
+        if (userId) {
+          const response = await axios.get(`http://localhost:3000/roles/${userId}`);
+          const roleData = response.data;
+
           setPermissions({
-            Insertar: userPermission.Insertar,
-            Editar: userPermission.Editar
+            insert: roleData.Insertar === 1,
+            edit: roleData.Editar === 1
           });
         }
       } catch (error) {
@@ -52,10 +51,10 @@ const PermissionsModule = () => {
 
   return (
     <ButtonGroup>
-      {permissions.Insertar === 1 && (
+      {permissions.insert && (
         <Button onClick={handleInsert}>Insertar</Button>
       )}
-      {permissions.Editar === 1 && (
+      {permissions.edit && (
         <Button onClick={handleEdit}>Editar</Button>
       )}
     </ButtonGroup>
