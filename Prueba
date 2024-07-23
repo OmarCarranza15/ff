@@ -1,120 +1,49 @@
-Para asegurar que el usuario seleccione División, Razón Social, Departamento y Centro de Costos cuando cambia de país, modifica el código de la siguiente manera:
+import React, { useState } from 'react';
 
-1. **Actualiza la función `handleModalChange` para incluir la validación de selección**:
-    ```javascript
-    const handleModalChange = (event, field) => {
-      const { value } = event.target;
-      setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
+// Suponiendo que estos estados están definidos en tu componente
+const [selectedCountry, setSelectedCountry] = useState(null);
+const [editedRow, setEditedRow] = useState(null);
+const [filteredRsocial, setFilteredRsocial] = useState([]);
+const [filteredDivision, setFilteredDivision] = useState([]);
+const [filteredDepartamento, setFilteredDepartamento] = useState([]);
+const [filteredCentroCosto, setFilteredCentroCosto] = useState([]);
 
-      if (field === "ID_Pais") {
-        const filteredRsocial = rsocial.filter(
-          (item) => item.ID_Pais === parseInt(value)
-        );
-        setFilteredRsocial(filteredRsocial);
+const startEdit = (row) => {
+  setEditedRow({ ...row });
+  setEditMode(row.id);
 
-        const filteredDivision = division.filter(
-          (item) => item.ID_Pais === parseInt(value)
-        );
-        setFilteredDivision(filteredDivision);
+  // Solo filtrar y validar si el país ha cambiado
+  if (selectedCountry !== row.ID_Pais) {
+    // Filtrar razón social según el país seleccionado
+    const filteredRsocial = rsocial.filter(
+      (item) => item.ID_Pais === row.ID_Pais
+    );
+    setFilteredRsocial(filteredRsocial);
 
-        const filteredDepartamento = departamento.filter(
-          (item) => item.ID_Pais === parseInt(value)
-        );
-        setFilteredDepartamento(filteredDepartamento);
+    // Filtrar división según el país seleccionado
+    const filteredDivision = division.filter(
+      (item) => item.ID_Pais === row.ID_Pais
+    );
+    setFilteredDivision(filteredDivision);
 
-        const filteredCentroCosto = centrocosto.filter(
-          (item) => item.ID_Pais === parseInt(value)
-        );
-        setFilteredCentroCosto(filteredCentroCosto);
+    // Filtrar departamento según el país seleccionado
+    const filteredDepartamento = departamento.filter(
+      (item) => item.ID_Pais === row.ID_Pais
+    );
+    setFilteredDepartamento(filteredDepartamento);
 
-        // Limpiar campos relacionados
-        setModalValues((prevValues) => ({
-          ...prevValues,
-          ID_RSocial: "",
-          ID_Division: "",
-          ID_Departamento: "",
-          ID_CentroCostos: "",
-        }));
-      }
+    // Filtrar centro de costos según el país seleccionado
+    const filteredCentroCosto = centrocosto.filter(
+      (item) => item.ID_Pais === row.ID_Pais
+    );
+    setFilteredCentroCosto(filteredCentroCosto);
 
-      setEditedRow((prevState) => ({
-        ...prevState,
-        [field]: value,
-        ...(field === "ID_Pais" && {
-          N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais,
-        }),
-        ...(field === "ID_RSocial" && {
-          N_RSocial: filteredRsocial.find((p) => p.id === parseInt(value))
-            .N_RSocial,
-        }),
-        ...(field === "ID_Division" && {
-          N_Division: filteredDivision.find((p) => p.id === parseInt(value))
-            .N_Division,
-        }),
-        ...(field === "ID_Departamento" && {
-          N_Departamento: filteredDepartamento.find(
-            (p) => p.id === parseInt(value)
-          ).N_Departamento,
-        }),
-        ...(field === "ID_CentroCostos" && {
-          Nombre: filteredCentroCosto.find((p) => p.id === parseInt(value))
-            .Nombre,
-        }),
-      }));
-      validateInput(field, value);
-    };
-    ```
+    // Actualizar el país seleccionado
+    setSelectedCountry(row.ID_Pais);
 
-2. **Actualiza la función `SaveModal` para validar la selección de los campos relacionados**:
-    ```javascript
-    const SaveModal = async () => {
-      const newErrors = {
-        ID_Pais: "",
-        Codigo: "",
-        N_Puesto: "",
-        ID_RSocial: "",
-        ID_Division: "",
-        ID_Departamento: "",
-        ID_CentroCostos: "",
-      };
-
-      // Validación de campos
-      if (!modalValues.ID_Pais) {
-        newErrors.ID_Pais = "El campo País es obligatorio";
-      }
-      if (!modalValues.ID_RSocial) {
-        newErrors.ID_RSocial = "El campo Razón Social es obligatorio";
-      }
-      if (!modalValues.ID_Division) {
-        newErrors.ID_Division = "El campo División es obligatorio";
-      }
-      if (!modalValues.ID_Departamento) {
-        newErrors.ID_Departamento = "El campo Departamento es obligatorio";
-      }
-      if (!modalValues.ID_CentroCostos) {
-        newErrors.ID_CentroCostos = "El campo Centro de Costos es obligatorio";
-      }
-
-      if (!modalValues.Codigo.trim()) {
-        newErrors.Codigo = "El campo Código es obligatorio";
-      } else if (!/^\d+$/.test(modalValues.Codigo)) {
-        newErrors.Codigo = "Solo se aceptan Dígitos";
-      }
-
-      if (!modalValues.N_Puesto.trim()) {
-        newErrors.N_Puesto = "El campo Nombre es obligatorio";
-      } else if (!/^[a-zA-Z\s]+$/.test(modalValues.N_Puesto)) {
-        newErrors.N_Puesto =
-          "El campo Nombre solo acepta letras y espacios en blanco";
-      }
-
-      setErrors(newErrors);
-
-      // Si no hay errores, proceder a insertar el nuevo puesto
-      if (Object.values(newErrors).every((error) => error === "")) {
-        // ... Código de inserción ...
-      }
-    };
-    ```
-
-Con estos cambios, cuando el usuario seleccione un nuevo país, los campos de Razón Social, División, Departamento y Centro de Costos serán limpiados y requeridos nuevamente para la validación.
+    // Validar si se han seleccionado todos los campos requeridos
+    if (!row.ID_Division || !row.ID_RSocial || !row.ID_Departamento || !row.ID_CentroCostos) {
+      alert("Por favor, asegúrese de seleccionar División, Razón Social, Departamento y Centro de Costos.");
+    }
+  }
+};
