@@ -1,51 +1,97 @@
 import React, { useState, useEffect } from 'react';
 
-// Suponiendo que estos estados están definidos en tu componente
+// Estados del componente
 const [selectedCountry, setSelectedCountry] = useState(null);
 const [editedRow, setEditedRow] = useState(null);
 const [filteredRsocial, setFilteredRsocial] = useState([]);
 const [filteredDivision, setFilteredDivision] = useState([]);
 const [filteredDepartamento, setFilteredDepartamento] = useState([]);
 const [filteredCentroCosto, setFilteredCentroCosto] = useState([]);
-const [validationError, setValidationError] = useState(false);
+const [isValidationError, setIsValidationError] = useState(false);
 
 // Función para iniciar la edición
 const startEdit = (row) => {
   setEditedRow({ ...row });
-  setEditMode(row.id);
+  setSelectedCountry(row.ID_Pais);
 
-  // Solo filtrar si el país ha cambiado
-  if (selectedCountry !== row.ID_Pais) {
-    // Filtrar según el país seleccionado
-    filterOptionsByCountry(row.ID_Pais);
-    setSelectedCountry(row.ID_Pais);
-  }
+  // Filtrar opciones si es necesario
+  filterOptionsByCountry(row.ID_Pais);
 };
 
 // Función para filtrar las opciones
 const filterOptionsByCountry = (countryId) => {
-  // Filtrar razón social, división, departamento y centro de costos según el país
   setFilteredRsocial(rsocial.filter(item => item.ID_Pais === countryId));
   setFilteredDivision(division.filter(item => item.ID_Pais === countryId));
   setFilteredDepartamento(departamento.filter(item => item.ID_Pais === countryId));
   setFilteredCentroCosto(centrocosto.filter(item => item.ID_Pais === countryId));
 };
 
-// Validar campos cuando cambie el país
+// Validar campos cuando el país cambie
 useEffect(() => {
   if (selectedCountry && editedRow) {
-    if (!editedRow.ID_Division || !editedRow.ID_RSocial || !editedRow.ID_Departamento || !editedRow.ID_CentroCostos) {
-      setValidationError(true);
+    const hasAllFields = editedRow.ID_Division && editedRow.ID_RSocial && editedRow.ID_Departamento && editedRow.ID_CentroCostos;
+    
+    // Si falta algún campo requerido, marcar error de validación
+    if (!hasAllFields) {
+      setIsValidationError(true);
       alert("Por favor, asegúrese de seleccionar División, Razón Social, Departamento y Centro de Costos.");
     } else {
-      setValidationError(false);
+      setIsValidationError(false);
     }
   }
 }, [selectedCountry, editedRow]);
 
-// Función para guardar cambios
-const saveChanges = () => {
-  if (!validationError) {
-    // Lógica para guardar los cambios
-  }
+// Función para manejar el cambio de país
+const handleCountryChange = (e) => {
+  const newCountryId = e.target.value;
+  setSelectedCountry(newCountryId);
+  filterOptionsByCountry(newCountryId);
+
+  // Limpiar los campos dependientes al cambiar el país
+  setEditedRow(prev => ({
+    ...prev,
+    ID_Division: null,
+    ID_RSocial: null,
+    ID_Departamento: null,
+    ID_CentroCostos: null
+  }));
 };
+
+// Función para guardar los cambios
+const saveChanges = () => {
+  if (isValidationError) {
+    alert("Por favor, complete todos los campos requeridos.");
+    return;
+  }
+
+  // Lógica para guardar los cambios
+};
+
+// Renderizado del componente
+return (
+  <div>
+    {/* Suponiendo que tienes una selección de país */}
+    <select value={selectedCountry || ''} onChange={handleCountryChange}>
+      {/* Opciones de país */}
+    </select>
+
+    {/* Renderiza los campos editables */}
+    <select value={editedRow?.ID_Division || ''} onChange={(e) => setEditedRow({ ...editedRow, ID_Division: e.target.value })}>
+      {/* Opciones de división filtradas */}
+    </select>
+
+    <select value={editedRow?.ID_RSocial || ''} onChange={(e) => setEditedRow({ ...editedRow, ID_RSocial: e.target.value })}>
+      {/* Opciones de razón social filtradas */}
+    </select>
+
+    <select value={editedRow?.ID_Departamento || ''} onChange={(e) => setEditedRow({ ...editedRow, ID_Departamento: e.target.value })}>
+      {/* Opciones de departamento filtradas */}
+    </select>
+
+    <select value={editedRow?.ID_CentroCostos || ''} onChange={(e) => setEditedRow({ ...editedRow, ID_CentroCostos: e.target.value })}>
+      {/* Opciones de centro de costos filtradas */}
+    </select>
+
+    <button onClick={saveChanges}>Guardar</button>
+  </div>
+);
