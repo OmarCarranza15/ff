@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // Suponiendo que estos estados están definidos en tu componente
 const [selectedCountry, setSelectedCountry] = useState(null);
@@ -7,43 +7,45 @@ const [filteredRsocial, setFilteredRsocial] = useState([]);
 const [filteredDivision, setFilteredDivision] = useState([]);
 const [filteredDepartamento, setFilteredDepartamento] = useState([]);
 const [filteredCentroCosto, setFilteredCentroCosto] = useState([]);
+const [validationError, setValidationError] = useState(false);
 
+// Función para iniciar la edición
 const startEdit = (row) => {
   setEditedRow({ ...row });
   setEditMode(row.id);
 
-  // Solo filtrar y validar si el país ha cambiado
+  // Solo filtrar si el país ha cambiado
   if (selectedCountry !== row.ID_Pais) {
-    // Filtrar razón social según el país seleccionado
-    const filteredRsocial = rsocial.filter(
-      (item) => item.ID_Pais === row.ID_Pais
-    );
-    setFilteredRsocial(filteredRsocial);
-
-    // Filtrar división según el país seleccionado
-    const filteredDivision = division.filter(
-      (item) => item.ID_Pais === row.ID_Pais
-    );
-    setFilteredDivision(filteredDivision);
-
-    // Filtrar departamento según el país seleccionado
-    const filteredDepartamento = departamento.filter(
-      (item) => item.ID_Pais === row.ID_Pais
-    );
-    setFilteredDepartamento(filteredDepartamento);
-
-    // Filtrar centro de costos según el país seleccionado
-    const filteredCentroCosto = centrocosto.filter(
-      (item) => item.ID_Pais === row.ID_Pais
-    );
-    setFilteredCentroCosto(filteredCentroCosto);
-
-    // Actualizar el país seleccionado
+    // Filtrar según el país seleccionado
+    filterOptionsByCountry(row.ID_Pais);
     setSelectedCountry(row.ID_Pais);
+  }
+};
 
-    // Validar si se han seleccionado todos los campos requeridos
-    if (!row.ID_Division || !row.ID_RSocial || !row.ID_Departamento || !row.ID_CentroCostos) {
+// Función para filtrar las opciones
+const filterOptionsByCountry = (countryId) => {
+  // Filtrar razón social, división, departamento y centro de costos según el país
+  setFilteredRsocial(rsocial.filter(item => item.ID_Pais === countryId));
+  setFilteredDivision(division.filter(item => item.ID_Pais === countryId));
+  setFilteredDepartamento(departamento.filter(item => item.ID_Pais === countryId));
+  setFilteredCentroCosto(centrocosto.filter(item => item.ID_Pais === countryId));
+};
+
+// Validar campos cuando cambie el país
+useEffect(() => {
+  if (selectedCountry && editedRow) {
+    if (!editedRow.ID_Division || !editedRow.ID_RSocial || !editedRow.ID_Departamento || !editedRow.ID_CentroCostos) {
+      setValidationError(true);
       alert("Por favor, asegúrese de seleccionar División, Razón Social, Departamento y Centro de Costos.");
+    } else {
+      setValidationError(false);
     }
+  }
+}, [selectedCountry, editedRow]);
+
+// Función para guardar cambios
+const saveChanges = () => {
+  if (!validationError) {
+    // Lógica para guardar los cambios
   }
 };
