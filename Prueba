@@ -109,7 +109,7 @@ function Usuario() {
                   : "Expirado",
               ID_PuestoIn: usuario.ID_PuestoIn,
               Fec_Exp_Acceso: usuario.Fec_Exp_Acceso,
-              Fec_Creacion: usuario.Fec_Creacion,
+              Fec_Creacion: usuario.Fec_Creacion,//usuario.Fec_Creacion,
               Fec_Ult_Conexion: usuario.Fec_Ult_Conexion,
               ID_RolUsuario: usuario.ID_RolUsuario,
               N_PuestoIn: puestoinResponse.data.N_PuestoIn,
@@ -199,6 +199,7 @@ function Usuario() {
     const { value } = event.target;
     setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
   };
+
 
   const SaveModal = async () => {
     const newErrors = {
