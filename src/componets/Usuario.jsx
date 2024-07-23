@@ -1,301 +1,31 @@
 import React, { useState, useEffect } from "react";
-import DataTable from "react-data-table-component";
 import Sidebar from "./SideNavBar.jsx"; // Ajusta la ruta según la ubicación real de Sidebar.jsx
 import TopBar from "./TopBar.jsx"; // Ajusta la ruta según la ubicación real de TopBar.jsx
-import { styled, keyframes } from "styled-components";
 import "../styles/DataTable.css"; // Importa el archivo CSS
 import axios from "axios";
-import { FaUndo,FaSearch,FaPlus,FaEdit, FaSave, FaTimes } from "react-icons/fa"; // Importa el ícono de edición
-
-
-
-const MainContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-`;
-
-const ContentContainer = styled.div`
-  display: flex;
-  flex: 1;
-`;
-
-const HeaderContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1px 10px;
-`;
-
-const Title = styled.h2`
-  flex-grow: 1;
-  text-align: center;
-`;
-
-const FilterWrapper = styled.div`
-  position: relative; /* Cambiado de 'absolute' a 'relative' */
-  right: 9px;
-  padding: 10px;
-  background-color: #ffffff;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  z-index: 100;
-  display: ${(props) => (props.show ? "flex" : "none")};
-  flex-wrap: wrap; 
-`;
-
-const FilterInput = styled.input`
-  padding: 8px;
-  margin-right: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  font-size: 14px;
-  justify-content: center;
-  flex: 1;
-  display: flex;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 10px;
-`;
-
-//Estilos de Boton de Buscar y de Insertar un nuevo perfil
-const Button = styled.button`
-  background-color: ${(props) => (props.primary ? "#008cba" : "#4caf50")};
-  color: #ffffff;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-`;
-
-//Estilos del Boton cancelar
-const ButtonCancelar = styled.button`
-  background-color: ${(props) =>
-    props.primary ? "#008cba" : props.cancel ? "#bf1515" : "#4caf50"};
-  color: #ffffff;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-`;
-
-const DataTableContainer = styled.div`
-  flex: 1;
-  padding: 1px;
-  overflow: auto;
-  position: relative;
-  width: 100%;
-  height: calc(100vh - 80px); /* Ajusta el tamaño del contenedor de la tabla */
-`;
-
-const StyledDataTable = styled(DataTable)`
-  border-collapse: collapse;
-  width: 100%;
-  position: relative;
-  margin: center;
-
-  th,
-  td {
-    border: 1px solid #ddd;
-    padding: 15px;
-    text-align: center; /* Centra el texto en las celdas */
-    white-space: normal;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-
-  th {
-    background-color: #f0f0f0;
-    text-align: center; /* Centra el texto en los encabezados */
-  }
-
-  td {
-    min-width: 200px;
-    max-width: 500px;
-    text-align: center;
-  }
-
-  @media (max-width: 768px) {
-    th,
-    td {
-      padding: 8px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    th,
-    td {
-      padding: 6px;
-    }
-  }
-`;
-
-const ModalBackground = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-`;
-
-const ModalWrapper = styled.div`
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-  z-index: 1100;
-  animation: fadeIn 0.3s ease-out;
-  max-width: 400px;
-  width: 100%;
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-`;
-
-const ModalTitle = styled.h3`
-  margin-bottom: 15px;
-  text-align: center;
-`;
-
-const ModalInput = styled.input`
-  width: 100%;
-  text-align: left;
-  padding: 12px;
-  margin-bottom: 15px;
-  border: 1px solid ${(props) => (props.error ? "red" : "#ccc")};
-  border-radius: 5px;
-  font-size: 14px;
-  outline: none;
-  box-sizing: border-box;
-  transition: border-color 0.3s ease;
-
-  &:focus {
-    border-color: #008cba;
-    box-shadow: 0 0 5px rgba(0, 140, 186, 0.5);
-  }
-`;
-
-const ErrorMessage = styled.p`
-  color: red;
-  font-size: 14px;
-  margin-bottom: 8px;
-`;
-
-const ModalButtonGroup = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-`;
-
-const ModalButton = styled.button`
-  background-color: ${(props) =>
-    props.primary ? "#4caf50" : props.cancel ? "#bf1515" : "#4caf50"};
-  color: #ffffff;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: ${(props) =>
-      props.primary ? "#45a049" : props.cancel ? "#ad1111" : "#45a049"};
-  }
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 7px;
-  margin-bottom: 9px;
-  border: 2px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
-  ${(props) => props.error && `border: 1px solid red;`}
-`;
-
-const GuardarButton = styled(ModalButton)`
-  background-color: #4caf50;
-`;
-
-const LabelModal = styled.label`
-  width: 100px;
-  text-align: left;
-  font-weight: bold;
-  margin-right: 10px;
-`;
-
-//Boton Limpiar filtros 
-const RedButton = styled(Button)`
-  background-color: #ff0000; /* Rojo */
-  font-size: 13px; 
-  padding: 2px 4px; 
-  border-radius: 5px; 
-  height: 35px; 
-  width: 120px; 
-`;
-
-const rotate360 = keyframes`
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-`;
-
-const Spinner = styled.div`
-  display: flex;
-  justify-content: center;
-  margin: 0 auto;
-  animation: ${rotate360} 1s linear infinite;
-  transform: translateZ(0);
-  border-top: 2px solid grey;
-  border-right: 2px solid grey;
-  border-bottom: 2px solid grey;
-  border-left: 4px solid black;
-  background: transparent;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-`;
-
-
-const CustomLoader = () => (
-  <div style={{ padding: "54px" }}>
-    <Spinner />
-    <div>Cargando Registros...</div>
-  </div>
-);
-
+import { FaUndo, FaSearch, FaPlus } from "react-icons/fa"; // Importa el ícono de edición
+import {
+  customStyles,
+  CustomLoader,
+  HeaderContainer,
+  Title,
+  MainContainer,
+  ContentContainer,
+  FilterWrapper,
+  FilterInput,
+  ButtonGroup,
+  Button,
+  StyledInput,
+  StyledDataTable,
+  StyledSelect,
+  RedButton,
+  DataTableContainer,
+  ModalBackground,
+  ModalWrapper,
+  ModalTitle,
+  ErrorMessage,
+  ModalButtonGroup,
+} from "./Estilos.jsx";
 
 function Usuario() {
   //const [usuario] = useState([]);
@@ -306,11 +36,29 @@ function Usuario() {
   const [puestoin, setPuestoin] = useState([]);
   const [rolusuario, setRolusuario] = useState([]);
   const [showModal, setShowModal] = useState(false); // Estado para mostrar/ocultar el modal
-  const [modalValues, setModalValues] = useState({Usuario: "", Nombre: "",Contrasenia: "" , ID_PuestoIn: "", ID_RolUsuario: "", Fec_Creacion: "", Fec_Exp_Acceso: "", Fec_Ult_Conexion: "",});
-  const [errors, setErrors] = useState({Usuario: "", Nombre: "",Contrasenia: "" , ID_PuestoIn: "", ID_RolUsuario: "", Fec_Creacion: "", Fec_Exp_Acceso: "", Fec_Ult_Conexion: "",});
+  const [modalValues, setModalValues] = useState({
+    Usuario: "",
+    Nombre: "",
+    Contrasenia: "",
+    ID_PuestoIn: "",
+    ID_RolUsuario: "",
+    Fec_Creacion: "",
+    Fec_Exp_Acceso: "",
+    Fec_Ult_Conexion: "",
+  });
+  const [errors, setErrors] = useState({
+    Usuario: "",
+    Nombre: "",
+    Contrasenia: "",
+    ID_PuestoIn: "",
+    ID_RolUsuario: "",
+    Fec_Creacion: "",
+    Fec_Exp_Acceso: "",
+    Fec_Ult_Conexion: "",
+  });
   const [showColumns, setShowColumns] = useState(false);
   const [loading, setLoading] = useState(true);
-
+  const [rows, setRows] = useState([]);
   const [filters, setFilters] = useState({
     N_PuestoIn: "",
     N_Rol: "",
@@ -320,30 +68,45 @@ function Usuario() {
     Fec_Creacion: "",
     Fec_Exp_Acceso: "",
     Fec_Ult_Conexion: "",
-
   });
 
-  const handleToggleColumns = () =>{
-    setShowColumns(!showColumns);
-  } 
+  const today = new Date();
+  const oneYearFromToday = new Date(today.setFullYear(today.getFullYear() + 1));
 
-  useEffect(()=> {
+  const [fecExpAcceso, setFecExpAcceso] = useState(
+    oneYearFromToday.toISOString().substr(0, 10)
+  );
+
+  const handleToggleColumns = () => {
+    setShowColumns(!showColumns);
+  };
+
+  useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const response = await axios.get(`http://localhost:3000/usuarios/`);
         const data = response.data;
         const mappedData = await Promise.all(
-          data.map(async (usuario)=> {
-            const puestoinResponse = await axios.get(`http://localhost:3000/puestoin/${usuario.ID_PuestoIn}`); 
-            const rolusuarioResponse = await axios.get(`http://localhost:3000/rolusuario/${usuario.ID_RolUsuario}`); 
-            
+          data.map(async (usuario) => {
+            const puestoinResponse = await axios.get(
+              `http://localhost:3000/puestoin/${usuario.ID_PuestoIn}`
+            );
+            const rolusuarioResponse = await axios.get(
+              `http://localhost:3000/rolusuario/${usuario.ID_RolUsuario}`
+            );
+
             return {
-              id: usuario.id,   
+              id: usuario.id,
               Usuario: usuario.Usuario,
               Nombre: usuario.Nombre,
               Contrasenia: usuario.Contrasenia,
-              Estado: usuario.Estado === 1?"Nuevo":  usuario.Estado === 2? "En Servicio": "Expirado",
+              Estado:
+                usuario.Estado === 1
+                  ? "Nuevo"
+                  : usuario.Estado === 2
+                  ? "En Servicio"
+                  : "Expirado",
               ID_PuestoIn: usuario.ID_PuestoIn,
               Fec_Exp_Acceso: usuario.Fec_Exp_Acceso,
               Fec_Creacion: usuario.Fec_Creacion,
@@ -351,37 +114,36 @@ function Usuario() {
               ID_RolUsuario: usuario.ID_RolUsuario,
               N_PuestoIn: puestoinResponse.data.N_PuestoIn,
               N_Rol: rolusuarioResponse.data.N_Rol,
-            }
+            };
           })
-        )
+        );
         setRecords(mappedData);
         setLoading(false);
       } catch (error) {
-        console.error ('Error al obtener los Puestos:', error);
+        console.error("Error al obtener los Puestos:", error);
         setLoading(false);
       }
     };
-    const fetchPuestoin = async () =>{
-        try {
-            const response = await axios.get(`http://localhost:3000/puestoin/`);
-            setPuestoin(response.data);
-        } catch (error) {
-            console.error('Error al obtener la lista de Puestoin', error);
-        }
+    const fetchPuestoin = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/puestoin/`);
+        setPuestoin(response.data);
+      } catch (error) {
+        console.error("Error al obtener la lista de Puestoin", error);
+      }
     };
-    const fetchRolusuario = async () =>{
-        try {
-             const response = await axios.get(`http://localhost:3000/rolusuario/`);
-             setRolusuario(response.data);
-         } catch (error) {
-             console.error('Error al obtener la lista de razon social', error);
-         }
-     };
-  
+    const fetchRolusuario = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/rolusuario/`);
+        setRolusuario(response.data);
+      } catch (error) {
+        console.error("Error al obtener la lista de razon social", error);
+      }
+    };
+
     fetchData();
     fetchPuestoin();
     fetchRolusuario();
-    
   }, []);
 
   const handleFilterChange = (event, column) => {
@@ -391,7 +153,8 @@ function Usuario() {
 
   const generateRandomPassword = () => {
     const length = 12; // Longitud de la contraseña
-    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.,"; // Caracteres permitidos
+    const charset =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.,"; // Caracteres permitidos
     let password = "";
     for (let i = 0; i < length; i++) {
       const randomIndex = Math.floor(Math.random() * charset.length);
@@ -409,17 +172,46 @@ function Usuario() {
   };
   const handleCloseModal = () => {
     setShowModal(false);
-    setModalValues({Usuario: "", Nombre: "",Contrasenia: "" , ID_PuestoIn: "", ID_RolUsuario: "", Fec_Creacion: "", Fec_Exp_Acceso: "", Fec_Ult_Conexion: "", Estado: ""});
-    setErrors({Usuario: "", Nombre: "",Contrasenia: "" , ID_PuestoIn: "", ID_RolUsuario: "", Fec_Creacion: "", Fec_Exp_Acceso: "", Fec_Ult_Conexion: "", Estado:""});
+    setModalValues({
+      Usuario: "",
+      Nombre: "",
+      Contrasenia: "",
+      ID_PuestoIn: "",
+      ID_RolUsuario: "",
+      Fec_Creacion: "",
+      Fec_Exp_Acceso: "",
+      Fec_Ult_Conexion: "",
+      Estado: "",
+    });
+    setErrors({
+      Usuario: "",
+      Nombre: "",
+      Contrasenia: "",
+      ID_PuestoIn: "",
+      ID_RolUsuario: "",
+      Fec_Creacion: "",
+      Fec_Exp_Acceso: "",
+      Fec_Ult_Conexion: "",
+      Estado: "",
+    });
   };
   const handleModalChange = (event, field) => {
     const { value } = event.target;
     setModalValues((prevValues) => ({ ...prevValues, [field]: value }));
   };
 
-  
   const SaveModal = async () => {
-    const newErrors = { Usuario: "", Nombre: "", Contrasenia: "", ID_PuestoIn: "", ID_RolUsuario: "", Fec_Creacion: "", Fec_Exp_Acceso: "", Fec_Ult_Conexion: "", Estado: "" };
+    const newErrors = {
+      Usuario: "",
+      Nombre: "",
+      Contrasenia: "",
+      ID_PuestoIn: "",
+      ID_RolUsuario: "",
+      Fec_Creacion: "",
+      Fec_Exp_Acceso: "",
+      Fec_Ult_Conexion: "",
+      Estado: "",
+    };
 
     // Generar nueva contraseña
     const newPassword = generateRandomPassword();
@@ -447,13 +239,12 @@ function Usuario() {
       newErrors.rolusuario = "El Rol del Usuario es obligatorio.";
     }
 
-    if (!modalValues.Fec_Exp_Acceso.trim()) {
+   /* if (!modalValues.Fec_Exp_Acceso.trim()) {
       newErrors.Fec_Exp_Acceso = "La fecha de expiración es obligatoria.";
-    }
-    
+    }*/
 
     setErrors(newErrors);
-  
+
     // Si no hay errores, proceder a insertar el nuevo puesto
     if (Object.values(newErrors).every((error) => error === "")) {
       try {
@@ -465,47 +256,54 @@ function Usuario() {
         const usuarios = response.data;
 
         const usuarioExistente = usuarios.some(
-          (usuario) => usuario.Usuario.toLowerCase() === modalValues.Usuario.toLowerCase()
+          (usuario) =>
+            usuario.Usuario.toLowerCase() === modalValues.Usuario.toLowerCase()
         );
 
-        if (usuarioExistente){
+        if (usuarioExistente) {
           const errorMessages = {};
-          if (usuarioExistente){
+          if (usuarioExistente) {
             errorMessages.Usuario = "El codigo de usuario ya existe";
-          setErrors({...newErrors, ...errorMessages});
-          return;
+            setErrors({ ...newErrors, ...errorMessages });
+            return;
           }
         }
-  
-         // Datos del nuevo puesto
-         const newUsuario = {
-       Usuario: modalValues.Usuario,
-       Nombre: modalValues.Nombre,
-       Contrasenia: newPassword, // Usar la contraseña generada
-       Fec_Creacion: "2024-05-24",
-       Fec_Exp_Acceso: modalValues.Fec_Exp_Acceso,
-       Fec_Ult_Conexion: "2024-10-30",
-       Estado: 1,
-       ID_RolUsuario: modalValues.ID_RolUsuario,
-       ID_PuestoIn: modalValues.ID_PuestoIn,
-     };
-  
+
+        // Datos del nuevo puesto
+        const newUsuario = {
+          Usuario: modalValues.Usuario,
+          Nombre: modalValues.Nombre,
+          Contrasenia: newPassword, // Usar la contraseña generada
+          Fec_Creacion: "2024-05-24",
+          Fec_Exp_Acceso: modalValues.Fec_Exp_Acceso,
+          Fec_Ult_Conexion: "2024-10-30",
+          Estado: 1,
+          ID_RolUsuario: modalValues.ID_RolUsuario,
+          ID_PuestoIn: modalValues.ID_PuestoIn,
+        };
+
         console.log("Enviando datos:", newUsuario);
-  
+
         // Enviar solicitud POST para insertar el nuevo puesto
-        const insertResponse = await axios.post(`http://localhost:3000/usuarios`, newUsuario);
+        const insertResponse = await axios.post(
+          `http://localhost:3000/usuarios`,
+          newUsuario
+        );
         console.log("Respuesta de inserción:", insertResponse.data);
-  
+
         // Actualizar la lista de puestos con el nuevo puesto
-        const rolusuarioResponse = await axios.get(`http://localhost:3000/rolusuario/${modalValues.ID_RolUsuario}`);
-        const puestoinResponse = await axios.get(`http://localhost:3000/puestoin/${modalValues.ID_PuestoIn}`);
-        
-  
+        const rolusuarioResponse = await axios.get(
+          `http://localhost:3000/rolusuario/${modalValues.ID_RolUsuario}`
+        );
+        const puestoinResponse = await axios.get(
+          `http://localhost:3000/puestoin/${modalValues.ID_PuestoIn}`
+        );
+
         console.log("Datos de respuesta para actualizar la UI:", {
           rolusuarioResponse: rolusuarioResponse.data,
           puestoinResponse: puestoinResponse.data,
         });
-  
+
         const updatedRecords = [
           ...records,
           {
@@ -520,17 +318,34 @@ function Usuario() {
             N_PuestoIn: puestoinResponse.data.N_PuestoIn,
           },
         ];
-  
+
         setRecords(updatedRecords);
         setShowModal(false); // Ocultar el modal después de guardar
-        setModalValues({ Usuario: "", Nombre: "",Contrasenia: "" , ID_PuestoIn: "", ID_RolUsuario: "", Fec_Exp_Acceso: "" }); // Limpiar los valores del modal
-        window.location.reload();
+        setModalValues({
+          Usuario: "",
+          Nombre: "",
+          Contrasenia: "",
+          ID_PuestoIn: "",
+          ID_RolUsuario: "",
+          Fec_Exp_Acceso: "",
+        }); // Limpiar los valores del modal
+        // Estilo de notificacion
+        const toastElement = document.createElement("div");
+        toastElement.className = "toast-success";
+        toastElement.innerHTML = "¡Usuario insertado correctamente!";
+
+        document.body.appendChild(toastElement);
+
+        // Ocultar la notificacion luego de 1 segundo
+        setTimeout(() => {
+          toastElement.remove();
+          window.location.reload(); // Recargar la pagina despues de 1 segundos
+        }, 1000);
       } catch (error) {
         console.error("Error al insertar un nuevo Puesto:", error);
       }
     }
   };
-
 
   const startEdit = (row) => {
     setEditedRow({ ...row });
@@ -542,11 +357,14 @@ function Usuario() {
     setEditedRow((prevState) => ({
       ...prevState,
       [field]: value,
-      ...(field === "ID_PuestoIn" && { N_PuestoIn: puestoin.find((p) => p.id === parseInt(value)).N_PuestoIn }),
-      ...(field === "ID_RolUsuario" && { N_Rol: rolusuario.find((p) => p.id === parseInt(value)).N_Rol }),
-    
-  }));
-   validateInput(field, value);
+      ...(field === "ID_PuestoIn" && {
+        N_PuestoIn: puestoin.find((p) => p.id === parseInt(value)).N_PuestoIn,
+      }),
+      ...(field === "ID_RolUsuario" && {
+        N_Rol: rolusuario.find((p) => p.id === parseInt(value)).N_Rol,
+      }),
+    }));
+    validateInput(field, value);
   };
 
   const validateInput = (field, value) => {
@@ -557,7 +375,7 @@ function Usuario() {
       } else {
         newErrors.Usuario = "";
       }
-    }else if (field === "nombre") {
+    } else if (field === "nombre") {
       if (!value.trim()) {
         newErrors.Nombre = "El nombre del empleado es obligatorio.";
       } else if (!/^[a-zA-Z\s]+$/.test(modalValues.Nombre)) {
@@ -566,150 +384,227 @@ function Usuario() {
       } else {
         newErrors.Nombre = "";
       }
-     }else if (field === "Contrasenia") {
+    } else if (field === "Contrasenia") {
       if (!value.trim()) {
         newErrors.Contrasenia = "El campo Contraseña es obligatorio.";
       } else {
         newErrors.Contrasenia = "";
       }
-    }else if (field === "Fec_Exp_Acceso") {
+    } else if (field === "Fec_Exp_Acceso") {
       if (!value.trim()) {
         newErrors.Fec_Exp_Acceso =
           "La fecha de expiración de acceso es obligatoria.";
       } else {
         newErrors.Fec_Exp_Acceso = "";
       }
-    }else if (field === "ID_RolUsuario") {
+    } else if (field === "ID_RolUsuario") {
       if (!value.trim()) {
         newErrors.ID_RolUsuario = "El campo Rol Usuario";
       } else {
         newErrors.ID_RolUsuario = "";
-      } 
-    setErrors(newErrors);
-    }else if (field === "ID_PuestoIn") {
+      }
+      setErrors(newErrors);
+    } else if (field === "ID_PuestoIn") {
       if (!value.trim()) {
         newErrors.ID_PuestoIn = "El campo puesto interno";
       } else {
         newErrors.ID_PuestoIn = "";
-      } 
-    setErrors(newErrors);
-    };
-  }
-  const saveChanges = async(id) => {
-
+      }
+      setErrors(newErrors);
+    }
+  };
+  const saveChanges = async (id) => {
     try {
       const updateRow = {
         ...editedRow,
-        Estado: editedRow.Estado === "Nuevo" ? 1: editedRow.Estado ==="En Servicio"? 2: 3,
-      }
-      
-      await axios.put(`http://localhost:3000/usuarios/${id}`,updateRow);   
+        Estado:
+          editedRow.Estado === "Nuevo"
+            ? 1
+            : editedRow.Estado === "En Servicio"
+            ? 2
+            : 3,
+      };
 
-      const updatedRecords = records.map ((row) => 
-        row.id === id ? {...editedRow} : row
-      )
-      
-      //setRecords(updatedRecordsPuesto);
+      // Verificar si el Usuario ya existe en la base de datos
+      console.log("Verificando si el puesto ya existe...");
+      const response = await axios.get(`http://localhost:3000/usuarios`);
+      console.log("Datos recibidos del servidor:", response.data);
+
+      const usuarios = response.data;
+
+      const usuarioExistente = usuarios.some(
+        (usuario) =>
+          usuario.Usuario.toLowerCase() === editedRow.Usuario.toLowerCase() &&
+          usuario.id !== id
+      );
+
+      if (usuarioExistente) {
+        setErrors({
+          usuario: "El usuario ya existe.",
+        });
+
+        const errorNotification = document.createElement("div");
+        errorNotification.className = "error-notification";
+        errorNotification.innerHTML = `
+          <span class="error-icon">!</span>
+          <span class="error-message">
+            El código de usuario que intenta actualizar ya existe en la base de datos.
+            Por favor, ingrese un usuario diferente.
+          </span>
+        `;
+
+        document.body.appendChild(errorNotification);
+
+        // Ocultar la notificación después de 2 segundos
+        setTimeout(() => {
+          errorNotification.remove();
+        }, 2000);
+        return;
+      }
+
+      await axios.put(`http://localhost:3000/usuarios/${id}`, updateRow);
+
+      const updatedRecords = records.map((row) =>
+        row.id === id ? { ...editedRow } : row
+      );
+
       setRecords(updatedRecords);
       setEditedRow(null);
-      setEditMode(null); 
-    
-                                                                               
-      console.log("Cambios guardados correctamente");
-    } catch(error) {
-      console.error("Error al guardar los cambios", error)
+      setEditMode(null);
+
+      // Notificación de datos actualizados
+      const toastElement = document.createElement("div");
+      toastElement.className = "toast-notification";
+      toastElement.innerHTML = "¡Usuario actualizado con éxito!";
+
+      document.body.appendChild(toastElement);
+
+      // Ocultar la notificación después de 1 segundo
+      setTimeout(() => {
+        toastElement.remove();
+        window.location.reload(); // Recargar la pagina despues de 1 segundo
+      }, 1000);
+    } catch (error) {
+      console.error("Error al guardar los cambios", error);
     }
   };
-
   const cancelEdit = () => {
     setEditedRow(null);
     setEditMode(null);
   };
 
   const filteredData = records.filter((row) => {
-   return(
-    (filters.N_PuestoIn === "" ||
-      row.N_PuestoIn
-          .toLowerCase()
-          .includes(filters.N_PuestoIn.toLowerCase())) &&
-    (filters.N_Rol === "" ||
-      row.N_Rol
-          .toLowerCase()
-          .includes(filters.N_Rol.toLowerCase())) &&
-    (filters.Usuario === "" ||
-        row.Usuario
-          .toLowerCase()
-          .includes(filters.Usuario.toLowerCase())) &&
-    (filters.Nombre === "" ||
+    return (
+      (filters.N_PuestoIn === "" ||
+        row.N_PuestoIn.toLowerCase().includes(
+          filters.N_PuestoIn.toLowerCase()
+        )) &&
+      (filters.N_Rol === "" ||
+        row.N_Rol.toLowerCase().includes(filters.N_Rol.toLowerCase())) &&
+      (filters.Usuario === "" ||
+        row.Usuario.toLowerCase().includes(filters.Usuario.toLowerCase())) &&
+      (filters.Nombre === "" ||
         row.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase())) &&
-    (filters.Fec_Creacion === "" ||
-        row.Fec_Creacion.toLowerCase().includes(filters.Fec_Creacion.toLowerCase())) &&
-    (filters.Fec_Ult_Conexion === "" ||
-        row.Fec_Ult_Conexion.toLowerCase().includes(filters.Fec_Ult_Conexion.toLowerCase())) &&
-    (filters.Fec_Exp_Acceso === "" ||
-        row.Fec_Exp_Acceso.toLowerCase().includes(filters.Fec_Exp_Acceso.toLowerCase())) &&
-    (filters.Estado === "" ||
-        row.Estado.toLowerCase().includes(filters.Estado.toLowerCase())) 
-    
-        );
+      (filters.Fec_Creacion === "" ||
+        row.Fec_Creacion.toLowerCase().includes(
+          filters.Fec_Creacion.toLowerCase()
+        )) &&
+      (filters.Fec_Ult_Conexion === "" ||
+        row.Fec_Ult_Conexion.toLowerCase().includes(
+          filters.Fec_Ult_Conexion.toLowerCase()
+        )) &&
+      (filters.Fec_Exp_Acceso === "" ||
+        row.Fec_Exp_Acceso.toLowerCase().includes(
+          filters.Fec_Exp_Acceso.toLowerCase()
+        )) &&
+      (filters.Estado === "" ||
+        row.Estado.toLowerCase().includes(filters.Estado.toLowerCase()))
+    );
   });
 
+  const deleteRow = (id) => {
+    axios
+      .get(`/Datosdependientes/${id}`)
+      .then((response) => {
+        if (response.data.hasDependencies) {
+          alert(
+            "No se puede eliminar este registro porque tiene dependencias en otros registros."
+          );
+        } else {
+          axios
+            .delete(`/delete/${id}`)
+            .then((response) => {
+              // Actualiza la lista de filas después de eliminar una fila
+              setRows(rows.filter((row) => row.id !== id));
+            })
+            .catch((error) => console.error(error));
+        }
+      })
+      .catch((error) => console.error(error));
+  };
+
   const columns = [
-      {
-        name: "Puesto Interno",
-        selector: (row) => row.N_PuestoIn,
-        sortable: true,
-        minWidth: "370px", // Ajusta el tamaño mínimo según sea necesario
-        maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
-        cell: (row) =>
-          editMode && editedRow?.id === row.id ? (
-            <select value={editedRow.ID_PuestoIn} onChange={(e) => handleEditChange(e, "ID_PuestoIn")}>
-              {puestoin.map((puestoin) => (
-                <option key={puestoin.id} value={puestoin.id}>
-                  {puestoin.N_PuestoIn}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <div>{row.N_PuestoIn}</div>
-          ),
-      },
-      {
-        name: "Rol del Usuario",
-        selector: (row) => row.N_Rol,
-        sortable: true,
-        minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
-        maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
-        cell: (row) =>
-          editMode && editedRow?.id === row.id ? (
-            <select value={editedRow.ID_RolUsuario} onChange={(e) => handleEditChange(e, "ID_RolUsuario")}>
-              {rolusuario.map((rolusuario) => (
-                <option key={rolusuario.id} value={rolusuario.id}>
-                  {rolusuario.N_Rol}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <div>{row.N_Rol}</div>
-          ),
-      },
-      {
-        name: "Usuario",
-        selector: (row) => row.Usuario,
-        sortable: true,
-        minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
-        maxWidth: "200px", // Ajusta el tamaño máximo según sea necesario
-        cell: (row) =>
-          editMode && editedRow?.id === row.id ? (
-              <input
-              type= "text"
-              value={editedRow.Usuario}
-              onChange={(e) => handleEditChange(e, "Usuario")}
-            />
-          ) : (
-            <div>{row.Usuario}</div>
-          ),
-      },
+    {
+      name: "Puesto Interno",
+      selector: (row) => row.N_PuestoIn,
+      sortable: true,
+      minWidth: "370px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <StyledSelect
+            value={editedRow.ID_PuestoIn}
+            onChange={(e) => handleEditChange(e, "ID_PuestoIn")}
+          >
+            {puestoin.map((puestoin) => (
+              <option key={puestoin.id} value={puestoin.id}>
+                {puestoin.N_PuestoIn}
+              </option>
+            ))}
+          </StyledSelect>
+        ) : (
+          <div>{row.N_PuestoIn}</div>
+        ),
+    },
+    {
+      name: "Rol del Usuario",
+      selector: (row) => row.N_Rol,
+      sortable: true,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <StyledSelect
+            value={editedRow.ID_RolUsuario}
+            onChange={(e) => handleEditChange(e, "ID_RolUsuario")}
+          >
+            {rolusuario.map((rolusuario) => (
+              <option key={rolusuario.id} value={rolusuario.id}>
+                {rolusuario.N_Rol}
+              </option>
+            ))}
+          </StyledSelect>
+        ) : (
+          <div>{row.N_Rol}</div>
+        ),
+    },
+    {
+      name: "Usuario",
+      selector: (row) => row.Usuario,
+      sortable: true,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "200px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <StyledInput
+            type="text"
+            value={editedRow.Usuario}
+            onChange={(e) => handleEditChange(e, "Usuario")}
+          />
+        ) : (
+          <div>{row.Usuario}</div>
+        ),
+    },
     {
       name: "Nombre",
       selector: (row) => row.Nombre,
@@ -718,7 +613,7 @@ function Usuario() {
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
-            <input
+          <StyledInput
             type="text"
             value={editedRow.Nombre}
             onChange={(e) => handleEditChange(e, "Nombre")}
@@ -735,13 +630,13 @@ function Usuario() {
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
-            <input
+          <StyledInput
             type="password"
             value={editedRow.Contrasenia}
             onChange={(e) => handleEditChange(e, "Contrasenia")}
           />
         ) : (
-          <div >*********</div>
+          <div>*********</div>
         ),
     },
     {
@@ -751,16 +646,7 @@ function Usuario() {
       sortable: true,
       minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "300px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-            <input
-            type="text"
-            value={editedRow.Fec_Creacion}
-            onChange={(e) => handleEditChange(e, "Fec_Creacion")}
-          />
-        ) : (
-          <div>{row.Fec_Creacion}</div>
-        ),
+      cell: (row) => <div>{row.Fec_Creacion}</div>,
     },
     {
       name: "Fecha de Ultima Conexion",
@@ -769,16 +655,7 @@ function Usuario() {
       sortable: true,
       minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "300px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-            <input
-            type="text"
-            value={editedRow.Fec_Ult_Conexion}
-            onChange={(e) => handleEditChange(e, "Fec_Ult_Conexion")}
-          />
-        ) : (
-          <div>{row.Fec_Ult_Conexion}</div>
-        ),
+      cell: (row) => <div>{row.Fec_Ult_Conexion}</div>,
     },
     {
       name: "Fecha de Expiracion",
@@ -789,8 +666,8 @@ function Usuario() {
       maxWidth: "300px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
-            <input
-            type="text"
+          <StyledInput
+            type="date"
             value={editedRow.Fec_Exp_Acceso}
             onChange={(e) => handleEditChange(e, "Fec_Exp_Acceso")}
           />
@@ -800,40 +677,68 @@ function Usuario() {
     },
     {
       name: "Estado",
-      selector: (row) => editMode === row.id ?(
-        <select value={editedRow.Estado} onChange={(e) => handleEditChange(e, "Estado")}>
-          <option value={"Nuevo"}>
-            Nuevo
-          </option>
-          <option value={"En Servicio"}>
-            En Servicio
-          </option>
-          <option value={"Expirado"}>
-          Expirado
-          </option>
-        </select>
-      )
-        : (
+      selector: (row) =>
+        editMode === row.id ? (
+          <StyledSelect
+            value={editedRow.Estado}
+            onChange={(e) => handleEditChange(e, "Estado")}
+          >
+            {/*<option value={"Nuevo"}>Nuevo</option>*/}
+            <option value={"En Servicio"}>En Servicio</option>
+            <option value={"Expirado"}>Expirado</option>
+          </StyledSelect>
+        ) : (
           <div>{row.Estado}</div>
         ),
-        sortable: true,
+      sortable: true,
     },
     {
       name: "Acciones",
+      minWidth: "170px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "170px", // Ajusta el tamaño máximo según sea necesario
       cell: (row) =>
         editMode === row.id ? (
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <Button onClick={() => saveChanges(row.id)}>
-              <FaSave />
+          <ButtonGroup>
+            <Button
+              type="button"
+              className="btn btn-outline-success"
+              onClick={() => saveChanges(row.id)}
+            >
+              Guardar
             </Button>
-            <ButtonCancelar cancel onClick={cancelEdit}>
-              <FaTimes />
-            </ButtonCancelar>
-          </div>
+            <Button
+              type="button"
+              className="btn btn-outline-danger"
+              onClick={cancelEdit}
+            >
+              Cancelar
+            </Button>
+          </ButtonGroup>
         ) : (
-          <Button onClick={() => startEdit(row)}>
-            <FaEdit />
-          </Button>
+          <ButtonGroup>
+            <Button
+              type="button"
+              className="btn btn-outline-primary"
+              onClick={() => startEdit(row)}
+            >
+              Editar
+            </Button>
+            <Button
+              type="button"
+              className="btn btn-outline-danger"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "¿Estás seguro que deseas eliminar este Usuario?"
+                  )
+                ) {
+                  deleteRow(row.id);
+                }
+              }}
+            >
+              Eliminar
+            </Button>
+          </ButtonGroup>
         ),
     },
   ];
@@ -841,14 +746,15 @@ function Usuario() {
   const resetFilters = () => {
     setFilters({
       N_PuestoIn: "",
-    N_Rol: "",
-    Usuario: "",
-    Nombre: "",
-    Estado: "",
-    Fec_Creacion: "",
-    Fec_Exp_Acceso: "",
-    Fec_Ult_Conexion: "",
-    })};
+      N_Rol: "",
+      Usuario: "",
+      Nombre: "",
+      Estado: "",
+      Fec_Creacion: "",
+      Fec_Exp_Acceso: "",
+      Fec_Ult_Conexion: "",
+    });
+  };
 
   return (
     <MainContainer>
@@ -857,12 +763,25 @@ function Usuario() {
         <Sidebar />
         <DataTableContainer>
           <HeaderContainer>
-            <Title><h2 className="Title">Usuarios</h2></Title>
+            <Title>
+              <h2 className="Title">Usuarios</h2>
+            </Title>
             <ButtonGroup>
-              <Button primary onClick={toggleFilters}>
-                  <FaSearch />{showFilters ? "Ocultar" : "Buscar"}
+              <Button
+                className="btn btn-outline-primary"
+                onClick={toggleFilters}
+              >
+                <FaSearch style={{margin: "0px 5px"}}/>
+                {showFilters ? "Ocultar" : "Buscar"}
               </Button>
-              <Button onClick={handleInsert}><FaPlus />Nuevo Puesto</Button>
+              <Button
+                style={{marginRight: "30px"}}
+                className="btn btn-outline-success"
+                onClick={handleInsert}
+              >
+                <FaPlus style={{margin: "0px 5px"}}/>
+                Nuevo Usuario
+              </Button>
             </ButtonGroup>
           </HeaderContainer>
           <FilterWrapper show={showFilters}>
@@ -891,47 +810,63 @@ function Usuario() {
               placeholder="Buscar por Nombre"
             />
             {showColumns && (
-            <>
-            <FilterInput
-              type="text"
-              value={filters.Fec_Creacion}
-              onChange={(e) => handleFilterChange(e, "Fec_Creacion")}
-              placeholder="Buscar por Fecha de Creacion"
-            />
-            <FilterInput
-              type="text"
-              value={filters.Fec_Ult_Conexion}
-              onChange={(e) => handleFilterChange(e, "Fec_Ult_Conexion")}
-              placeholder="Buscar por ultima conexion"
-            />
-            <FilterInput
-              type="text"
-              value={filters.Fec_Exp_Acceso}
-              onChange={(e) => handleFilterChange(e, "Fec_Exp_Acceso")}
-              placeholder="Buscar por Fecha de Expiracion"
-            />
-            </>)}
+              <>
+                <FilterInput
+                  type="text"
+                  value={filters.Fec_Creacion}
+                  onChange={(e) => handleFilterChange(e, "Fec_Creacion")}
+                  placeholder="Buscar por Fecha de Creacion"
+                />
+                <FilterInput
+                  type="text"
+                  value={filters.Fec_Ult_Conexion}
+                  onChange={(e) => handleFilterChange(e, "Fec_Ult_Conexion")}
+                  placeholder="Buscar por ultima conexion"
+                />
+                <FilterInput
+                  type="text"
+                  value={filters.Fec_Exp_Acceso}
+                  onChange={(e) => handleFilterChange(e, "Fec_Exp_Acceso")}
+                  placeholder="Buscar por Fecha de Expiracion"
+                />
+              </>
+            )}
             <FilterInput
               type="text"
               value={filters.Estado}
               onChange={(e) => handleFilterChange(e, "Estado")}
               placeholder="Buscar por Estado"
             />
-            <RedButton onClick={resetFilters}>
-              <FaUndo /> Resetear Filtros
-            </RedButton>
+            <ButtonGroup>
+              <RedButton onClick={resetFilters}>
+                <FaUndo /> Resetear Filtros
+              </RedButton>
+            </ButtonGroup>
           </FilterWrapper>
-          <Button onClick={handleToggleColumns} style={{marginLeft: "auto", position: "relative", marginRight: 10, backgroundColor: "white", color:"blue"}}>{showColumns ? 'Ver Menos Detalles' : 'Ver Mas Detalles'}</Button>
+          <Button
+            onClick={handleToggleColumns}
+            style={{
+              marginLeft: "auto",
+              position: "relative",
+              marginRight: 10,
+              backgroundColor: "white",
+              color: "blue",
+            }}
+          >
+            {showColumns ? "Ver Menos Detalles" : "Ver Mas Detalles"}
+          </Button>
           {loading ? (
             <CustomLoader />
           ) : (
-          <StyledDataTable
-            columns={columns}
-            data={filteredData}
-            pagination
-            paginationPerPage={30}
-            showFilters={showFilters}
-          />)}
+            <StyledDataTable
+              columns={columns}
+              data={filteredData}
+              pagination
+              paginationPerPage={30}
+              showFilters={showFilters}
+              customStyles={customStyles}
+            />
+          )}
         </DataTableContainer>
       </ContentContainer>
       {/* Modal para insertar un nuevo usuario */}
@@ -939,27 +874,44 @@ function Usuario() {
         <ModalBackground>
           <ModalWrapper>
             <ModalTitle>Nuevo Usuario</ModalTitle>
-            <ModalInput
+            <label
+              style={{ width: "100%", display: "block", textAlign: "left" }}
+            >
+              <span style={{ textAlign: "left" }}>Código del Usuario:</span>
+            </label>
+            <input
+              class="form-control"
               type="text"
               value={modalValues.Usuario}
               onChange={(e) => handleModalChange(e, "Usuario")}
-              placeholder="Código del Usuario"
+              placeholder="Ingrese el Código"
               error={errors.Usuario}
               required
             />
-            {errors.Usuario && (
-              <ErrorMessage>{errors.Usuario}</ErrorMessage>
-            )}
+            {errors.Usuario && <ErrorMessage>{errors.Usuario}</ErrorMessage>}
+            <div style={{ margin: "15px" }} />
 
-            <ModalInput
+            <label
+              style={{ width: "100%", display: "block", textAlign: "left" }}
+            >
+              <span style={{ textAlign: "left" }}>Nombre del Empleado:</span>
+            </label>
+            <input
+              class="form-control"
               type="text"
               value={modalValues.Nombre}
               onChange={(e) => handleModalChange(e, "Nombre")}
-              placeholder="Nombre del Empleado"
+              placeholder="Ingrese el Nombre"
+              onKeyPress={(e) => {
+                if (!/^[a-zA-ZÑñ-]$/.test(e.key)) {
+                  e.preventDefault();
+                }
+              }}
               error={errors.Nombre}
               required
             />
             {errors.Nombre && <ErrorMessage>{errors.Nombre}</ErrorMessage>}
+            <div style={{ margin: "15px" }} />
 
             {/*<ModalInput
               type="password"
@@ -969,8 +921,18 @@ function Usuario() {
               error={errors.Contrasenia}
               required
             />*/}
-            {errors.Contrasenia && <ErrorMessage>{errors.Contrasenia}</ErrorMessage>}
-            <Select
+            {errors.Contrasenia && (
+              <ErrorMessage>{errors.Contrasenia}</ErrorMessage>
+            )}
+
+            <label
+              style={{ width: "100%", display: "block", textAlign: "left" }}
+            >
+              <span style={{ textAlign: "left" }}>Rol:</span>
+            </label>
+            <select
+              class="form-select"
+              aria-label="Default select example"
               value={modalValues.ID_RolUsuario}
               onChange={(e) => handleModalChange(e, "ID_RolUsuario")}
               error={errors.rolusuario}
@@ -982,10 +944,20 @@ function Usuario() {
                   {p.N_Rol}
                 </option>
               ))}
-            </Select>
-            {errors.rolusuario && <ErrorMessage>{errors.rolusuario}</ErrorMessage>}
+            </select>
+            {errors.rolusuario && (
+              <ErrorMessage>{errors.rolusuario}</ErrorMessage>
+            )}
+            <div style={{ margin: "15px" }} />
 
-            <Select
+            <label
+              style={{ width: "100%", display: "block", textAlign: "left" }}
+            >
+              <span style={{ textAlign: "left" }}>Puesto Interno:</span>
+            </label>
+            <select
+              class="form-select"
+              aria-label="Default select example"
               value={modalValues.ID_PuestoIn}
               onChange={(e) => handleModalChange(e, "ID_PuestoIn")}
               error={errors.puestoin}
@@ -997,31 +969,47 @@ function Usuario() {
                   {p.N_PuestoIn}
                 </option>
               ))}
-            </Select>
+            </select>
             {errors.puestoin && <ErrorMessage>{errors.puestoin}</ErrorMessage>}
+            <div style={{ margin: "15px" }} />
 
-            <LabelModal style={{ textAlign: "left" }}>
-              Fecha de Expiración:
-            </LabelModal>
-            <ModalInput
+            <label
+              style={{ width: "100%", display: "block", textAlign: "left" }}
+            >
+              <span style={{ textAlign: "left" }}>Fecha de Expiración:</span>
+            </label>
+            <input
+              class="form-control"
               type="date"
-              value={modalValues.Fec_Exp_Acceso}
-              onChange={(e) => handleModalChange(e, "Fec_Exp_Acceso")}
-              placeholder="Fecha de Expiración"
+              value={fecExpAcceso}
+              onChange={(e) => {
+                setFecExpAcceso(e.target.value);
+                handleModalChange(e, "Fec_Exp_Acceso");
+              }}
               error={errors.Fec_Exp_Acceso}
               required
             />
             {errors.Fec_Exp_Acceso && (
               <ErrorMessage>{errors.Fec_Exp_Acceso}</ErrorMessage>
             )}
-
+            <div style={{ margin: "15px" }} />
             <ModalButtonGroup>
-              <GuardarButton onClick={SaveModal}>
-                <FaSave /> Guardar
-              </GuardarButton>
-              <ModalButton cancel onClick={handleCloseModal}>
-                <FaTimes /> Cancelar
-              </ModalButton>
+              <button
+                type="button"
+                class="btn btn-success"
+                style={{ fontSize: "14px", padding: "10px 10px" }}
+                onClick={SaveModal}
+              >
+                Guardar
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                cancel
+                onClick={handleCloseModal}
+              >
+                Cancelar
+              </button>
             </ModalButtonGroup>
           </ModalWrapper>
         </ModalBackground>
@@ -1029,6 +1017,5 @@ function Usuario() {
     </MainContainer>
   );
 }
-
 
 export default Usuario;
