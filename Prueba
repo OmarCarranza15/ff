@@ -274,8 +274,8 @@ function Usuario() {
           Usuario: modalValues.Usuario,
           Nombre: modalValues.Nombre,
           Contrasenia: newPassword, // Usar la contraseña generada
-          Fec_Creacion: "2024-05-24",
-          Fec_Exp_Acceso: modalValues.Fec_Exp_Acceso,
+          Fec_Creacion: new Date(),
+          Fec_Exp_Acceso: "2025-10-17",
           Fec_Ult_Conexion: "2024-10-30",
           Estado: 1,
           ID_RolUsuario: modalValues.ID_RolUsuario,
@@ -629,7 +629,13 @@ function Usuario() {
       sortable: true,
       minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
       maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) =><div>*********</div>
+      cell: (row) => {
+        if (row.Estado === "Nuevo"){
+          return <div>{row.Contrasenia}</div>;
+        } else {
+          return <div>*********</div>
+        }
+      }
     },
     {
       name: "Fecha de Creacion",
