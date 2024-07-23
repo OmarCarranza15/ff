@@ -1,97 +1,160 @@
-import React, { useState, useEffect } from 'react';
 
-// Estados del componente
-const [selectedCountry, setSelectedCountry] = useState(null);
-const [editedRow, setEditedRow] = useState(null);
-const [filteredRsocial, setFilteredRsocial] = useState([]);
-const [filteredDivision, setFilteredDivision] = useState([]);
-const [filteredDepartamento, setFilteredDepartamento] = useState([]);
-const [filteredCentroCosto, setFilteredCentroCosto] = useState([]);
-const [isValidationError, setIsValidationError] = useState(false);
+Para implementar una validación que asegure que se seleccionen los campos "Razón Social", "División", "Departamento" y "Centro de Coste" cuando cambias el país en modo edición, debes realizar los siguientes ajustes:
 
-// Función para iniciar la edición
-const startEdit = (row) => {
-  setEditedRow({ ...row });
-  setSelectedCountry(row.ID_Pais);
+1. **Validar los Campos**: Asegúrate de que todos los campos requeridos se seleccionen antes de permitir guardar los cambios.
 
-  // Filtrar opciones si es necesario
-  filterOptionsByCountry(row.ID_Pais);
-};
+2. **Mostrar Mensaje de Error**: Informa al usuario que debe seleccionar todos los campos requeridos.
 
-// Función para filtrar las opciones
-const filterOptionsByCountry = (countryId) => {
-  setFilteredRsocial(rsocial.filter(item => item.ID_Pais === countryId));
-  setFilteredDivision(division.filter(item => item.ID_Pais === countryId));
-  setFilteredDepartamento(departamento.filter(item => item.ID_Pais === countryId));
-  setFilteredCentroCosto(centrocosto.filter(item => item.ID_Pais === countryId));
-};
+Aquí tienes una solución basada en el código que proporcionaste:
 
-// Validar campos cuando el país cambie
-useEffect(() => {
-  if (selectedCountry && editedRow) {
-    const hasAllFields = editedRow.ID_Division && editedRow.ID_RSocial && editedRow.ID_Departamento && editedRow.ID_CentroCostos;
+### Ajustes Necesarios
+
+1. **Añadir Estado para Validación y Mensaje de Error**
+
+Agrega un estado para gestionar el mensaje de error y la validación.
+
+```javascript
+const [validationError, setValidationError] = useState('');
+```
+
+2. **Modificar `handleEditChange` para Actualizar el Estado y Validar**
+
+Actualiza `handleEditChange` para manejar la validación al cambiar los campos.
+
+```javascript
+const handleEditChange = (e, field) => {
+  const { value } = e.target;
+  setEditedRow((prev) => ({
+    ...prev,
+    [field]: value,
+  }));
+
+  // Validar si todos los campos están llenos
+  if (field === 'ID_Pais') {
+    const hasAllFields =
+      editedRow.ID_RSocial &&
+      editedRow.ID_Division &&
+      editedRow.ID_Departamento &&
+      editedRow.ID_CentroCostos;
     
-    // Si falta algún campo requerido, marcar error de validación
     if (!hasAllFields) {
-      setIsValidationError(true);
-      alert("Por favor, asegúrese de seleccionar División, Razón Social, Departamento y Centro de Costos.");
+      setValidationError('Por favor, complete todos los campos requeridos.');
     } else {
-      setIsValidationError(false);
+      setValidationError('');
     }
   }
-}, [selectedCountry, editedRow]);
-
-// Función para manejar el cambio de país
-const handleCountryChange = (e) => {
-  const newCountryId = e.target.value;
-  setSelectedCountry(newCountryId);
-  filterOptionsByCountry(newCountryId);
-
-  // Limpiar los campos dependientes al cambiar el país
-  setEditedRow(prev => ({
-    ...prev,
-    ID_Division: null,
-    ID_RSocial: null,
-    ID_Departamento: null,
-    ID_CentroCostos: null
-  }));
 };
+```
 
-// Función para guardar los cambios
-const saveChanges = () => {
-  if (isValidationError) {
-    alert("Por favor, complete todos los campos requeridos.");
+3. **Modificar `saveChanges` para Validar Antes de Guardar**
+
+Asegúrate de que la validación se realiza antes de guardar los cambios.
+
+```javascript
+const saveChanges = (rowId) => {
+  if (validationError) {
+    alert(validationError);
     return;
   }
 
-  // Lógica para guardar los cambios
+  // Lógica para guardar cambios
 };
+```
 
-// Renderizado del componente
-return (
-  <div>
-    {/* Suponiendo que tienes una selección de país */}
-    <select value={selectedCountry || ''} onChange={handleCountryChange}>
-      {/* Opciones de país */}
-    </select>
+4. **Mostrar Mensaje de Error en la Interfaz de Usuario**
 
-    {/* Renderiza los campos editables */}
-    <select value={editedRow?.ID_Division || ''} onChange={(e) => setEditedRow({ ...editedRow, ID_Division: e.target.value })}>
-      {/* Opciones de división filtradas */}
-    </select>
+Añade un mensaje de error en la interfaz si hay algún error de validación.
 
-    <select value={editedRow?.ID_RSocial || ''} onChange={(e) => setEditedRow({ ...editedRow, ID_RSocial: e.target.value })}>
-      {/* Opciones de razón social filtradas */}
-    </select>
+```javascript
+{
+  name: "Acciones",
+  cell: (row) =>
+    editMode === row.id ? (
+      <ButtonGroup>
+        <Button
+          type="button"
+          className="btn btn-outline-success"
+          onClick={() => saveChanges(row.id)}
+          disabled={validationError} // Deshabilitar si hay error
+        >
+          Guardar
+        </Button>
+        <Button
+          type="button"
+          className="btn btn-outline-danger"
+          onClick={cancelEdit}
+        >
+          Cancelar
+        </Button>
+        {validationError && <div style={{ color: 'red' }}>{validationError}</div>}
+      </ButtonGroup>
+    ) : (
+      <ButtonGroup>
+        <Button
+          type="button"
+          className="btn btn-outline-primary"
+          onClick={() => startEdit(row)}
+        >
+          Editar
+        </Button>
+        <Button
+          type="button"
+          className="btn btn-outline-danger"
+          onClick={() => {
+            if (
+              window.confirm(
+                "¿Estás seguro que deseas eliminar este registro?"
+              )
+            ) {
+              deleteRow(row.id);
+            }
+          }}
+        >
+          Eliminar
+        </Button>
+      </ButtonGroup>
+    ),
+}
+```
 
-    <select value={editedRow?.ID_Departamento || ''} onChange={(e) => setEditedRow({ ...editedRow, ID_Departamento: e.target.value })}>
-      {/* Opciones de departamento filtradas */}
-    </select>
+5. **Modificar el Renderizado del Selector de País**
 
-    <select value={editedRow?.ID_CentroCostos || ''} onChange={(e) => setEditedRow({ ...editedRow, ID_CentroCostos: e.target.value })}>
-      {/* Opciones de centro de costos filtradas */}
-    </select>
+Asegúrate de que el cambio de país resetea los campos dependientes y maneja la validación correctamente.
 
-    <button onClick={saveChanges}>Guardar</button>
-  </div>
-);
+```javascript
+{
+  name: "Pais",
+  selector: (row) => row.N_Pais,
+  sortable: true,
+  minWidth: "100px",
+  maxWidth: "100px",
+  cell: (row) =>
+    editMode && editedRow?.id === row.id ? (
+      <StyledSelect
+        value={editedRow.ID_Pais}
+        onChange={(e) => {
+          handleEditChange(e, "ID_Pais");
+          filterOptionsByCountry(e.target.value);
+        }}
+      >
+        {pais.map((pais) => (
+          <option key={pais.id} value={pais.id}>
+            {pais.N_Pais}
+          </option>
+        ))}
+      </StyledSelect>
+    ) : (
+      <div>{row.N_Pais}</div>
+    ),
+}
+```
+
+### Explicación:
+
+- **`handleEditChange`**: Maneja el cambio en los campos y valida si todos los campos requeridos están seleccionados cuando se cambia el país.
+
+- **`saveChanges`**: Verifica el error de validación antes de permitir que se guarden los cambios.
+
+- **`validationError`**: Muestra un mensaje de error en la interfaz si falta alguna selección requerida.
+
+Este enfoque asegura que, al cambiar el país en modo edición, el usuario deberá seleccionar "Razón Social", "División", "Departamento" y "Centro de Coste" antes de
