@@ -1,69 +1,25 @@
-import express from "express";
-import cors from "cors";
-import session from "express-session";
-import { db } from "./database/db.js";
-import usuarioRoutes from "./routes/UsuarioRoutes.js";
-import paisRoutes from "./routes/PaisRoutes.js";
-import perfilRoutes from "./routes/PerfilRotes.js";
-import rsocialRoutes from "./routes/RSocialRoutes.js";
-import puestoRoutes from "./routes/PuestoRoutes.js";
-import divisionRoutes from "./routes/DivisionRoutes.js";
-import departamentoRotes from "./routes/DepartamentoRoutes.js";
-import aplicacionRoutes from "./routes/AplicacionRoutes.js";
-import ambienteRoutes from "./routes/AmbienteRoutes.js";
-import centrocostosRoutes from "./routes/CetrocostosRoutes.js";
-import permisoRoutes from "./routes/PermisoRoute.js";
-import rolusuarioRoutes from "./routes/RolUsuarioRoutes.js";
-import PuestoIn from "./routes/PuestoInRoutes.js";
-import auditoria from "./routes/AuditoriaRoutes.js";
-import { ensureAuthenticated } from "./middleware/auth.js";
-
-// Inicialización de la aplicación Express
-const app = express();
-
-// Configuración del CORS
-app.use(cors());
-
-// Procesa los JSON en la solicitud
-app.use(express.json());
-
-// Configuración de la sesión
-app.use(session({
-    secret: 'tu-secreto', // Cambia esto por una clave secreta segura
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // Cambia a true en producción si usas HTTPS
-}));
-
-// Aplica el middleware de autenticación a todas las rutas
-app.use(ensureAuthenticated);
-
-// Rutas
-app.use('/usuarios', usuarioRoutes);
-app.use('/pais', paisRoutes);
-app.use('/perfil', perfilRoutes); 
-app.use('/rsocial', rsocialRoutes);
-app.use('/puesto', puestoRoutes);
-app.use('/division', divisionRoutes);
-app.use('/departamento', departamentoRotes);
-app.use('/aplicacion', aplicacionRoutes);
-app.use('/ambiente', ambienteRoutes);
-app.use('/centrocosto', centrocostosRoutes);
-app.use('/permiso', permisoRoutes);
-app.use('/rolusuario', rolusuarioRoutes);
-app.use('/puestoin', PuestoIn);
-app.use('/auditoria', auditoria);
-
-// Verifica la conexión de la base de datos
-db.authenticate()
-    .then(() => {
-        console.log('Conexión exitosa a la DB');
-        // Iniciar el servidor después de que se establezca la conexión a la base de datos 
-        const PORT = process.env.PORT || 3000;
-        app.listen(PORT, () => {
-            console.log(`Server UP running in http://localhost:${PORT}`);
-        });
-    })
-    .catch(error => {
-        console.error(`Error de conexión a la DB: ${error}`);
-    });
+Login.jsx:69  Error al intentar iniciar sesión AxiosError {message: 'Network Error', name: 'AxiosError', code: 'ERR_NETWORK', config: {…}, request: XMLHttpRequest, …}
+console.<computed> @ index.js:1191
+handleSubmit @ Login.jsx:69
+await in handleSubmit (asincrónica)
+callCallback @ react-dom.development.js:3724
+invokeGuardedCallbackDev @ react-dom.development.js:3768
+invokeGuardedCallback @ react-dom.development.js:3825
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:3839
+executeDispatch @ react-dom.development.js:7982
+processDispatchQueueItemsInOrder @ react-dom.development.js:8008
+processDispatchQueue @ react-dom.development.js:8019
+dispatchEventsForPlugins @ react-dom.development.js:8028
+(anónimo) @ react-dom.development.js:8188
+batchedUpdates$1 @ react-dom.development.js:22611
+batchedUpdates @ react-dom.development.js:3572
+dispatchEventForPluginEventSystem @ react-dom.development.js:8187
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ react-dom.development.js:5694
+dispatchEvent @ react-dom.development.js:5688
+dispatchDiscreteEvent @ react-dom.development.js:5665
+Mostrar 16 más cuadros
+Mostrar menos
+Login.jsx:26 
+        
+        
+        GET http://localhost:3000/login net::ERR_TOO_MANY_REDIRECTS
