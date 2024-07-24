@@ -1,25 +1,159 @@
-Login.jsx:69  Error al intentar iniciar sesión AxiosError {message: 'Network Error', name: 'AxiosError', code: 'ERR_NETWORK', config: {…}, request: XMLHttpRequest, …}
-console.<computed> @ index.js:1191
-handleSubmit @ Login.jsx:69
-await in handleSubmit (asincrónica)
-callCallback @ react-dom.development.js:3724
-invokeGuardedCallbackDev @ react-dom.development.js:3768
-invokeGuardedCallback @ react-dom.development.js:3825
-invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:3839
-executeDispatch @ react-dom.development.js:7982
-processDispatchQueueItemsInOrder @ react-dom.development.js:8008
-processDispatchQueue @ react-dom.development.js:8019
-dispatchEventsForPlugins @ react-dom.development.js:8028
-(anónimo) @ react-dom.development.js:8188
-batchedUpdates$1 @ react-dom.development.js:22611
-batchedUpdates @ react-dom.development.js:3572
-dispatchEventForPluginEventSystem @ react-dom.development.js:8187
-dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ react-dom.development.js:5694
-dispatchEvent @ react-dom.development.js:5688
-dispatchDiscreteEvent @ react-dom.development.js:5665
-Mostrar 16 más cuadros
-Mostrar menos
-Login.jsx:26 
+Claro, aquí tienes el código completo, asegurando que no se omita nada y con las rutas correctamente protegidas:
+
+### **1. Middleware de Autenticación**
+
+**`middleware/auth.js`**
+
+```javascript
+// middleware/auth.js
+export function ensureAuthenticated(req, res, next) {
+    if (req.session.userId) {
+        return next();
+    } else {
+        return res.redirect('/'); // Redirige al login si no está autenticado
+    }
+}
+```
+
+### **2. Ruta de Login y Logout**
+
+**`routes/authRoutes.js`**
+
+```javascript
+import express from 'express';
+import { db } from '../database/db.js'; // Ajusta según la ubicación de tu archivo db.js
+
+const router = express.Router();
+
+// Ruta para el login
+router.post('/', async (req, res) => {
+    const { username, password } = req.body;
+    
+    try {
+        // Verifica las credenciales del usuario
+        const [user] = await db.query(
+            `SELECT * FROM Usuario WHERE username = ? AND password = ?`,
+            [username, password]
+        );
         
-        
-        GET http://localhost:3000/login net::ERR_TOO_MANY_REDIRECTS
+        if (user) {
+            req.session.userId = user.ID; // Guarda el ID del usuario en la sesión
+            res.redirect('/landingPage'); // Redirige a la página protegida
+        } else {
+            res.status(401).send('Credenciales incorrectas'); // Enviar error si credenciales son incorrectas
+        }
+    } catch (error) {
+        console.error('Error al autenticar usuario:', error);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// Ruta de logout
+router.get('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).send('Error al cerrar sesión');
+        }
+        res.redirect('/'); // Redirige al login después de cerrar sesión
+    });
+});
+
+export default router;
+```
+
+### **3. Configuración del Servidor Express**
+
+**`app.js`**
+
+```javascript
+import express from 'express';
+import cors from 'cors';
+import session from 'express-session';
+import { db } from './database/db.js';
+import usuarioRoutes from './routes/UsuarioRoutes.js';
+import paisRoutes from './routes/PaisRoutes.js';
+import perfilRoutes from './routes/PerfilRoutes.js'; // Corregido
+import rsocialRoutes from './routes/RSocialRoutes.js';
+import puestoRoutes from './routes/PuestoRoutes.js';
+import divisionRoutes from './routes/DivisionRoutes.js';
+import departamentoRoutes from './routes/DepartamentoRoutes.js'; // Corregido
+import aplicacionRoutes from './routes/AplicacionRoutes.js';
+import ambienteRoutes from './routes/AmbienteRoutes.js';
+import centrocostosRoutes from './routes/CentrocostosRoutes.js'; // Corregido
+import permisoRoutes from './routes/PermisoRoutes.js'; // Corregido
+import rolusuarioRoutes from './routes/RolUsuarioRoutes.js';
+import PuestoIn from './routes/PuestoInRoutes.js';
+import auditoriaRoutes from './routes/AuditoriaRoutes.js';
+import { ensureAuthenticated } from './middleware/auth.js';
+import authRoutes from './routes/authRoutes.js'; // Importa las rutas de autenticación
+
+// Inicialización de la aplicación Express
+const app = express();
+
+// Configuración del CORS
+app.use(cors());
+
+// Procesa los JSON en la solicitud
+app.use(express.json());
+
+// Configuración de la sesión
+app.use(session({
+    secret: 'tu-clave-secreta', // Cambia esto por una clave secreta segura
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // Cambia a true en producción si usas HTTPS
+}));
+
+// Ruta pública de login
+app.use('/', authRoutes);
+
+// Ruta pública para la página de inicio
+app.get('/landingPage', ensureAuthenticated, (req, res) => {
+    res.send('Bienvenido a la página de inicio'); // Aquí podrías renderizar una vista o enviar datos
+});
+
+// Rutas protegidas (con autenticación)
+app.use('/usuarios', ensureAuthenticated, usuarioRoutes);
+app.use('/pais', ensureAuthenticated, paisRoutes);
+app.use('/perfil', ensureAuthenticated, perfilRoutes);
+app.use('/rsocial', ensureAuthenticated, rsocialRoutes);
+app.use('/puesto', ensureAuthenticated, puestoRoutes);
+app.use('/division', ensureAuthenticated, divisionRoutes);
+app.use('/departamento', ensureAuthenticated, departamentoRoutes);
+app.use('/aplicacion', ensureAuthenticated, aplicacionRoutes);
+app.use('/ambiente', ensureAuthenticated, ambienteRoutes);
+app.use('/centrocosto', ensureAuthenticated, centrocostosRoutes);
+app.use('/permiso', ensureAuthenticated, permisoRoutes);
+app.use('/rolusuario', ensureAuthenticated, rolusuarioRoutes);
+app.use('/puestoin', ensureAuthenticated, PuestoIn);
+app.use('/auditoria', ensureAuthenticated, auditoriaRoutes);
+
+// Verifica la conexión de la base de datos
+db.authenticate()
+    .then(() => {
+        console.log('Conexión exitosa a la DB');
+        const PORT = process.env.PORT || 3000;
+        app.listen(PORT, () => {
+            console.log(`Servidor corriendo en http://localhost:${PORT}`);
+        });
+    })
+    .catch(error => {
+        console.error(`Error de conexión a la DB: ${error}`);
+    });
+```
+
+### **4. Configuración de la Base de Datos**
+
+**Nota:** Asegúrate de que en tu archivo de configuración de la base de datos (`db.js`), la conexión y las consultas SQL están configuradas correctamente.
+
+### **5. Instalación de Dependencias**
+
+Asegúrate de que tienes las siguientes dependencias instaladas en tu proyecto:
+
+```bash
+npm install express cors express-session mysql2
+```
+
+**Nota:** Cambia `'mysql2'` por el cliente de base de datos que estés usando (como `pg` para PostgreSQL).
+
+Con esta configuración, todas las rutas están protegidas excepto la ruta de login (`/`) y la ruta pública de inicio (`/landingPage`), que redirigirá al login si el usuario no está autenticado.
