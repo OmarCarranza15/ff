@@ -51,23 +51,21 @@ const SideNavBar = () => {
     const encryptedRole = sessionStorage.getItem('userRole');
     if (encryptedRole) {
       const role = decryptData(encryptedRole);
-      if (role) {
-        setUserRole(role);
+      setUserRole(role);
 
-        // Obtener países permitidos del RolUsuario
-        const fetchUserRole = async () => {
-          try {
-            const response = await axios.get(`http://localhost:3000/rolusuario/${role}`);
-            const paisesPermitidos = response.data.Paises ? response.data.Paises.split(',').map(id => id.trim()) : [];
-            setUserCountries(paisesPermitidos);
-            console.log("Países permitidos:", paisesPermitidos);
-          } catch (error) {
-            console.error("Error al obtener el rol del usuario", error);
-          }
-        };
+      // Obtener países permitidos del RolUsuario
+      const fetchUserRole = async () => {
+        try {
+          const response = await axios.get(`http://localhost:3000/rolusuario/${role}`);
+          const paisesPermitidos = response.data.Paises ? response.data.Paises.split(',').map(id => id.trim()) : [];
+          setUserCountries(paisesPermitidos);
+          console.log("Países permitidos:", paisesPermitidos);
+        } catch (error) {
+          console.error("Error al obtener el rol del usuario", error);
+        }
+      };
 
-        fetchUserRole();
-      }
+      fetchUserRole();
     }
 
     // Obtener la lista de todos los países
