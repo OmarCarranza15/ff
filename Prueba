@@ -1,7 +1,69 @@
-// middleware/auth.js
-export const ensureAuthenticated = (req, res, next) => {
-    if (req.session.user) {
-        return next();
-    }
-    res.redirect('/login');
-};
+import express from "express";
+import cors from "cors";
+import session from "express-session";
+import { db } from "./database/db.js";
+import usuarioRoutes from "./routes/UsuarioRoutes.js";
+import paisRoutes from "./routes/PaisRoutes.js";
+import perfilRoutes from "./routes/PerfilRotes.js";
+import rsocialRoutes from "./routes/RSocialRoutes.js";
+import puestoRoutes from "./routes/PuestoRoutes.js";
+import divisionRoutes from "./routes/DivisionRoutes.js";
+import departamentoRotes from "./routes/DepartamentoRoutes.js";
+import aplicacionRoutes from "./routes/AplicacionRoutes.js";
+import ambienteRoutes from "./routes/AmbienteRoutes.js";
+import centrocostosRoutes from "./routes/CetrocostosRoutes.js";
+import permisoRoutes from "./routes/PermisoRoute.js";
+import rolusuarioRoutes from "./routes/RolUsuarioRoutes.js";
+import PuestoIn from "./routes/PuestoInRoutes.js";
+import auditoria from "./routes/AuditoriaRoutes.js";
+import { ensureAuthenticated } from "./middleware/auth.js";
+
+// Inicialización de la aplicación Express
+const app = express();
+
+// Configuración del CORS
+app.use(cors());
+
+// Procesa los JSON en la solicitud
+app.use(express.json());
+
+// Configuración de la sesión
+app.use(session({
+    secret: 'tu-secreto', // Cambia esto por una clave secreta segura
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // Cambia a true en producción si usas HTTPS
+}));
+
+// Aplica el middleware de autenticación a todas las rutas
+app.use(ensureAuthenticated);
+
+// Rutas
+app.use('/usuarios', usuarioRoutes);
+app.use('/pais', paisRoutes);
+app.use('/perfil', perfilRoutes); 
+app.use('/rsocial', rsocialRoutes);
+app.use('/puesto', puestoRoutes);
+app.use('/division', divisionRoutes);
+app.use('/departamento', departamentoRotes);
+app.use('/aplicacion', aplicacionRoutes);
+app.use('/ambiente', ambienteRoutes);
+app.use('/centrocosto', centrocostosRoutes);
+app.use('/permiso', permisoRoutes);
+app.use('/rolusuario', rolusuarioRoutes);
+app.use('/puestoin', PuestoIn);
+app.use('/auditoria', auditoria);
+
+// Verifica la conexión de la base de datos
+db.authenticate()
+    .then(() => {
+        console.log('Conexión exitosa a la DB');
+        // Iniciar el servidor después de que se establezca la conexión a la base de datos 
+        const PORT = process.env.PORT || 3000;
+        app.listen(PORT, () => {
+            console.log(`Server UP running in http://localhost:${PORT}`);
+        });
+    })
+    .catch(error => {
+        console.error(`Error de conexión a la DB: ${error}`);
+    });
