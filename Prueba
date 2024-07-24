@@ -1,70 +1,7 @@
-import express from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import session from "express-session";
-import { db } from "./database/db.js";
-import usuarioRoutes from "./routes/UsuarioRoutes.js";
-import paisRoutes from "./routes/PaisRoutes.js";
-import perfilRoutes from "./routes/PerfilRotes.js";
-import rsocialRoutes from "./routes/RSocialRoutes.js";
-import puestoRoutes from "./routes/PuestoRoutes.js";
-import divisionRoutes from "./routes/DivisionRoutes.js";
-import departamentoRotes from "./routes/DepartamentoRoutes.js";
-import aplicacionRoutes from "./routes/AplicacionRoutes.js";
-import ambienteRoutes from "./routes/AmbienteRoutes.js";
-import centrocostosRoutes from "./routes/CetrocostosRoutes.js"
-import permisoRoutes from "./routes/PermisoRoute.js";
-import rolusuarioRoutes from "./routes/RolUsuarioRoutes.js";
-import PuestoIn from "./routes/PuestoInRoutes.js";
-import auditoria from "./routes/AuditoriaRoutes.js";
-
-// Inicialización de la aplicación Express
-const app = express();
-
-// Configuración del CORS
-app.use(cors({
-    credentials: true,
-    origin: 'http://localhost:3000', // Cambia esto a la URL de tu frontend
-}));
-
-// Configuración de cookies y sesiones
-app.use(cookieParser());
-app.use(session({
-    secret: 'tu_clave_secreta', // Cambia esto a una clave secreta más segura
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false, maxAge: 60000 } // Ajusta la configuración según tus necesidades
-}));
-
-// Procesa los JSON en la solicitud
-app.use(express.json());
-
-// Rutas
-app.use('/usuarios', usuarioRoutes);
-app.use('/pais', paisRoutes);
-app.use('/perfil', perfilRoutes);
-app.use('/rsocial', rsocialRoutes);
-app.use('/puesto', puestoRoutes);
-app.use('/division', divisionRoutes);
-app.use('/departamento', departamentoRotes);
-app.use('/aplicacion', aplicacionRoutes);
-app.use('/ambiente', ambienteRoutes);
-app.use('/centrocosto', centrocostosRoutes);
-app.use('/permiso', permisoRoutes);
-app.use('/rolusuario', rolusuarioRoutes);
-app.use('/puestoin', PuestoIn);
-app.use('/auditoria', auditoria);
-
-// Verifica la conexión de la base de datos
-db.authenticate()
-    .then(() => {
-        console.log('Conexión Exitosa a la DB');
-        // Iniciar el servidor después de que se establezca la conexión a la base de datos 
-        const PORT = process.env.PORT || 3000;
-        app.listen(PORT, () => {
-            console.log(`Server UP running in http://localhost:${PORT}`);
-        });
-    })
-    .catch(error => {
-        console.error(`Error de conexión a la DB: ${error}`);
-    });
+// middleware/auth.js
+export const ensureAuthenticated = (req, res, next) => {
+    if (req.session.user) {
+        return next();
+    }
+    res.redirect('/login');
+};
