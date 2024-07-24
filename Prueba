@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   GrTable,
@@ -38,8 +37,13 @@ const SideNavBar = () => {
   const secretKey = 'mySecretKey'; // La misma clave secreta para desencriptar
 
   const decryptData = (encryptedData) => {
-    const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
-    return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+    try {
+      const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
+      return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+    } catch (error) {
+      console.error("Error al desencriptar los datos", error);
+      return null;
+    }
   };
 
   useEffect(() => {
@@ -47,21 +51,23 @@ const SideNavBar = () => {
     const encryptedRole = sessionStorage.getItem('userRole');
     if (encryptedRole) {
       const role = decryptData(encryptedRole);
-      setUserRole(role);
+      if (role) {
+        setUserRole(role);
 
-      // Obtener países permitidos del RolUsuario
-      const fetchUserRole = async () => {
-        try {
-          const response = await axios.get(`http://localhost:3000/rolusuario/${role}`);
-          const paisesPermitidos = response.data.Paises ? response.data.Paises.split(',').map(id => id.trim()) : [];
-          setUserCountries(paisesPermitidos);
-          console.log("Países permitidos:", paisesPermitidos);
-        } catch (error) {
-          console.error("Error al obtener el rol del usuario", error);
-        }
-      };
+        // Obtener países permitidos del RolUsuario
+        const fetchUserRole = async () => {
+          try {
+            const response = await axios.get(`http://localhost:3000/rolusuario/${role}`);
+            const paisesPermitidos = response.data.Paises ? response.data.Paises.split(',').map(id => id.trim()) : [];
+            setUserCountries(paisesPermitidos);
+            console.log("Países permitidos:", paisesPermitidos);
+          } catch (error) {
+            console.error("Error al obtener el rol del usuario", error);
+          }
+        };
 
-      fetchUserRole();
+        fetchUserRole();
+      }
     }
 
     // Obtener la lista de todos los países
