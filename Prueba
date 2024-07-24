@@ -1,8 +1,54 @@
-Parece que hay varios problemas en tu código. Vamos a solucionarlos uno por uno.
+Entiendo. Si deseas que solo las rutas después del login estén protegidas y que el login sea accesible para todos, puedes ajustar la configuración de `ProtectedRoute` y el archivo `App.js` como sigue:
 
-### **1. Problema con `ProtectedRoute` en `App.js`**
+### **1. ** `ProtectedRoute.jsx`
 
-Asegúrate de que `ProtectedRoute` esté importado correctamente en `App.js`. Verifica que tu archivo `ProtectedRoute.jsx` esté ubicado correctamente y que estés importando `ProtectedRoute` desde la ruta correcta. Aquí tienes el código corregido:
+Asegúrate de que `ProtectedRoute` esté bien definido para manejar las rutas protegidas:
+
+**`ProtectedRoute.jsx`**
+```jsx
+import React from 'react';
+import { Route, Navigate } from 'react-router-dom';
+
+const ProtectedRoute = ({ element: Element, ...rest }) => {
+    const isAuthenticated = !!localStorage.getItem('userId'); // Verifica si hay un ID de usuario en localStorage
+    return isAuthenticated ? <Element /> : <Navigate to="/" replace />;
+};
+
+export default ProtectedRoute;
+```
+
+### **2. ** `Stop.jsx`
+
+El componente `Stop` se usa para mostrar un mensaje cuando un usuario no autenticado intenta acceder a una página protegida. Asegúrate de que `Stop` esté correctamente definido:
+
+**`Stop.jsx`**
+```jsx
+import React from 'react'; // Asegúrate de importar React
+import { Container } from 'react-bootstrap';
+
+export default function Stop({ user }) {
+    return (
+        <Container>
+            <div className="mt-3">
+                <span className="h1 text-danger">Alto</span>
+            </div>
+            <div>
+                <p className="h5 text-danger">
+                    Para visitar esta página necesitas estar registrado como {user}.
+                    {' '} Si ya tienes una cuenta, Inicia Sesión.
+                </p>
+                <p className="h5 text-danger">
+                    Si no tienes una cuenta, comunícate con un Administrador para que te asigne una.
+                </p>
+            </div>
+        </Container>
+    );
+}
+```
+
+### **3. ** `App.js`
+
+Ajusta `App.js` para proteger las rutas deseadas. El login (`/`) será accesible para todos, y las demás rutas estarán protegidas. Aquí está el archivo `App.js` corregido:
 
 **`App.js`**
 ```jsx
@@ -23,14 +69,16 @@ import MatrizPais from './components/MatrizPais';
 import Auditoria from './components/Auditoria';
 import RolesyPermisos from './components/RolesyPermisos';
 import Stop from './components/Stop';
-import ProtectedRoute from './components/ProtectedRoute'; // Asegúrate de que la ruta sea correcta
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
     return (
         <Router>
             <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/" element={<Stop isAuthenticated={false} user={null} />} /> {/* Página de acceso no permitido */}
+                {/* Ruta pública */}
+                <Route path="/" element={<Login />} />
+
+                {/* Rutas protegidas */}
                 <Route path="/landingPage" element={<ProtectedRoute element={<LandingPage />} />} />
                 <Route path="/paises" element={<ProtectedRoute element={<Paises />} />} />
                 <Route path="/razonsocial" element={<ProtectedRoute element={<RazonSocial />} />} />
@@ -44,6 +92,9 @@ function App() {
                 <Route path="/matrizPais" element={<ProtectedRoute element={<MatrizPais />} />} />
                 <Route path="/auditoria" element={<ProtectedRoute element={<Auditoria />} />} />
                 <Route path="/rolespermisos" element={<ProtectedRoute element={<RolesyPermisos />} />} />
+
+                {/* Ruta para acceso no permitido */}
+                <Route path="*" element={<Stop user="usuario" />} />
             </Routes>
         </Router>
     );
@@ -52,71 +103,10 @@ function App() {
 export default App;
 ```
 
-### **2. Problemas con `Stop`**
+### **Notas:**
 
-Asegúrate de que el archivo `Stop.jsx` tenga `React` importado al principio del archivo. Aquí está el código corregido:
+- **Ruta pública:** La ruta `/` está accesible para todos los usuarios y muestra el componente `Login`.
+- **Rutas protegidas:** Todas las demás rutas están protegidas por el componente `ProtectedRoute`.
+- **Ruta de acceso no permitido:** La ruta `*` es una ruta comodín que muestra el componente `Stop` para cualquier ruta no definida. Puedes ajustar esto según tus necesidades.
 
-**`Stop.jsx`**
-```jsx
-import React from 'react'; // Asegúrate de importar React
-import { Container } from 'react-bootstrap';
-
-export default function Stop({ isAuthenticated, user }) {
-    return (
-        <Container>
-            <div className="mt-3">
-                <span className="h1 text-danger">Alto</span>
-            </div>
-            <div>
-                <p className="h5 text-danger">
-                    Para visitar esta página necesitas estar registrado como {user}.
-                    {isAuthenticated ? (
-                        ' Si ya tienes una cuenta, Inicia Sesión.'
-                    ) : (
-                        ' Si no tienes una cuenta, comunicate con un Administrador para que te asigne una.'
-                    )}
-                </p>
-                {!isAuthenticated && (
-                    <p className="h5 text-danger">
-                        Si no tienes una cuenta, <span><a href="/login">Inicia Sesión.</a></span>
-                    </p>
-                )}
-            </div>
-        </Container>
-    );
-}
-```
-
-### **3. Asegúrate de que las rutas sean correctas**
-
-Verifica que los nombres y rutas de los componentes sean correctos en el `App.js`. Asegúrate de que todos los componentes importados existen y están en la ruta correcta.
-
-### **4. Verifica `ProtectedRoute`**
-
-El componente `ProtectedRoute` debe estar en la ruta correcta y asegurarse de que se exporte correctamente desde `ProtectedRoute.jsx`:
-
-**`ProtectedRoute.jsx`**
-```jsx
-import React from 'react';
-import { Route, Navigate } from 'react-router-dom';
-
-const ProtectedRoute = ({ element: Element, ...rest }) => {
-    const isAuthenticated = !!localStorage.getItem('userId'); // Verifica si hay un ID de usuario en localStorage
-    return (
-        <Route
-            {...rest}
-            element={isAuthenticated ? (
-                Element
-            ) : (
-                <Navigate to="/" replace />
-            )}
-        />
-    );
-};
-
-export default ProtectedRoute;
-```
-
-### **Conclusión**
-
-Después de hacer estas correcciones, intenta compilar de nuevo tu aplicación. Asegúrate de que todos los archivos estén en las rutas correctas y que los nombres de los componentes coincidan. Si aún encuentras problemas, revisa los mensajes de error específicos y ajusta según sea necesario.
+Con estas modificaciones, la aplicación debería permitir el acceso a la página de login para todos, mientras protege las demás rutas según la autenticación del usuario.
