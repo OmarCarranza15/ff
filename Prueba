@@ -1,48 +1,34 @@
-const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-        const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}`);
-        console.log('response.data:', response.data);
+useEffect(() => {
+    // Leer el rol del usuario desde sessionStorage y desencriptar
+    const encryptedRole = sessionStorage.getItem('userRole');
+    if (encryptedRole) {
+        const role = decryptData(encryptedRole);
+        setUserRole(role);
 
-        const user = response.data.find(user => user.Usuario === username && user.Contrasenia === password);
-
-        if (user) {
-            setUserId(user.id);
-            setUserName(user.Nombre);
-            setUserRole(user.ID_RolUsuario);
-
-            // Obtener permisos y países del rol del usuario
-            const roleResponse = await axios.get(`http://localhost:3000/rolusuario/${user.ID_RolUsuario}`);
-            const roleData = roleResponse.data;
-
-            // Guardar permisos y países
-            setUserPermissions({
-                insert: roleData.Insertar === 1,
-                edit: roleData.Editar === 1
-            });
-            setUserCountries(roleData.Paises.split(',').map(paisId => parseInt(paisId, 10)));
-
-            if (user.Estado === 1) {
-                setIsNewUser(true);
-            } else if (user.Estado === 3) {
-                setError('Este usuario ha expirado');
-            } else {
-                // Guardar datos en sessionStorage y encriptar
-                sessionStorage.setItem('userId', encryptData(user.id));
-                sessionStorage.setItem('username', encryptData(user.Nombre));
-                sessionStorage.setItem('userRole', encryptData(user.ID_RolUsuario)); // Encriptar el rol
-                sessionStorage.setItem('userPermissions', encryptData({
-                    insert: roleData.Insertar === 1,
-                    edit: roleData.Editar === 1
-                }));
-                sessionStorage.setItem('userCountries', encryptData(userCountries));
-                navigate('/landingPage');
+        // Obtener países permitidos del RolUsuario
+        const fetchUserRole = async () => {
+            try {
+                const response = await axios.get(`http://localhost:3000/rolusuario/${role}`);
+                const paisesPermitidos = response.data.Paises ? response.data.Paises.split(',').map(id => id.trim()) : [];
+                setUserCountries(paisesPermitidos);
+                console.log("Países permitidos:", paisesPermitidos);
+            } catch (error) {
+                console.error("Error al obtener el rol del usuario", error);
             }
-        } else {
-            setError('Usuario o contraseña incorrectos');
-        }
-    } catch (error) {
-        console.error('Error al intentar iniciar sesión', error);
-        setError('Usuario o contraseña incorrectos');
+        };
+
+        fetchUserRole();
     }
-};
+
+    // Obtener la lista de todos los países
+    const fetchPaises = async () => {
+        try {
+            const response = await axios.get(`http://localhost:3000/pais/`);
+            setPaises(response.data);
+            console.log("Lista de países:", response.data); // Verifica los países obtenidos
+        } catch (error) {
+            console.error("Error al obtener la lista de paises", error);
+        }
+    };
+    fetchPaises();
+}, []);
