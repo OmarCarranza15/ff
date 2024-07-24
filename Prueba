@@ -1,33 +1,122 @@
+Parece que hay varios problemas en tu código. Vamos a solucionarlos uno por uno.
 
-./src/App.js
-  Line 18:1:   Expected an assignment or function call and instead saw an expression  no-unused-expressions
-  Line 18:1:   'impor' is not defined                                                 no-undef
-  Line 26:34:  'ProtectedRoute' is not defined                                        react/jsx-no-undef
-  Line 27:34:  'ProtectedRoute' is not defined                                        react/jsx-no-undef
-  Line 28:34:  'ProtectedRoute' is not defined                                        react/jsx-no-undef
-  Line 29:34:  'ProtectedRoute' is not defined                                        react/jsx-no-undef
-  Line 30:34:  'ProtectedRoute' is not defined                                        react/jsx-no-undef
-Failed to compile.
+### **1. Problema con `ProtectedRoute` en `App.js`**
 
-./src/componets/stop.jsx
-  Line 5:9:    'React' must be in scope when using JSX  react/react-in-jsx-scope
-  Line 6:13:   'React' must be in scope when using JSX  react/react-in-jsx-scope
-  Line 7:17:   'React' must be in scope when using JSX  react/react-in-jsx-scope
-  Line 9:13:   'React' must be in scope when using JSX  react/react-in-jsx-scope
-  Line 10:17:  'React' must be in scope when using JSX  react/react-in-jsx-scope
-  Line 19:21:  'React' must be in scope when using JSX  react/react-in-jsx-scope
-  Line 20:50:  'React' must be in scope when using JSX  react/react-in-jsx-scope
-  Line 20:56:  'React' must be in scope when using JSX  react/react-in-jsx-scope
-Failed to compile.
+Asegúrate de que `ProtectedRoute` esté importado correctamente en `App.js`. Verifica que tu archivo `ProtectedRoute.jsx` esté ubicado correctamente y que estés importando `ProtectedRoute` desde la ruta correcta. Aquí tienes el código corregido:
 
-./src/componets/stop.jsx
-  Line 5:9:    'React' must be in scope when using JSX  react/react-in-jsx-scope
-  Line 6:13:   'React' must be in scope when using JSX  react/react-in-jsx-scope
-  Line 7:17:   'React' must be in scope when using JSX  react/react-in-jsx-scope
-  Line 9:13:   'React' must be in scope when using JSX  react/react-in-jsx-scope
-  Line 10:17:  'React' must be in scope when using JSX  react/react-in-jsx-scope
-  Line 19:21:  'React' must be in scope when using JSX  react/react-in-jsx-scope
-  Line 20:50:  'React' must be in scope when using JSX  react/react-in-jsx-scope
-  Line 20:56:  'React' must be in scope when using JSX  react/react-in-jsx-scope
+**`App.js`**
+```jsx
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Login from './components/Login';
+import LandingPage from './components/LandingPage';
+import Paises from './components/Paises';
+import RazonSocial from './components/RazonSocial';
+import Departamento from './components/Departamento';
+import Aplicacion from './components/Aplicacion';
+import Ambiente from './components/Ambiente';
+import CentroCosto from './components/CentroCosto';
+import Puesto from './components/Puesto';
+import Division from './components/Division';
+import Usuario from './components/Usuario';
+import MatrizPais from './components/MatrizPais';
+import Auditoria from './components/Auditoria';
+import RolesyPermisos from './components/RolesyPermisos';
+import Stop from './components/Stop';
+import ProtectedRoute from './components/ProtectedRoute'; // Asegúrate de que la ruta sea correcta
 
-Search for the keywords to learn more about each error.
+function App() {
+    return (
+        <Router>
+            <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<Stop isAuthenticated={false} user={null} />} /> {/* Página de acceso no permitido */}
+                <Route path="/landingPage" element={<ProtectedRoute element={<LandingPage />} />} />
+                <Route path="/paises" element={<ProtectedRoute element={<Paises />} />} />
+                <Route path="/razonsocial" element={<ProtectedRoute element={<RazonSocial />} />} />
+                <Route path="/departamento" element={<ProtectedRoute element={<Departamento />} />} />
+                <Route path="/aplicacion" element={<ProtectedRoute element={<Aplicacion />} />} />
+                <Route path="/ambiente" element={<ProtectedRoute element={<Ambiente />} />} />
+                <Route path="/centrocosto" element={<ProtectedRoute element={<CentroCosto />} />} />
+                <Route path="/puesto" element={<ProtectedRoute element={<Puesto />} />} />
+                <Route path="/division" element={<ProtectedRoute element={<Division />} />} />
+                <Route path="/usuario" element={<ProtectedRoute element={<Usuario />} />} />
+                <Route path="/matrizPais" element={<ProtectedRoute element={<MatrizPais />} />} />
+                <Route path="/auditoria" element={<ProtectedRoute element={<Auditoria />} />} />
+                <Route path="/rolespermisos" element={<ProtectedRoute element={<RolesyPermisos />} />} />
+            </Routes>
+        </Router>
+    );
+}
+
+export default App;
+```
+
+### **2. Problemas con `Stop`**
+
+Asegúrate de que el archivo `Stop.jsx` tenga `React` importado al principio del archivo. Aquí está el código corregido:
+
+**`Stop.jsx`**
+```jsx
+import React from 'react'; // Asegúrate de importar React
+import { Container } from 'react-bootstrap';
+
+export default function Stop({ isAuthenticated, user }) {
+    return (
+        <Container>
+            <div className="mt-3">
+                <span className="h1 text-danger">Alto</span>
+            </div>
+            <div>
+                <p className="h5 text-danger">
+                    Para visitar esta página necesitas estar registrado como {user}.
+                    {isAuthenticated ? (
+                        ' Si ya tienes una cuenta, Inicia Sesión.'
+                    ) : (
+                        ' Si no tienes una cuenta, comunicate con un Administrador para que te asigne una.'
+                    )}
+                </p>
+                {!isAuthenticated && (
+                    <p className="h5 text-danger">
+                        Si no tienes una cuenta, <span><a href="/login">Inicia Sesión.</a></span>
+                    </p>
+                )}
+            </div>
+        </Container>
+    );
+}
+```
+
+### **3. Asegúrate de que las rutas sean correctas**
+
+Verifica que los nombres y rutas de los componentes sean correctos en el `App.js`. Asegúrate de que todos los componentes importados existen y están en la ruta correcta.
+
+### **4. Verifica `ProtectedRoute`**
+
+El componente `ProtectedRoute` debe estar en la ruta correcta y asegurarse de que se exporte correctamente desde `ProtectedRoute.jsx`:
+
+**`ProtectedRoute.jsx`**
+```jsx
+import React from 'react';
+import { Route, Navigate } from 'react-router-dom';
+
+const ProtectedRoute = ({ element: Element, ...rest }) => {
+    const isAuthenticated = !!localStorage.getItem('userId'); // Verifica si hay un ID de usuario en localStorage
+    return (
+        <Route
+            {...rest}
+            element={isAuthenticated ? (
+                Element
+            ) : (
+                <Navigate to="/" replace />
+            )}
+        />
+    );
+};
+
+export default ProtectedRoute;
+```
+
+### **Conclusión**
+
+Después de hacer estas correcciones, intenta compilar de nuevo tu aplicación. Asegúrate de que todos los archivos estén en las rutas correctas y que los nombres de los componentes coincidan. Si aún encuentras problemas, revisa los mensajes de error específicos y ajusta según sea necesario.
