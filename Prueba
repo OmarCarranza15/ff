@@ -1,12 +1,12 @@
-Perfecto. Aquí está la configuración completa para proteger las rutas en tu aplicación React usando el componente `Stop` para mostrar un mensaje cuando el usuario no tiene acceso.
+Claro, vamos a ajustar el componente `Stop` para que no incluya la imagen y asegurarnos de que todo esté configurado correctamente.
 
-### 1. **Componente `Stop`**
+### **1. Componente `Stop`**
 
-Este componente muestra un mensaje cuando el usuario no tiene acceso a una página específica. Asegúrate de que esté en el archivo correcto y ajustado según sea necesario.
+Primero, modifica el componente `Stop` para que no incluya la imagen:
 
 ```jsx
+// components/Stop.jsx
 import { Container } from "react-bootstrap";
-import senal from '../imgs/alto.png';
 
 export default function Stop({ isAuthenticated, user }) {
     return (
@@ -14,7 +14,6 @@ export default function Stop({ isAuthenticated, user }) {
             <div className="mt-3">
                 <span className="h1 text-danger">Alto</span>
             </div>
-            <img src={senal} alt="" style={{ width: 300 }} className="rounded-3 shadow-lg" />
             <div>
                 <p className="h5 text-danger">
                     Para visitar esta página necesitas estar registrado como {user}.
@@ -35,18 +34,17 @@ export default function Stop({ isAuthenticated, user }) {
 }
 ```
 
-### 2. **Componente `ProtectedRoute`**
+### **2. Componente `ProtectedRoute`**
 
-Crea un archivo llamado `ProtectedRoute.jsx` con el siguiente código:
+El componente `ProtectedRoute` será el encargado de verificar la autenticación y redirigir a los usuarios no autenticados. Aquí está el código ajustado:
 
 ```jsx
+// components/ProtectedRoute.jsx
 import React from 'react';
 import { Route, Navigate } from 'react-router-dom';
 
 const ProtectedRoute = ({ element: Element, ...rest }) => {
     const isAuthenticated = !!localStorage.getItem('userId'); // Verifica si hay un ID de usuario en localStorage
-    const userRole = localStorage.getItem('userRole');
-
     return (
         <Route
             {...rest}
@@ -62,11 +60,12 @@ const ProtectedRoute = ({ element: Element, ...rest }) => {
 export default ProtectedRoute;
 ```
 
-### 3. **Modificar `App.jsx`**
+### **3. Configurar `App.jsx`**
 
-Actualiza tu archivo `App.jsx` para usar el componente `ProtectedRoute`:
+Ahora, integra el componente `ProtectedRoute` en `App.jsx` para proteger las rutas:
 
 ```jsx
+// App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './components/Login';
@@ -83,8 +82,7 @@ import Usuario from './components/Usuario';
 import MatrizPais from './components/MatrizPais';
 import Auditoria from './components/Auditoria';
 import RolesyPermisos from './components/RolesyPermisos';
-import ProtectedRoute from './components/ProtectedRoute'; // Importa el componente de ruta protegida
-import Stop from './components/Stop'; // Importa el componente de acceso denegado
+import Stop from './components/Stop';
 
 function App() {
     return (
@@ -92,19 +90,19 @@ function App() {
             <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/" element={<Stop isAuthenticated={false} user={null} />} /> {/* Página de acceso no permitido */}
-                <ProtectedRoute path="/landingPage" element={<LandingPage />} />
-                <ProtectedRoute path="/paises" element={<Paises />} />
-                <ProtectedRoute path="/razonsocial" element={<RazonSocial />} />
-                <ProtectedRoute path="/departamento" element={<Departamento />} />
-                <ProtectedRoute path="/aplicacion" element={<Aplicacion />} />
-                <ProtectedRoute path="/ambiente" element={<Ambiente />} />
-                <ProtectedRoute path="/centrocosto" element={<CentroCosto />} />
-                <ProtectedRoute path="/puesto" element={<Puesto />} />
-                <ProtectedRoute path="/division" element={<Division />} />
-                <ProtectedRoute path="/usuario" element={<Usuario />} />
-                <ProtectedRoute path="/matrizPais" element={<MatrizPais />} />
-                <ProtectedRoute path="/auditoria" element={<Auditoria />} />
-                <ProtectedRoute path="/rolespermisos" element={<RolesyPermisos />} />
+                <Route element={<ProtectedRoute element={<LandingPage />} />} path="/landingPage" />
+                <Route element={<ProtectedRoute element={<Paises />} />} path="/paises" />
+                <Route element={<ProtectedRoute element={<RazonSocial />} />} path="/razonsocial" />
+                <Route element={<ProtectedRoute element={<Departamento />} />} path="/departamento" />
+                <Route element={<ProtectedRoute element={<Aplicacion />} />} path="/aplicacion" />
+                <Route element={<ProtectedRoute element={<Ambiente />} />} path="/ambiente" />
+                <Route element={<ProtectedRoute element={<CentroCosto />} />} path="/centrocosto" />
+                <Route element={<ProtectedRoute element={<Puesto />} />} path="/puesto" />
+                <Route element={<ProtectedRoute element={<Division />} />} path="/division" />
+                <Route element={<ProtectedRoute element={<Usuario />} />} path="/usuario" />
+                <Route element={<ProtectedRoute element={<MatrizPais />} />} path="/matrizPais" />
+                <Route element={<ProtectedRoute element={<Auditoria />} />} path="/auditoria" />
+                <Route element={<ProtectedRoute element={<RolesyPermisos />} />} path="/rolespermisos" />
             </Routes>
         </Router>
     );
@@ -113,12 +111,10 @@ function App() {
 export default App;
 ```
 
-### Notas
+### **Resumen**
 
-- **Autenticación y Token:** Asegúrate de que cuando el usuario inicie sesión, se guarde un token en `localStorage`. En el componente `Stop`, ajusta la lógica para reflejar el estado de autenticación del usuario.
-  
-- **Rutas Protegidas:** `ProtectedRoute` redirige a la página de inicio si el usuario no está autenticado. Puedes ajustar esta lógica según tus necesidades.
+1. **Componente `Stop`**: Muestra un mensaje de acceso denegado sin la imagen.
+2. **Componente `ProtectedRoute`**: Protege las rutas verificando si el usuario está autenticado.
+3. **`App.jsx`**: Configura las rutas y utiliza `ProtectedRoute` para proteger las páginas específicas.
 
-- **`Stop` Componente:** Ajusta el `Stop` para que use la lógica adecuada para mostrar mensajes de acceso denegado basados en la autenticación del usuario.
-
-Con estos cambios, las rutas de tu aplicación estarán protegidas y solo serán accesibles para los usuarios autenticados.
+Con estos cambios, tu aplicación ahora manejará el acceso a las rutas protegidas de manera adecuada. Asegúrate de que `localStorage` esté gestionado correctamente para reflejar el estado de autenticación del usuario.
