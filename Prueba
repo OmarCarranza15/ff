@@ -1,11 +1,3 @@
-Para actualizar el componente `TopBar` de manera similar a cómo manejaste los datos encriptados en el `SideNavBar`, deberás desencriptar el nombre de usuario guardado en `localStorage`. Aquí están los pasos para hacerlo:
-
-1. **Importa la biblioteca `CryptoJS`.**
-2. **Desencripta el nombre de usuario en el `useEffect`.**
-
-Aquí está el código actualizado para tu componente `TopBar`:
-
-```javascript
 import React, { useEffect, useState } from "react";
 import { FaUser } from "react-icons/fa"; // Importamos el icono FaUser de FontAwesome
 import "../styles/TopBar.css"; // Ajusta la ruta de los estilos según sea necesario
@@ -23,12 +15,20 @@ const TopBar = ({ userName }) => {
   const secretKey = 'mySecretKey'; // La misma clave secreta para desencriptar
 
   const decryptData = (encryptedData) => {
-    const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
-    return bytes.toString(CryptoJS.enc.Utf8);
+    try {
+      const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
+      const decryptedData = bytes.toString(CryptoJS.enc.Utf8);
+      console.log("Desencriptado:", decryptedData); // Verifica el valor desencriptado
+      return decryptedData;
+    } catch (error) {
+      console.error("Error al desencriptar:", error);
+      return '';
+    }
   };
 
   useEffect(() => {
     const encryptedUsername = localStorage.getItem('username');
+    console.log("Encriptado en localStorage:", encryptedUsername); // Verifica el valor almacenado
     if (encryptedUsername) {
       const decryptedUsername = decryptData(encryptedUsername);
       setUsername(decryptedUsername);
@@ -56,12 +56,3 @@ const TopBar = ({ userName }) => {
 };
 
 export default TopBar;
-```
-
-### Cambios realizados:
-
-1. **Importación de `CryptoJS`**: Añadido al inicio del archivo.
-2. **Método `decryptData`**: Implementado para desencriptar el nombre de usuario almacenado en `localStorage`.
-3. **Uso de `decryptData`**: Desencriptar el nombre de usuario desde `localStorage` en el `useEffect`.
-
-Con estas modificaciones, el nombre de usuario se desencriptará correctamente antes de ser mostrado en la `TopBar`. Asegúrate de que la clave secreta (`secretKey`) sea la misma que utilizaste en el componente `Login` y en el `SideNavBar`.
