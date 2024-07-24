@@ -1,223 +1,241 @@
 
-import { useState, useEffect } from "react";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import {
+  GrTable,
+  GrSystem,
+  GrUserSettings,
+  GrGroup,
+  GrGlobe,
+  GrBusinessService,
+  GrContactInfo,
+  GrMonitor,
+  GrOrganization,
+  GrShieldSecurity,
+  GrMultiple,
+  GrFolder,
+  GrSearch,
+  GrDocumentDownload,
+} from "react-icons/gr";
+import { LiaUserTieSolid } from "react-icons/lia";
+import styled from "styled-components";
+import "../styles/SideNavBar.css";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import '../styles/login.css';
-import CryptoJS from "crypto-js";
+import "bootstrap/dist/css/bootstrap.min.css";
+import CryptoJS from "crypto-js"; // Importa CryptoJS
 
-const Login = () => {
-    const navigate = useNavigate();
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [error, setError] = useState('');
-    const [isNewUser, setIsNewUser] = useState(false);
-    const [userId, setUserId] = useState(null);
-    const [userName, setUserName] = useState('');
-    const [userRole, setUserRole] = useState(null);
-    const [userPermissions, setUserPermissions] = useState({ insert: false, edit: false });
-    const [userCountries, setUserCountries] = useState([]);
-    const [isNewPasswordEmpty, setIsNewPasswordEmpty] = useState(false);
-    const [isConfirmPasswordEmpty, setIsConfirmPasswordEmpty] = useState(false);
+const Banderas = styled.img`
+  width: 20px;
+  height: 20px;
+`;
 
-    const secretKey = 'mySecretKey'; // Clave secreta para encriptar datos
+const SideNavBar = () => {
+  const [isExpanded, setExpandState] = useState(false);
+  const [activeMenu, setActiveMenu] = useState(null);
+  const [paises, setPaises] = useState([]);
+  const [userRole, setUserRole] = useState(null);
+  const [userCountries, setUserCountries] = useState([]);
 
-    const encryptData = (data) => {
-        return CryptoJS.AES.encrypt(JSON.stringify(data), secretKey).toString();
-    };
+  const secretKey = 'mySecretKey'; // La misma clave secreta para desencriptar
 
-    const decryptData = (encryptedData) => {
-        const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
-        return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-    };
+  const decryptData = (encryptedData) => {
+    const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
+    return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+  };
 
-    useEffect(() => {
-        // Recuperar y desencriptar datos del sessionStorage si existen
-        const storedUserId = sessionStorage.getItem('userId');
-        const storedUsername = sessionStorage.getItem('username');
-        const storedUserRole = sessionStorage.getItem('userRole');
-        const storedUserPermissions = sessionStorage.getItem('userPermissions');
-        const storedUserCountries = sessionStorage.getItem('userCountries');
+  useEffect(() => {
+    // Leer el rol del usuario desde sessionStorage y desencriptar
+    const encryptedRole = sessionStorage.getItem('userRole');
+    if (encryptedRole) {
+      const role = decryptData(encryptedRole);
+      setUserRole(role);
 
-        if (storedUserId) {
-            setUserId(decryptData(storedUserId));
-        }
-        if (storedUsername) {
-            setUserName(decryptData(storedUsername));
-        }
-        if (storedUserRole) {
-            setUserRole(decryptData(storedUserRole));
-        }
-        if (storedUserPermissions) {
-            setUserPermissions(decryptData(storedUserPermissions));
-        }
-        if (storedUserCountries) {
-            setUserCountries(decryptData(storedUserCountries));
-        }
-    }, []);
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+      // Obtener países permitidos del RolUsuario
+      const fetchUserRole = async () => {
         try {
-            const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}`);
-            console.log('response.data:', response.data);
-
-            const user = response.data.find(user => user.Usuario === username && user.Contrasenia === password);
-
-            if (user) {
-                setUserId(user.id);
-                setUserName(user.Nombre);
-                setUserRole(user.ID_RolUsuario);
-
-                // Obtener permisos y países del rol del usuario
-                const roleResponse = await axios.get(`http://localhost:3000/rolusuario/${user.ID_RolUsuario}`);
-                const roleData = roleResponse.data;
-
-                // Guardar permisos
-                setUserPermissions({
-                    insert: roleData.Insertar === 1,
-                    edit: roleData.Editar === 1
-                });
-
-                // Guardar países
-                setUserCountries(roleData.Paises.split(',').map(paisId => parseInt(paisId, 10)));
-
-                if (user.Estado === 1) {
-                    setIsNewUser(true);
-                } else if (user.Estado === 3) {
-                    setError('Este usuario ha expirado');
-                } else {
-                    // Guardar datos en sessionStorage y encriptar
-                    sessionStorage.setItem('userId', encryptData(user.id));
-                    sessionStorage.setItem('username', encryptData(user.Nombre));
-                    sessionStorage.setItem('userRole', encryptData(user.ID_RolUsuario));
-                    sessionStorage.setItem('userPermissions', encryptData({
-                        insert: roleData.Insertar === 1,
-                        edit: roleData.Editar === 1
-                    }));
-                    sessionStorage.setItem('userCountries', encryptData(userCountries));
-                    navigate('/landingPage');
-                }
-            } else {
-                setError('Usuario o contraseña incorrectos');
-            }
+          const response = await axios.get(`http://localhost:3000/rolusuario/${role}`);
+          const paisesPermitidos = response.data.Paises ? response.data.Paises.split(',').map(id => id.trim()) : [];
+          setUserCountries(paisesPermitidos);
+          console.log("Países permitidos:", paisesPermitidos);
         } catch (error) {
-            console.error('Error al intentar iniciar sesión', error);
-            setError('Usuario o contraseña incorrectos');
+          console.error("Error al obtener el rol del usuario", error);
         }
+      };
+
+      fetchUserRole();
+    }
+
+    // Obtener la lista de todos los países
+    const fetchPaises = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/pais/`);
+        setPaises(response.data);
+        console.log("Lista de países:", response.data); // Verifica los países obtenidos
+      } catch (error) {
+        console.error("Error al obtener la lista de paises", error);
+      }
     };
+    fetchPaises();
+  }, []);
 
-    const handlePasswordChange = async () => {
-        if (newPassword === '') {
-            setIsNewPasswordEmpty(true);
-        } else {
-            setIsNewPasswordEmpty(false);
-        }
+  // Verifica los países que se están filtrando
+  useEffect(() => {
+    console.log("Paises disponibles:", paises);
+    console.log("Paises del usuario:", userCountries);
+  }, [paises, userCountries]);
 
-        if (confirmPassword === '') {
-            setIsConfirmPasswordEmpty(true);
-        } else {
-            setIsConfirmPasswordEmpty(false);
-        }
+  const menuItems = [
+    {
+      title: "Matriz de Perfiles",
+      icon: <GrTable />,
+      subNav: [
+        {
+          title: "Reportes",
+          path: "/reportes",
+          icon: <GrDocumentDownload />, // Icono de reporte
+        },
+      ].concat(
+        paises
+          .filter(pais => userCountries.includes(pais.id.toString())) // Filtrar según los países del usuario
+          .map((pais) => ({
+            title: pais.N_Pais,
+            icon: <Banderas src={require(`../imgs/${pais.N_Pais}.png`)} alt="Flag image" />, // Imagen de bandera
+            path: `/matrizPais?pais=${encodeURIComponent(pais.id)}&Nombre=${pais.N_Pais}`,
+          }))
+      ),
+    },
+    {
+      title: "Estructura",
+      icon: <GrGroup />, // Icono de edificio
+      subNav: [
+        {
+          title: "Paises",
+          path: "/paises",
+          icon: <GrGlobe />, // Icono de globo
+        },
+        {
+          title: "División",
+          path: "/division",
+          icon: <GrBusinessService />,
+        },
+        {
+          title: "Razón Social",
+          path: "/razonsocial",
+          icon: <GrOrganization />, // Icono de empresa
+        },
+        {
+          title: "Departamentos",
+          path: "/departamento",
+          icon: <GrFolder />, // Icono de carpeta
+        },
+        {
+          title: "Aplicaciones",
+          path: "/aplicacion",
+          icon: <GrMonitor />, // Icono de aplicaciones
+        },
+        {
+          title: "Ambientes",
+          path: "/ambiente",
+          icon: <GrSystem />, // Icono de nube
+        },
+        {
+          title: "Centro de Costes",
+          path: "/centrocosto",
+          icon: <GrMultiple />, // Icono
+        },
+        {
+          title: "Puestos",
+          path: "/puesto",
+          icon: <LiaUserTieSolid />, // Icono de Puesto
+        },
+      ],
+    },
+    {
+      title: "Gestión de Usuarios",
+      icon: <GrUserSettings />, // Icono de usuario
+      subNav: [
+        {
+          title: "Usuarios",
+          path: "/usuario",
+          icon: <GrContactInfo />, // Icono de personas
+        },
+        {
+          title: "Roles y Permisos",
+          path: "/rolespermisos",
+          icon: <GrShieldSecurity />, // Icono de candado
+        },
+        {
+          title: "Auditoría",
+          path: "/auditoria",
+          icon: <GrSearch />, // Icono de lupa
+        },
+      ],
+    },
+  ];
 
-        if (newPassword !== confirmPassword) {
-            setError('Las contraseñas no coinciden');
-            return;
-        }
+  const toggleSubMenu = (index) => {
+    setActiveMenu(activeMenu === index ? null : index);
+  };
 
-        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{12,}$/;
+  // Función para expandir el sidebar
+  const expandSidebar = () => {
+    setExpandState(true);
+  };
 
-        if (!passwordRegex.test(newPassword)) {
-            setError('La nueva contraseña debe tener al menos 12 caracteres, una letra mayúscula, un número y un carácter especial.');
-            return;
-        }
+  // Función para contraer el sidebar
+  const collapseSidebar = () => {
+    setExpandState(false);
+  };
 
-        // Validar que la nueva contraseña no sea igual a la anterior
-        if (newPassword === password) {
-            setError('La nueva contraseña no puede ser igual a la contraseña anterior.');
-            return;
-        }
-
-        try {
-            if (!userId) {
-                setError('No se encontró el ID del usuario. Inicie sesión nuevamente.');
-                return;
-            }
-
-            const updateResponse = await axios.put(`http://localhost:3000/usuarios/${userId}`, {
-                Contrasenia: newPassword,
-                Estado: 2
-            });
-
-            if (updateResponse.status === 200) {
-                // Actualizar datos en sessionStorage y encriptar
-                sessionStorage.setItem('username', encryptData(userName));
-                sessionStorage.setItem('userRole', encryptData(userRole)); // Guardar el rol del usuario
-                sessionStorage.setItem('userPermissions', encryptData(userPermissions));
-                sessionStorage.setItem('userCountries', encryptData(userCountries));
-                navigate('/landingPage');
-            } else {
-                setError('Error al cambiar la contraseña');
-            }
-        } catch (error) {
-            console.error('Error al cambiar la contraseña', error);
-            setError('Error al cambiar la contraseña');
-        }
-    };
-
-    return (
-        <div className="login-container">
-            <form onSubmit={handleSubmit} className="login-form">
-                <h2 className="in-group">Inicio de Sesión</h2>
-                <label>Ingrese su Usuario de Red y Contraseña</label>
-                <br />
-                <br />
-                <div className="form-group">
-                    <label>Usuario:</label>
-                    <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="form-control" required />
-                </div>
-                <div className="form-group">
-                    <label>Contraseña:</label>
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-control" required />
-                </div>
-                {isNewUser && (
-                    <>
-                        <p className="message">Debe cambiar su contraseña actual.</p>
-                        <div className="form-group">
-                            <label className="bold-label">Nueva Contraseña:</label>
-                            <input 
-                                type="password" 
-                                value={newPassword} 
-                                onChange={(e) => setNewPassword(e.target.value)} 
-                                className={`form-control ${isNewPasswordEmpty ? 'input-error' : ''}`} 
-                                required 
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label className="bold-label">Confirmar Contraseña:</label>
-                            <input 
-                                type="password" 
-                                value={confirmPassword} 
-                                onChange={(e) => setConfirmPassword(e.target.value)} 
-                                className={`form-control ${isConfirmPasswordEmpty ? 'input-error' : ''}`} 
-                                required 
-                            />
-                        </div>
-                        <button type="button" className="btn btn-primary" onClick={handlePasswordChange}>Cambiar Contraseña</button>
-                    </>
+  return (
+    <div
+      className={
+        isExpanded
+          ? "side-nav-container"
+          : "side-nav-container side-nav-container-NX"
+      }
+      onMouseEnter={expandSidebar}
+      onMouseLeave={collapseSidebar}
+    >
+      <div className="nav-upper">
+        <div className="nav-menu">
+          {menuItems
+            .filter(item => userRole === '1' || item.title === "Matriz de Perfiles") // Filtrar según el rol del usuario
+            .map((menuItem, index) => (
+              <div key={index}>
+                <button
+                  className={isExpanded ? "menu-item" : "menu-item menu-item-NX"}
+                  onClick={() => toggleSubMenu(index)}
+                >
+                  <div className="menu-item-icon">{menuItem.icon}</div>
+                  {isExpanded && <p>{menuItem.title}</p>}
+                </button>
+                {isExpanded && activeMenu === index && menuItem.subNav && (
+                  <div className="sub-menu">
+                    {menuItem.subNav.map((subItem, subIndex) => (
+                      <a
+                        href={subItem.path}
+                        className="sub-menu-item"
+                        key={subIndex}
+                      >
+                        <div className="sub-menu-item-icon">{subItem.icon}</div>
+                        <p>{subItem.title}</p>
+                      </a>
+                    ))}
+                  </div>
                 )}
-                {!isNewUser && <button type="submit" className="btn btn-primary">Iniciar Sesión</button>}
-                <br />
-                {error && <p style={{ color: 'red' }}>{error}</p>}
-                <div className="form-floating mb-3 mt-3">
-                    <a href="/Solicitud" style={{ textDecoration: 'none' }}><span className="form-con">He olvidado mi contraseña</span></a>
-                </div>
-                <br />
-            </form>
+              </div>
+            ))}
         </div>
-    );
+      </div>
+      <div className="nav-footer">
+        {isExpanded && (
+          <div className="nav-details">
+            <div className="nav-footer-info"></div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
-export default Login;
+export default SideNavBar;
