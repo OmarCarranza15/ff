@@ -1,193 +1,124 @@
-import { useState } from "react";
-import React from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import '../styles/login.css';
+Perfecto. Aquí está la configuración completa para proteger las rutas en tu aplicación React usando el componente `Stop` para mostrar un mensaje cuando el usuario no tiene acceso.
 
-const Login = () => {
-    const navigate = useNavigate();
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [error, setError] = useState('');
-    const [isNewUser, setIsNewUser] = useState(false);
-    const [userId, setUserId] = useState(null);
-    const [userName, setUserName] = useState('');
-    const [userRole, setUserRole] = useState(null);
-    const [userPermissions, setUserPermissions] = useState({ insert: false, edit: false });
-    const [userCountries, setUserCountries] = useState([]);
-    const [isNewPasswordEmpty, setIsNewPasswordEmpty] = useState(false);
-    const [isConfirmPasswordEmpty, setIsConfirmPasswordEmpty] = useState(false);
+### 1. **Componente `Stop`**
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            // Enviar los datos de inicio de sesión al backend
-            const response = await axios.post('http://localhost:3000/login', {
-                username,
-                password
-            }, {
-                withCredentials: true // Asegúrate de enviar cookies con la solicitud
-            });
+Este componente muestra un mensaje cuando el usuario no tiene acceso a una página específica. Asegúrate de que esté en el archivo correcto y ajustado según sea necesario.
 
-            const user = response.data.user;
+```jsx
+import { Container } from "react-bootstrap";
+import senal from '../imgs/alto.png';
 
-            if (user) {
-                setUserId(user.id);
-                setUserName(user.Nombre);
-                setUserRole(user.ID_RolUsuario);
+export default function Stop({ isAuthenticated, user }) {
+    return (
+        <Container>
+            <div className="mt-3">
+                <span className="h1 text-danger">Alto</span>
+            </div>
+            <img src={senal} alt="" style={{ width: 300 }} className="rounded-3 shadow-lg" />
+            <div>
+                <p className="h5 text-danger">
+                    Para visitar esta página necesitas estar registrado como {user}.
+                    {isAuthenticated ? (
+                        ' Si ya tienes una cuenta, Inicia Sesión.'
+                    ) : (
+                        ' Si no tienes una cuenta, comunicate con un Administrador para que te asigne una.'
+                    )}
+                </p>
+                {!isAuthenticated && (
+                    <p className="h5 text-danger">
+                        Si no tienes una cuenta, <span><a href="/login">Inicia Sesión.</a></span>
+                    </p>
+                )}
+            </div>
+        </Container>
+    );
+}
+```
 
-                // Obtener permisos y países del rol del usuario
-                const roleResponse = await axios.get(`http://localhost:3000/rolusuario/${user.ID_RolUsuario}`, {
-                    withCredentials: true
-                });
-                const roleData = roleResponse.data;
+### 2. **Componente `ProtectedRoute`**
 
-                // Guardar permisos
-                setUserPermissions({
-                    insert: roleData.Insertar === 1,
-                    edit: roleData.Editar === 1
-                });
+Crea un archivo llamado `ProtectedRoute.jsx` con el siguiente código:
 
-                // Guardar países
-                setUserCountries(roleData.Paises.split(',').map(paisId => parseInt(paisId, 10)));
+```jsx
+import React from 'react';
+import { Route, Navigate } from 'react-router-dom';
 
-                if (user.Estado === 1) {
-                    setIsNewUser(true);
-                } else if (user.Estado === 3) {
-                    setError('Este usuario ha expirado');
-                } else {
-                    // Guardar datos en localStorage
-                    localStorage.setItem('userId', user.id); // Guardar ID del usuario
-                    localStorage.setItem('username', user.Nombre);
-                    localStorage.setItem('userRole', user.ID_RolUsuario);
-                    localStorage.setItem('userPermissions', JSON.stringify({
-                        insert: roleData.Insertar === 1,
-                        edit: roleData.Editar === 1
-                    }));
-                    localStorage.setItem('userCountries', JSON.stringify(userCountries));
-                    navigate('/landingPage');
-                }
-            } else {
-                setError('Usuario o contraseña incorrectos');
-            }
-        } catch (error) {
-            console.error('Error al intentar iniciar sesión', error);
-            setError('Usuario o contraseña incorrectos');
-        }
-    };
-
-    const handlePasswordChange = async () => {
-        if (newPassword === '') {
-            setIsNewPasswordEmpty(true);
-        } else {
-            setIsNewPasswordEmpty(false);
-        }
-
-        if (confirmPassword === '') {
-            setIsConfirmPasswordEmpty(true);
-        } else {
-            setIsConfirmPasswordEmpty(false);
-        }
-
-        if (newPassword !== confirmPassword) {
-            setError('Las contraseñas no coinciden');
-            return;
-        }
-
-        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{12,}$/;
-
-        if (!passwordRegex.test(newPassword)) {
-            setError('La nueva contraseña debe tener al menos 12 caracteres, una letra mayúscula, un número y un carácter especial.');
-            return;
-        }
-
-        // Validar que la nueva contraseña no sea igual a la anterior
-        if (newPassword === password) {
-            setError('La nueva contraseña no puede ser igual a la contraseña anterior.');
-            return;
-        }
-
-        try {
-            if (!userId) {
-                setError('No se encontró el ID del usuario. Inicie sesión nuevamente.');
-                return;
-            }
-
-            const updateResponse = await axios.put(`http://localhost:3000/usuarios/${userId}`, {
-                Contrasenia: newPassword,
-                Estado: 2
-            }, {
-                withCredentials: true
-            });
-
-            if (updateResponse.status === 200) {
-                localStorage.setItem('username', userName);
-                localStorage.setItem('userRole', userRole); // Guardar el rol del usuario
-                localStorage.setItem('userPermissions', JSON.stringify(userPermissions));
-                localStorage.setItem('userCountries', JSON.stringify(userCountries));
-                navigate('/landingPage');
-            } else {
-                setError('Error al cambiar la contraseña');
-            }
-        } catch (error) {
-            console.error('Error al cambiar la contraseña', error);
-            setError('Error al cambiar la contraseña');
-        }
-    };
+const ProtectedRoute = ({ element: Element, ...rest }) => {
+    const isAuthenticated = !!localStorage.getItem('userId'); // Verifica si hay un ID de usuario en localStorage
+    const userRole = localStorage.getItem('userRole');
 
     return (
-        <div className="login-container">
-            <form onSubmit={handleSubmit} className="login-form">
-                <h2 className="in-group">Inicio de Sesión</h2>
-                <label>Ingrese su Usuario de Red y Contraseña</label>
-                <br />
-                <br />
-                <div className="form-group">
-                    <label>Usuario:</label>
-                    <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="form-control" required />
-                </div>
-                <div className="form-group">
-                    <label>Contraseña:</label>
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-control" required />
-                </div>
-                {isNewUser && (
-                    <>
-                        <p className="message">Debe cambiar su contraseña actual.</p>
-                        <div className="form-group">
-                            <label className="bold-label">Nueva Contraseña:</label>
-                            <input 
-                                type="password" 
-                                value={newPassword} 
-                                onChange={(e) => setNewPassword(e.target.value)} 
-                                className={`form-control ${isNewPasswordEmpty ? 'input-error' : ''}`} 
-                                required 
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label className="bold-label">Confirmar Contraseña:</label>
-                            <input 
-                                type="password" 
-                                value={confirmPassword} 
-                                onChange={(e) => setConfirmPassword(e.target.value)} 
-                                className={`form-control ${isConfirmPasswordEmpty ? 'input-error' : ''}`} 
-                                required 
-                            />
-                        </div>
-                        <button type="button" className="btn btn-primary" onClick={handlePasswordChange}>Cambiar Contraseña</button>
-                    </>
-                )}
-                {!isNewUser && <button type="submit" className="btn btn-primary">Iniciar Sesión</button>}
-                <br />
-                {error && <p style={{ color: 'red' }}>{error}</p>}
-                <div className="form-floating mb-3 mt-3">
-                    <a href="/Solicitud" style={{ textDecoration: 'none' }}><span className="form-con">He olvidado mi contraseña</span></a>
-                </div>
-                <br />
-            </form>
-        </div>
+        <Route
+            {...rest}
+            element={isAuthenticated ? (
+                Element
+            ) : (
+                <Navigate to="/" replace />
+            )}
+        />
     );
 };
 
-export default Login;
+export default ProtectedRoute;
+```
+
+### 3. **Modificar `App.jsx`**
+
+Actualiza tu archivo `App.jsx` para usar el componente `ProtectedRoute`:
+
+```jsx
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Login from './components/Login';
+import LandingPage from './components/LandingPage';
+import Paises from './components/Paises';
+import RazonSocial from './components/RazonSocial';
+import Departamento from './components/Departamento';
+import Aplicacion from './components/Aplicacion';
+import Ambiente from './components/Ambiente';
+import CentroCosto from './components/CentroCosto';
+import Puesto from './components/Puesto';
+import Division from './components/Division';
+import Usuario from './components/Usuario';
+import MatrizPais from './components/MatrizPais';
+import Auditoria from './components/Auditoria';
+import RolesyPermisos from './components/RolesyPermisos';
+import ProtectedRoute from './components/ProtectedRoute'; // Importa el componente de ruta protegida
+import Stop from './components/Stop'; // Importa el componente de acceso denegado
+
+function App() {
+    return (
+        <Router>
+            <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<Stop isAuthenticated={false} user={null} />} /> {/* Página de acceso no permitido */}
+                <ProtectedRoute path="/landingPage" element={<LandingPage />} />
+                <ProtectedRoute path="/paises" element={<Paises />} />
+                <ProtectedRoute path="/razonsocial" element={<RazonSocial />} />
+                <ProtectedRoute path="/departamento" element={<Departamento />} />
+                <ProtectedRoute path="/aplicacion" element={<Aplicacion />} />
+                <ProtectedRoute path="/ambiente" element={<Ambiente />} />
+                <ProtectedRoute path="/centrocosto" element={<CentroCosto />} />
+                <ProtectedRoute path="/puesto" element={<Puesto />} />
+                <ProtectedRoute path="/division" element={<Division />} />
+                <ProtectedRoute path="/usuario" element={<Usuario />} />
+                <ProtectedRoute path="/matrizPais" element={<MatrizPais />} />
+                <ProtectedRoute path="/auditoria" element={<Auditoria />} />
+                <ProtectedRoute path="/rolespermisos" element={<RolesyPermisos />} />
+            </Routes>
+        </Router>
+    );
+}
+
+export default App;
+```
+
+### Notas
+
+- **Autenticación y Token:** Asegúrate de que cuando el usuario inicie sesión, se guarde un token en `localStorage`. En el componente `Stop`, ajusta la lógica para reflejar el estado de autenticación del usuario.
+  
+- **Rutas Protegidas:** `ProtectedRoute` redirige a la página de inicio si el usuario no está autenticado. Puedes ajustar esta lógica según tus necesidades.
+
+- **`Stop` Componente:** Ajusta el `Stop` para que use la lógica adecuada para mostrar mensajes de acceso denegado basados en la autenticación del usuario.
+
+Con estos cambios, las rutas de tu aplicación estarán protegidas y solo serán accesibles para los usuarios autenticados.
