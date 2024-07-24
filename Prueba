@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import React from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import '../styles/login.css';
-import CryptoJS from "crypto-js"; // Importa la biblioteca para encriptar
+import CryptoJS from "crypto-js";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -31,6 +31,31 @@ const Login = () => {
         const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
         return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
     };
+
+    useEffect(() => {
+        // Recuperar y desencriptar datos del sessionStorage si existen
+        const storedUserId = sessionStorage.getItem('userId');
+        const storedUsername = sessionStorage.getItem('username');
+        const storedUserRole = sessionStorage.getItem('userRole');
+        const storedUserPermissions = sessionStorage.getItem('userPermissions');
+        const storedUserCountries = sessionStorage.getItem('userCountries');
+
+        if (storedUserId) {
+            setUserId(decryptData(storedUserId));
+        }
+        if (storedUsername) {
+            setUserName(decryptData(storedUsername));
+        }
+        if (storedUserRole) {
+            setUserRole(decryptData(storedUserRole));
+        }
+        if (storedUserPermissions) {
+            setUserPermissions(decryptData(storedUserPermissions));
+        }
+        if (storedUserCountries) {
+            setUserCountries(decryptData(storedUserCountries));
+        }
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -186,12 +211,4 @@ const Login = () => {
                 <br />
                 {error && <p style={{ color: 'red' }}>{error}</p>}
                 <div className="form-floating mb-3 mt-3">
-                    <a href="/Solicitud" style={{ textDecoration: 'none' }}><span className="form-con">He olvidado mi contraseña</span></a>
-                </div>
-                <br />
-            </form>
-        </div>
-    );
-};
-
-export default Login;
+                    <a href="/Solicitud" style={{ textDecoration: 'none' }}><span className="form
