@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FaUser } from "react-icons/fa"; // Importamos el icono FaUser de FontAwesome
+import { IoIosLogOut } from "react-icons/io";
 import "../styles/TopBar.css"; // Ajusta la ruta de los estilos según sea necesario
 import logo from "../imgs/OIP.jfif";
 import styled from "styled-components";
@@ -29,7 +30,7 @@ const TopBar = () => {
     const storedUsername = sessionStorage.getItem('username');
     if (storedUsername) {
       const decryptedUsername = decryptData(storedUsername); // Desencriptar nombre de usuario
-      console.log("Decrypted Username:", decryptedUsername); // Verifica el valor desencriptado
+      //console.log("Decrypted Username:", decryptedUsername); // Verifica el valor desencriptado
       setUsername(decryptedUsername);
     }
   }, []);
@@ -49,6 +50,7 @@ const TopBar = () => {
       <div className="top-bar-right">
         <FaUser className="user-icon" />
         <p className="user-name">{username}</p>
+        <a href="/" ><IoIosLogOut className="user-icon" style={{marginLeft: "10px"}}/></a> {/*Este icono nos sirve para mandarnos al login de nuevo*/}
       </div>
     </div>
   );
