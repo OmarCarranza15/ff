@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import CryptoJS from "crypto-js";
-
 import {
   GrTable,
   GrSystem,
@@ -28,12 +27,11 @@ const Banderas = styled.img`
   height: 20px;
 `;
 
-const secretKey = 'mySecretKey'; // Clave secreta para desencriptar datos
+const secretKey = 'mySecretKey'; // Clave secreta para encriptar datos
 
-   const decryptData = (encryptedData) => {
-       const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
-       return bytes.toString(CryptoJS.enc.Utf8);
-   };
+const encryptData = (data) => {
+  return CryptoJS.AES.encrypt(JSON.stringify(data), secretKey).toString();
+};
 
 const SideNavBar = () => {
   const [isExpanded, setExpandState] = useState(false);
@@ -77,8 +75,6 @@ const SideNavBar = () => {
     fetchPaises();
 }, [userRole]);
 
-
-
   // Verifica los países que se están filtrando
   useEffect(() => {
     console.log("Paises disponibles:", paises);
@@ -101,7 +97,7 @@ const SideNavBar = () => {
                    .map((pais) => ({
                        title: pais.N_Pais,
                        icon: <Banderas src={require(`../imgs/${pais.N_Pais}.png`)} alt="Flag image" />,
-                       path: `/matrizPais?pais=${encodeURIComponent(pais.id)}&Nombre=${pais.N_Pais}`,
+                       path: `/matrizPais?pais=${encodeURIComponent(encryptData(pais.id))}&Nombre=${encodeURIComponent(encryptData(pais.N_Pais))}`,
                    }))
            ),
        },
