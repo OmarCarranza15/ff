@@ -1,91 +1,51 @@
-Para resolver el problema de desencriptación del rol y agregar la consola para depuración, sigue estos pasos:
+import React, { useEffect, useState } from "react";
+import { FaUser } from "react-icons/fa"; // Importamos el icono FaUser de FontAwesome
+import "../styles/TopBar.css"; // Ajusta la ruta de los estilos según sea necesario
+import logo from "../imgs/OIP.jfif";
+import styled from "styled-components";
+import CryptoJS from "crypto-js";
 
-1. **Agregar la dependencia `crypto-js` si aún no está instalada:**
+const Image = styled.img`
+  width: 100%;
+  height: auto;
+`;
 
-   Si no has instalado `crypto-js`, hazlo ejecutando:
+const secretKey = 'mySecretKey'; // Clave secreta para desencriptar datos
 
-   ```bash
-   npm install crypto-js
-   ```
+const decryptData = (encryptedData) => {
+  const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
+  return bytes.toString(CryptoJS.enc.Utf8);
+};
 
-2. **Agregar las funciones de encriptación y desencriptación usando `crypto-js`:**
+const TopBar = ({ userName }) => {
+  const [username, setUsername] = useState('');
 
-   Asegúrate de tener la siguiente importación en tu archivo `SideNavBar.jsx`:
+  useEffect(() => {
+    const storedUsername = sessionStorage.getItem('username');
+    if (storedUsername) {
+      const decryptedUsername = decryptData(storedUsername); // Desencriptar nombre de usuario
+      setUsername(decryptedUsername);
+    }
+  }, []);
 
-   ```js
-   import CryptoJS from "crypto-js";
-   ```
+  return (
+    <div className="top-bar">
+      <div className="nav">
+        <a href="/landingPage" style={{ textDecoration: 'none' }}>
+          <Image src={logo} />
+        </a>
+      </div>
+      <div className="nav-brand">
+        <a href="/landingPage" style={{ textDecoration: 'none' }}>
+          <h2 className="icon">Ficohsa</h2>
+        </a>
+      </div>
+      <div className="top-bar-right">
+        <FaUser className="user-icon" />
+        <p className="user-name">{username}</p>
+      </div>
+    </div>
+  );
+};
 
-   Luego, define las funciones de desencriptación:
-
-   ```js
-   const secretKey = 'mySecretKey'; // Clave secreta para desencriptar datos
-
-   const decryptData = (encryptedData) => {
-       const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
-       return bytes.toString(CryptoJS.enc.Utf8);
-   };
-   ```
-
-3. **Modificar el `useEffect` para desencriptar correctamente y agregar `console.log` para depuración:**
-
-   Cambia el `useEffect` para asegurarte de que los datos se están desencriptando correctamente:
-
-   ```js
-   useEffect(() => {
-       // Leer el rol del usuario desde sessionStorage y desencriptar
-       const encryptedRole = sessionStorage.getItem('userRole');
-       if (encryptedRole) {
-           const decryptedRole = decryptData(encryptedRole);
-           console.log('Rol desencriptado:', decryptedRole); // Consola para verificar el rol desencriptado
-           setUserRole(decryptedRole);
-       }
-
-       const fetchUserRole = async () => {
-           if (!userRole) return; // Esperar a que el rol sea desencriptado
-           try {
-               const response = await axios.get(`http://localhost:3000/rolusuario/${userRole}`);
-               const paisesPermitidos = response.data.Paises ? response.data.Paises.split(',').map(id => id.trim()) : [];
-               setUserCountries(paisesPermitidos);
-               console.log("Países permitidos:", paisesPermitidos);
-           } catch (error) {
-               console.error("Error al obtener el rol del usuario", error);
-           }
-       };
-
-       fetchUserRole();
-
-       const fetchPaises = async () => {
-           try {
-               const response = await axios.get(`http://localhost:3000/pais/`);
-               setPaises(response.data);
-               console.log("Lista de países:", response.data); // Verifica los países obtenidos
-           } catch (error) {
-               console.error("Error al obtener la lista de paises", error);
-           }
-       };
-       fetchPaises();
-   }, [userRole]); // Añadir userRole como dependencia para ejecutar fetchUserRole cuando el rol sea desencriptado
-   ```
-
-4. **Actualizar el `handleSubmit` del componente `Login` para encriptar el rol antes de almacenarlo en `sessionStorage`:**
-
-   Asegúrate de que el rol se encripte correctamente:
-
-   ```js
-   const encryptData = (data) => {
-       return CryptoJS.AES.encrypt(JSON.stringify(data), secretKey).toString();
-   };
-
-   // Guardar datos en sessionStorage con encriptación
-   sessionStorage.setItem('userId', user.id);
-   sessionStorage.setItem('username', encryptData(user.Nombre));
-   sessionStorage.setItem('userRole', encryptData(user.ID_RolUsuario)); // Encriptar rol
-   sessionStorage.setItem('userPermissions', encryptData({
-       insert: roleData.Insertar === 1,
-       edit: roleData.Editar === 1
-   }));
-   sessionStorage.setItem('userCountries', encryptData(userCountries));
-   ```
-
-Estas modificaciones asegurarán que el rol se desencripte correctamente y podrás verificar el resultado en la consola. Asegúrate de que la clave secreta (`secretKey`) sea la misma para encriptar y desencriptar los datos en ambos componentes.
+export default TopBar;
