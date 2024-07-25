@@ -1,70 +1,167 @@
-index.js:1191 
- Warning: React does not recognize the `maxWidth` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `maxwidth` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at http://localhost:3001/static/js/0.chunk.js:29079:11
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at nt (http://localhost:3001/static/js/0.chunk.js:142268:56)
-    at http://localhost:3001/static/js/0.chunk.js:30034:13
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at LandingPage (http://localhost:3001/static/js/main.chunk.js:12274:87)
-    at RenderedRoute (http://localhost:3001/static/js/0.chunk.js:128322:5)
-    at Routes (http://localhost:3001/static/js/0.chunk.js:129013:5)
-    at div
-    at Router (http://localhost:3001/static/js/0.chunk.js:128947:15)
-    at BrowserRouter (http://localhost:3001/static/js/0.chunk.js:126888:5)
-    at div
-    at div
-    at div
-    at div
-    at App
-index.js:1191 
- Warning: React does not recognize the `minWidth` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `minwidth` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at http://localhost:3001/static/js/0.chunk.js:29079:11
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at nt (http://localhost:3001/static/js/0.chunk.js:142268:56)
-    at http://localhost:3001/static/js/0.chunk.js:30034:13
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
-    at LandingPage (http://localhost:3001/static/js/main.chunk.js:12274:87)
-    at RenderedRoute (http://localhost:3001/static/js/0.chunk.js:128322:5)
-    at Routes (http://localhost:3001/static/js/0.chunk.js:129013:5)
-    at div
-    at Router (http://localhost:3001/static/js/0.chunk.js:128947:15)
-    at BrowserRouter (http://localhost:3001/static/js/0.chunk.js:126888:5)
-    at div
-    at div
-    at div
-    at div
-    at App
+Para implementar la funcionalidad de cerrar sesión y confirmar la acción con un modal, puedes seguir estos pasos:
+
+1. **Añadir funcionalidad de cierre de sesión y confirmación en el modal**.
+2. **Actualizar el componente `TopBar` para mostrar el modal y manejar la acción de cierre de sesión**.
+
+### Paso 1: Crear el Modal de Confirmación
+
+Primero, crea un componente de modal que será utilizado para confirmar el cierre de sesión. Aquí está un ejemplo simple utilizando `styled-components` para el estilo:
+
+```jsx
+import React from "react";
+import styled from "styled-components";
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalContainer = styled.div`
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  text-align: center;
+`;
+
+const ModalButton = styled.button`
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  margin: 5px;
+  cursor: pointer;
+
+  &:hover {
+    background: #0056b3;
+  }
+`;
+
+const Modal = ({ isOpen, onClose, onConfirm }) => {
+  if (!isOpen) return null;
+
+  return (
+    <ModalOverlay>
+      <ModalContainer>
+        <h2>Confirmar Cierre de Sesión</h2>
+        <p>¿Estás seguro de que quieres cerrar sesión?</p>
+        <ModalButton onClick={onConfirm}>Confirmar</ModalButton>
+        <ModalButton onClick={onClose}>Cancelar</ModalButton>
+      </ModalContainer>
+    </ModalOverlay>
+  );
+};
+
+export default Modal;
+```
+
+### Paso 2: Actualizar el Componente `TopBar`
+
+Actualiza tu componente `TopBar` para incluir el nuevo modal y manejar el estado de cierre de sesión.
+
+```jsx
+import React, { useEffect, useState } from "react";
+import { FaUser } from "react-icons/fa"; // Importamos el icono FaUser de FontAwesome
+import { IoIosLogOut } from "react-icons/io";
+import "../styles/TopBar.css"; // Ajusta la ruta de los estilos según sea necesario
+import logo from "../imgs/OIP.jfif";
+import styled from "styled-components";
+import CryptoJS from "crypto-js";
+import Modal from "./Modal"; // Asegúrate de ajustar la ruta del componente Modal
+
+const Image = styled.img`
+  width: 100%;
+  height: auto;
+`;
+
+const secretKey = 'mySecretKey'; // Clave secreta para desencriptar datos
+
+const decryptData = (encryptedData) => {
+  try {
+    const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
+    return bytes.toString(CryptoJS.enc.Utf8).replace(/^"|"$/g, ''); // Eliminar comillas
+  } catch (error) {
+    console.error("Error al desencriptar datos:", error);
+    return '';
+  }
+};
+
+const TopBar = () => {
+  const [username, setUsername] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const storedUsername = sessionStorage.getItem('username');
+    if (storedUsername) {
+      const decryptedUsername = decryptData(storedUsername); // Desencriptar nombre de usuario
+      setUsername(decryptedUsername);
+    }
+  }, []);
+
+  const handleLogoutClick = () => {
+    setIsModalOpen(true); // Abrir el modal de confirmación
+  };
+
+  const handleConfirmLogout = () => {
+    sessionStorage.removeItem('username'); // Limpiar los datos del usuario
+    window.location.href = '/'; // Redirigir al login
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false); // Cerrar el modal de confirmación
+  };
+
+  return (
+    <div className="top-bar">
+      <div className="nav">
+        <a href="/landingPage" style={{ textDecoration: 'none' }}>
+          <Image src={logo} />
+        </a>
+      </div>
+      <div className="nav-brand">
+        <a href="/landingPage" style={{ textDecoration: 'none' }}>
+          <h2 className="icon">Ficohsa</h2>
+        </a>
+      </div>
+      <div className="top-bar-right">
+        <FaUser className="user-icon" />
+        <p className="user-name">{username}</p>
+        <IoIosLogOut 
+          className="user-icon" 
+          style={{ marginLeft: "10px" }} 
+          onClick={handleLogoutClick} 
+        />
+      </div>
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={handleCloseModal} 
+        onConfirm={handleConfirmLogout} 
+      />
+    </div>
+  );
+};
+
+export default TopBar;
+```
+
+### Explicación
+
+1. **Componente `Modal`**:
+   - Un modal simple con dos botones: Confirmar y Cancelar.
+   - Usa `styled-components` para el estilo.
+
+2. **Componente `TopBar`**:
+   - Maneja el estado del modal (`isModalOpen`).
+   - Muestra el modal cuando se hace clic en el ícono de cerrar sesión.
+   - Maneja el cierre de sesión y la redirección al login.
+
+Esto debería proporcionar una experiencia completa de cierre de sesión con confirmación. Ajusta los estilos y la lógica según sea necesario para tu aplicación.
