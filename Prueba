@@ -14,7 +14,7 @@ const secretKey = 'mySecretKey'; // Clave secreta para desencriptar datos
 
 const decryptData = (encryptedData) => {
   const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
-  return bytes.toString(CryptoJS.enc.Utf8);
+  return bytes.toString(CryptoJS.enc.Utf8).trim(); // Asegúrate de eliminar espacios en blanco
 };
 
 const TopBar = ({ userName }) => {
@@ -25,6 +25,7 @@ const TopBar = ({ userName }) => {
     if (storedUsername) {
       const decryptedUsername = decryptData(storedUsername); // Desencriptar nombre de usuario
       setUsername(decryptedUsername);
+      console.log("Decrypted Username:", decryptedUsername); // Verifica el valor desencriptado
     }
   }, []);
 
