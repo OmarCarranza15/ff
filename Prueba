@@ -1,29 +1,78 @@
-.side-nav-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh; /* O cualquier altura que necesites */
-}
+Aquí está el código modificado para encriptar los datos antes de almacenarlos en `sessionStorage` y para desencriptar los datos cuando los necesites:
 
-.nav-upper {
-  flex: 1; /* Ocupa el espacio restante */
-  overflow-y: auto; /* Permite desplazamiento si hay mucho contenido */
-}
+### Cambios en el Código del Login:
 
-.nav-footer {
-  margin-top: auto; /* Empuja el botón al fondo del contenedor */
-}
+1. **Importar `CryptoJS` para encriptación y desencriptación:**
 
-.logout-button {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  background-color: #f44336; /* Rojo para el botón de cerrar sesión */
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  text-align: center;
-}
+   Añade esta línea al principio del archivo, si aún no está importado:
+   ```js
+   import CryptoJS from "crypto-js";
+   ```
 
-.logout-button:hover {
-  background-color: #d32f2f; /* Rojo más oscuro al pasar el ratón */
-}
+2. **Agregar funciones para encriptar y desencriptar datos:**
+
+   Añade estas funciones fuera del componente `Login`:
+
+   ```js
+   const secretKey = 'mySecretKey'; // Clave secreta para encriptar datos
+
+   const encryptData = (data) => {
+       return CryptoJS.AES.encrypt(JSON.stringify(data), secretKey).toString();
+   };
+
+   const decryptData = (encryptedData) => {
+       const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
+       return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+   };
+   ```
+
+3. **Modificar el método `handleSubmit` para encriptar los datos:**
+
+   Cambia el código que guarda datos en `sessionStorage` para usar `encryptData`:
+
+   ```js
+   sessionStorage.setItem('userId', encryptData(user.id));
+   sessionStorage.setItem('username', encryptData(user.Nombre));
+   sessionStorage.setItem('userRole', encryptData(user.ID_RolUsuario));
+   sessionStorage.setItem('userPermissions', encryptData({
+       insert: roleData.Insertar === 1,
+       edit: roleData.Editar === 1
+   }));
+   sessionStorage.setItem('userCountries', encryptData(userCountries));
+   ```
+
+4. **Modificar el método `handlePasswordChange` para encriptar los datos:**
+
+   Cambia el código que guarda datos en `sessionStorage` para usar `encryptData`:
+
+   ```js
+   sessionStorage.setItem('username', encryptData(userName));
+   sessionStorage.setItem('userRole', encryptData(userRole));
+   sessionStorage.setItem('userPermissions', encryptData(userPermissions));
+   sessionStorage.setItem('userCountries', encryptData(userCountries));
+   ```
+
+Con estos cambios, los datos sensibles se encriptarán antes de ser almacenados en `sessionStorage`, y deberás desencriptarlos cuando los necesites.
+
+### Ejemplo de Desencriptación en Otro Componente:
+
+Cuando necesites usar los datos encriptados, desencríptalos de esta manera:
+
+```js
+const encryptedUserId = sessionStorage.getItem('userId');
+const userId = decryptData(encryptedUserId);
+
+const encryptedUsername = sessionStorage.getItem('username');
+const username = decryptData(encryptedUsername);
+
+const encryptedUserRole = sessionStorage.getItem('userRole');
+const userRole = decryptData(encryptedUserRole);
+
+const encryptedUserPermissions = sessionStorage.getItem('userPermissions');
+const userPermissions = decryptData(encryptedUserPermissions);
+
+const encryptedUserCountries = sessionStorage.getItem('userCountries');
+const userCountries = decryptData(encryptedUserCountries);
+```
+
+Estos cambios asegurarán que los datos sensibles sean manejados de manera segura en tu aplicación.
