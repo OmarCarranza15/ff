@@ -1,5 +1,4 @@
-import React from "react";
-import styled from "styled-components";
+
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -24,7 +23,7 @@ const ModalContainer = styled.div`
   text-align: center;
 `;
 
-const ModalTitle = styled.h3`
+const ModalTitleTop = styled.h3`
   margin-bottom: 15px;
   font-size: 1.5em;
   color: #333;
@@ -42,32 +41,62 @@ const ButtonContainer = styled.div`
   gap: 10px;
 `;
 
-const ModalButton = styled.button`
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1em;
-  transition: background 0.3s;
-
-  &:hover {
-    background: #0056b3;
-  }
-
+const ModalButtonB = styled.button`
+  display: flex;
+  align-items: center;
+  padding: 6px 12px; /* Ajusta el padding para hacer los botones más pequeños */
+  font-size: 14px; /* Ajusta el tamaño del texto */
+  border-radius: 4px; /* Bordes redondeados */
+  border: 1px solid transparent; /* Borde transparente para mantener el tamaño */
+  cursor: pointer; /* Cambia el cursor para indicar que es clickeable */
+  transition: background-color 0.3s ease, border-color 0.3s ease; /* Transición suave para cambios de color */
+  flex-grow: 1; /* Ajusta el ancho del botón al texto */
+  width: fit-content; /* Ajusta el ancho del botón al texto */
+  min-width: 0; /* No tiene un ancho mínimo predeterminado */
+  white-space: nowrap; /* Evita que el texto se deborde */
+  overflow: hidden; /* Oculta el texto que se deborda */
+  text-overflow: ellipsis; /* Agrega puntos suspensivos al final del texto si se deborda */
   &:focus {
-    outline: none;
+    outline: none; /* Elimina el borde de enfoque por defecto */
   }
+
+  &.btn-outline-primary {
+    background-color: #fff; /* Fondo blanco para el botón de búsqueda */
+    border-color: #007bff; /* Borde azul */
+    color: #007bff; /* Color del texto azul */
+
+    &:hover {
+      background-color: #007bff; /* Fondo azul al pasar el mouse */
+      color: #fff; /* Color del texto blanco */
+    }
+  }
+
+   &.btn.btn-outline-danger {
+    background-color: #fff; /* Fondo blanco para el botón de cancelar */
+    border-color: #dc3545; /* Borde rojo */
+    color: #dc3545; /* Color del texto rojo */
+
+    &:hover {
+      background-color: #dc3545; /* Fondo rojo al pasar el mouse */
+      color: #fff; /* Color del texto blanco */
+    }
+  }
+
+
 `;
 
-const CancelButton = styled(ModalButton)`
-  background: #6c757d;
-  
-  &:hover {
-    background: #5a6268;
-  }
+const CancelButton = styled(ModalButtonB)`
+  background-color: #ff0000; /* Rojo */
+  color: #ffffff; /* Blanco */
+  font-size: 13px;
+  padding: 2px 4px;
+  border-radius: 5px;
+  height: 35px;
+  width: 120px;
 `;
+
+
+
 
 const Modal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;
@@ -75,15 +104,13 @@ const Modal = ({ isOpen, onClose, onConfirm }) => {
   return (
     <ModalOverlay>
       <ModalContainer>
-        <ModalTitle>Confirmación</ModalTitle>
+        <ModalTitleTop>Confirmación</ModalTitleTop>
         <ModalMessage>¿Estás seguro de que deseas cerrar sesión? Todos los datos no guardados se perderán.</ModalMessage>
         <ButtonContainer>
-          <ModalButton onClick={onConfirm}>Confirmar</ModalButton>
-          <CancelButton onClick={onClose}>Cancelar</CancelButton>
+          <ModalButtonB className="btn btn-outline-primary" onClick={onConfirm}>Confirmar</ModalButtonB>
+          <CancelButton className="btn btn-outline-danger" onClick={onClose}>Cancelar</CancelButton>
         </ButtonContainer>
       </ModalContainer>
     </ModalOverlay>
   );
 };
-
-export default Modal;
