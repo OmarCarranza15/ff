@@ -1,79 +1,3 @@
-Si el nombre de usuario sigue mostrándose con comillas, es posible que el problema esté en cómo se guarda o se procesa el valor en el `sessionStorage` o en cómo se maneja el valor desencriptado. Vamos a abordar esto de la siguiente manera:
-
-### 1. Verifica el Almacenamiento en `sessionStorage`
-
-Asegúrate de que el valor guardado en `sessionStorage` no tenga comillas adicionales. Revisa cómo se guarda el valor en `sessionStorage` en la función `handleSubmit` del `Login`.
-
-### 2. Revisa el Proceso de Encriptación y Desencriptación
-
-Confirma que la encriptación y desencriptación se realicen correctamente y que no introduzcan comillas. Verifica los pasos en `Login` y `TopBar` para asegurarte de que se maneja correctamente.
-
-### 3. Elimina Espacios y Comillas Adicionales
-
-Puedes eliminar espacios en blanco y comillas adicionales en el proceso de desencriptación.
-
-### Código Revisado
-
-A continuación se muestra cómo ajustar el código para garantizar que se manejen adecuadamente los valores encriptados y desencriptados:
-
-#### `Login.jsx`
-
-Verifica si el nombre se almacena correctamente y sin comillas adicionales.
-
-```js
-const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-        const response = await axios.get(`http://localhost:3000/usuarios/?Usuario=${username}`);
-        const user = response.data.find(user => user.Usuario === username && user.Contrasenia === password);
-
-        if (user) {
-            setUserId(user.id);
-            setUserName(user.Nombre);
-            setUserRole(user.ID_RolUsuario);
-
-            const roleResponse = await axios.get(`http://localhost:3000/rolusuario/${user.ID_RolUsuario}`);
-            const roleData = roleResponse.data;
-
-            setUserPermissions({
-                insert: roleData.Insertar === 1,
-                edit: roleData.Editar === 1
-            });
-
-            setUserCountries(roleData.Paises.split(',').map(paisId => parseInt(paisId, 10)));
-
-            if (user.Estado === 1) {
-                setIsNewUser(true);
-            } else if (user.Estado === 3) {
-                setError('Este usuario ha expirado');
-            } else {
-                const encryptedUsername = encryptData(user.Nombre);
-                console.log('Encrypted Username:', encryptedUsername); // Verifica el valor encriptado
-                sessionStorage.setItem('userId', encryptData(user.id));
-                sessionStorage.setItem('username', encryptedUsername);
-                sessionStorage.setItem('userRole', encryptData(user.ID_RolUsuario));
-                sessionStorage.setItem('userPermissions', encryptData({
-                    insert: roleData.Insertar === 1,
-                    edit: roleData.Editar === 1
-                }));
-                sessionStorage.setItem('userCountries', encryptData(userCountries));
-                navigate('/landingPage');
-            }
-        } else {
-            setError('Usuario o contraseña incorrectos');
-        }
-    } catch (error) {
-        console.error('Error al intentar iniciar sesión', error);
-        setError('Usuario o contraseña incorrectos');
-    }
-};
-```
-
-#### `TopBar.jsx`
-
-Asegúrate de que el valor desencriptado esté libre de comillas adicionales.
-
-```js
 import React, { useEffect, useState } from "react";
 import { FaUser } from "react-icons/fa"; // Importamos el icono FaUser de FontAwesome
 import "../styles/TopBar.css"; // Ajusta la ruta de los estilos según sea necesario
@@ -91,7 +15,7 @@ const secretKey = 'mySecretKey'; // Clave secreta para desencriptar datos
 const decryptData = (encryptedData) => {
   try {
     const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
-    return bytes.toString(CryptoJS.enc.Utf8).trim(); // Asegúrate de eliminar espacios en blanco
+    return bytes.toString(CryptoJS.enc.Utf8).replace(/^"|"$/g, ''); // Eliminar comillas
   } catch (error) {
     console.error("Error al desencriptar datos:", error);
     return '';
@@ -131,12 +55,3 @@ const TopBar = () => {
 };
 
 export default TopBar;
-```
-
-### Pasos Adicionales
-
-1. **Verifica en la Consola del Navegador:** Usa `console.log` para revisar los valores encriptados y desencriptados en la consola del navegador.
-
-2. **Revisa el Almacenamiento:** Abre las herramientas de desarrollo de tu navegador y revisa el contenido de `sessionStorage` para asegurarte de que los valores estén almacenados correctamente.
-
-Estos ajustes deben ayudarte a solucionar el problema con las comillas alrededor del nombre del usuario.
