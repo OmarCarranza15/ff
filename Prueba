@@ -1,24 +1,11 @@
-Aquí está el código modificado para encriptar los datos antes de almacenarlos en `sessionStorage` y para desencriptar los datos cuando los necesites:
+Para que el componente `SideNavBar` use la información encriptada desde `sessionStorage`, realiza las siguientes modificaciones:
 
-### Cambios en el Código del Login:
+1. **Agregar funciones de desencriptación:**
 
-1. **Importar `CryptoJS` para encriptación y desencriptación:**
-
-   Añade esta línea al principio del archivo, si aún no está importado:
-   ```js
-   import CryptoJS from "crypto-js";
-   ```
-
-2. **Agregar funciones para encriptar y desencriptar datos:**
-
-   Añade estas funciones fuera del componente `Login`:
+   Añade estas funciones fuera del componente `SideNavBar`:
 
    ```js
-   const secretKey = 'mySecretKey'; // Clave secreta para encriptar datos
-
-   const encryptData = (data) => {
-       return CryptoJS.AES.encrypt(JSON.stringify(data), secretKey).toString();
-   };
+   const secretKey = 'mySecretKey'; // Clave secreta para desencriptar datos
 
    const decryptData = (encryptedData) => {
        const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
@@ -26,53 +13,134 @@ Aquí está el código modificado para encriptar los datos antes de almacenarlos
    };
    ```
 
-3. **Modificar el método `handleSubmit` para encriptar los datos:**
+2. **Modificar el `useEffect` para desencriptar datos y obtener países permitidos:**
 
-   Cambia el código que guarda datos en `sessionStorage` para usar `encryptData`:
-
-   ```js
-   sessionStorage.setItem('userId', encryptData(user.id));
-   sessionStorage.setItem('username', encryptData(user.Nombre));
-   sessionStorage.setItem('userRole', encryptData(user.ID_RolUsuario));
-   sessionStorage.setItem('userPermissions', encryptData({
-       insert: roleData.Insertar === 1,
-       edit: roleData.Editar === 1
-   }));
-   sessionStorage.setItem('userCountries', encryptData(userCountries));
-   ```
-
-4. **Modificar el método `handlePasswordChange` para encriptar los datos:**
-
-   Cambia el código que guarda datos en `sessionStorage` para usar `encryptData`:
+   Cambia la lógica para leer y desencriptar los datos desde `sessionStorage`:
 
    ```js
-   sessionStorage.setItem('username', encryptData(userName));
-   sessionStorage.setItem('userRole', encryptData(userRole));
-   sessionStorage.setItem('userPermissions', encryptData(userPermissions));
-   sessionStorage.setItem('userCountries', encryptData(userCountries));
+   useEffect(() => {
+       const role = decryptData(sessionStorage.getItem('userRole'));
+       setUserRole(role);
+
+       const fetchUserRole = async () => {
+           try {
+               const response = await axios.get(`http://localhost:3000/rolusuario/${role}`);
+               const paisesPermitidos = response.data.Paises ? response.data.Paises.split(',').map(id => id.trim()) : [];
+               setUserCountries(paisesPermitidos);
+               console.log("Países permitidos:", paisesPermitidos);
+           } catch (error) {
+               console.error("Error al obtener el rol del usuario", error);
+           }
+       };
+
+       fetchUserRole();
+
+       const fetchPaises = async () => {
+           try {
+               const response = await axios.get(`http://localhost:3000/pais/`);
+               setPaises(response.data);
+               console.log("Lista de países:", response.data); // Verifica los países obtenidos
+           } catch (error) {
+               console.error("Error al obtener la lista de paises", error);
+           }
+       };
+       fetchPaises();
+   }, []);
    ```
 
-Con estos cambios, los datos sensibles se encriptarán antes de ser almacenados en `sessionStorage`, y deberás desencriptarlos cuando los necesites.
+3. **Modificar la lógica para filtrar países y establecer `menuItems`:**
 
-### Ejemplo de Desencriptación en Otro Componente:
+   Cambia la parte que usa la información desencriptada:
 
-Cuando necesites usar los datos encriptados, desencríptalos de esta manera:
+   ```js
+   const menuItems = [
+       {
+           title: "Matriz de Perfiles",
+           icon: <GrTable />,
+           subNav: [
+               {
+                   title: "Reportes",
+                   path: "/reportes",
+                   icon: <GrDocumentDownload />,
+               },
+           ].concat(
+               paises
+                   .filter(pais => userCountries.includes(pais.id.toString())) // Filtrar según los países del usuario
+                   .map((pais) => ({
+                       title: pais.N_Pais,
+                       icon: <Banderas src={require(`../imgs/${pais.N_Pais}.png`)} alt="Flag image" />,
+                       path: `/matrizPais?pais=${encodeURIComponent(pais.id)}&Nombre=${pais.N_Pais}`,
+                   }))
+           ),
+       },
+       {
+           title: "Estructura",
+           icon: <GrGroup />,
+           subNav: [
+               {
+                   title: "Paises",
+                   path: "/paises",
+                   icon: <GrGlobe />,
+               },
+               {
+                   title: "División",
+                   path: "/division",
+                   icon: <GrBusinessService />,
+               },
+               {
+                   title: "Razón Social",
+                   path: "/razonsocial",
+                   icon: <GrOrganization />,
+               },
+               {
+                   title: "Departamentos",
+                   path: "/departamento",
+                   icon: <GrFolder />,
+               },
+               {
+                   title: "Aplicaciones",
+                   path: "/aplicacion",
+                   icon: <GrMonitor />,
+               },
+               {
+                   title: "Ambientes",
+                   path: "/ambiente",
+                   icon: <GrSystem />,
+               },
+               {
+                   title: "Centro de Costes",
+                   path: "/centrocosto",
+                   icon: <GrMultiple />,
+               },
+               {
+                   title: "Puestos",
+                   path: "/puesto",
+                   icon: <LiaUserTieSolid />,
+               },
+           ],
+       },
+       {
+           title: "Gestión de Usuarios",
+           icon: <GrUserSettings />,
+           subNav: [
+               {
+                   title: "Usuarios",
+                   path: "/usuario",
+                   icon: <GrContactInfo />,
+               },
+               {
+                   title: "Roles y Permisos",
+                   path: "/rolespermisos",
+                   icon: <GrShieldSecurity />,
+               },
+               {
+                   title: "Auditoría",
+                   path: "/auditoria",
+                   icon: <GrSearch />,
+               },
+           ],
+       },
+   ];
+   ```
 
-```js
-const encryptedUserId = sessionStorage.getItem('userId');
-const userId = decryptData(encryptedUserId);
-
-const encryptedUsername = sessionStorage.getItem('username');
-const username = decryptData(encryptedUsername);
-
-const encryptedUserRole = sessionStorage.getItem('userRole');
-const userRole = decryptData(encryptedUserRole);
-
-const encryptedUserPermissions = sessionStorage.getItem('userPermissions');
-const userPermissions = decryptData(encryptedUserPermissions);
-
-const encryptedUserCountries = sessionStorage.getItem('userCountries');
-const userCountries = decryptData(encryptedUserCountries);
-```
-
-Estos cambios asegurarán que los datos sensibles sean manejados de manera segura en tu aplicación.
+Estos cambios permiten que `SideNavBar` use los datos encriptados almacenados en `sessionStorage`. Asegúrate de que la clave secreta utilizada para encriptar y desencriptar los datos sea la misma en ambos componentes.
