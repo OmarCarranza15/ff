@@ -20,12 +20,12 @@ const MatrizPais = () => {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const paisId = searchParams.get("pais");
-    const paisNombre = searchParams.get("Nombre");
+    const paisIdEncrypted = searchParams.get("pais");
+    const paisNombreEncrypted = searchParams.get("Nombre");
     
     // Desencriptar los datos
-    const decryptedPaisId = decryptData(paisId);
-    const decryptedPaisNombre = decryptData(paisNombre);
+    const decryptedPaisId = decryptData(paisIdEncrypted);
+    const decryptedPaisNombre = decryptData(paisNombreEncrypted);
 
     setSelectedCountryId(decryptedPaisId);
     setSelectedCountry(decryptedPaisNombre);
