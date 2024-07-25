@@ -1,115 +1,70 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import CryptoJS from "crypto-js";
-import { useLocation } from "react-router-dom";
-
-const secretKey = 'mySecretKey'; // Clave secreta para desencriptar datos
-
-const decryptData = (encryptedData) => {
-  const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
-  return bytes.toString(CryptoJS.enc.Utf8);
-};
-
-const MatrizPais = () => {
-  const location = useLocation();
-  const [selectedCountryId, setSelectedCountryId] = useState(null);
-  const [selectedCountry, setSelectedCountry] = useState("");
-  const [permissions, setPermissions] = useState({});
-  const [records, setRecords] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const paisIdEncrypted = searchParams.get("pais");
-    const paisNombreEncrypted = searchParams.get("Nombre");
-    
-    // Desencriptar los datos
-    const decryptedPaisId = decryptData(paisIdEncrypted);
-    const decryptedPaisNombre = decryptData(paisNombreEncrypted);
-
-    setSelectedCountryId(decryptedPaisId);
-    setSelectedCountry(decryptedPaisNombre);
-
-    const storedPermissions = sessionStorage.getItem("userPermissions");
-    if (storedPermissions) {
-      setPermissions(JSON.parse(storedPermissions));
-    }
-
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(`http://localhost:3000/perfil/`);
-        const data = response.data;
-        const filteredData = data.filter(
-          (perfil) => perfil.ID_Pais === parseInt(decryptedPaisId, 10)
-        );
-        const mappedData = await Promise.all(
-          filteredData.map(async (perfil) => {
-            const puestoResponse = await axios.get(
-              `http://localhost:3000/puesto/${perfil.ID_Puesto}`
-            );
-            const aplicacionResponse = await axios.get(
-              `http://localhost:3000/aplicacion/${perfil.ID_Aplicaciones}`
-            );
-            const rsocialResponse = await axios.get(
-              `http://localhost:3000/rsocial/${puestoResponse.data.ID_RSocial}`
-            );
-            const divisionResponse = await axios.get(
-              `http://localhost:3000/division/${puestoResponse.data.ID_Division}`
-            );
-            const departamentoResponse = await axios.get(
-              `http://localhost:3000/departamento/${puestoResponse.data.ID_Departamento}`
-            );
-            const centrocostosResponse = await axios.get(
-              `http://localhost:3000/centrocosto/${puestoResponse.data.ID_CentroCostos}`
-            );
-            const paisResponse = await axios.get(
-              `http://localhost:3000/pais/${perfil.ID_Pais}`
-            );
-            const ambienteResponse = await axios.get(
-              `http://localhost:3000/ambiente/${aplicacionResponse.data.ID_Ambiente}`
-            );
-
-            return {
-              N_RSocial: rsocialResponse.data.N_RSocial,
-              N_Division: divisionResponse.data.N_Division,
-              N_Puesto: puestoResponse.data.N_Puesto,
-              N_Pais: paisResponse.data.N_Pais,
-              N_Departamento: departamentoResponse.data.N_Departamento,
-              Rol: perfil.Rol,
-              N_Aplicaciones: aplicacionResponse.data.N_Aplicaciones,
-              N_Ambiente: ambienteResponse.data.N_Ambiente,
-              Puesto_Jefe: perfil.Puesto_Jefe,
-              Ticket: perfil.Ticket,
-              Observaciones: perfil.Observaciones,
-              Estado_Perfil:
-                perfil.Estado_Perfil === 1 ? "En Servicio" : "Suspendido",
-              id: perfil.id,
-              ID_Pais: perfil.ID_Pais,
-              ID_Aplicaciones: perfil.ID_Aplicaciones,
-              ID_Puesto: perfil.ID_Puesto,
-              Cod_Menu: perfil.Cod_Menu,
-              ID_Ambiente: aplicacionResponse.data.ID_Ambiente,
-              ID_RSocial: puestoResponse.data.ID_RSocial,
-              ID_Division: puestoResponse.data.ID_Division,
-              ID_Departamento: puestoResponse.data.ID_Departamento,
-              ID_CentroCostos: puestoResponse.data.ID_CentroCostos,
-              Nombre: centrocostosResponse.data.Nombre,
-            };
-          })
-        );
-        setRecords(mappedData);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error al obtener los perfiles:", error);
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [location.search]);
-
-  // Aquí puedes agregar el código para renderizar tus datos y manejar el estado de carga
-};
-
-export default MatrizPais;
+index.js:1191 
+ Warning: React does not recognize the `maxWidth` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `maxwidth` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at http://localhost:3001/static/js/0.chunk.js:29079:11
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at nt (http://localhost:3001/static/js/0.chunk.js:142268:56)
+    at http://localhost:3001/static/js/0.chunk.js:30034:13
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at LandingPage (http://localhost:3001/static/js/main.chunk.js:12274:87)
+    at RenderedRoute (http://localhost:3001/static/js/0.chunk.js:128322:5)
+    at Routes (http://localhost:3001/static/js/0.chunk.js:129013:5)
+    at div
+    at Router (http://localhost:3001/static/js/0.chunk.js:128947:15)
+    at BrowserRouter (http://localhost:3001/static/js/0.chunk.js:126888:5)
+    at div
+    at div
+    at div
+    at div
+    at App
+index.js:1191 
+ Warning: React does not recognize the `minWidth` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `minwidth` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at http://localhost:3001/static/js/0.chunk.js:29079:11
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at nt (http://localhost:3001/static/js/0.chunk.js:142268:56)
+    at http://localhost:3001/static/js/0.chunk.js:30034:13
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:142351:6)
+    at LandingPage (http://localhost:3001/static/js/main.chunk.js:12274:87)
+    at RenderedRoute (http://localhost:3001/static/js/0.chunk.js:128322:5)
+    at Routes (http://localhost:3001/static/js/0.chunk.js:129013:5)
+    at div
+    at Router (http://localhost:3001/static/js/0.chunk.js:128947:15)
+    at BrowserRouter (http://localhost:3001/static/js/0.chunk.js:126888:5)
+    at div
+    at div
+    at div
+    at div
+    at App
