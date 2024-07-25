@@ -33,6 +33,11 @@ const encryptData = (data) => {
   return CryptoJS.AES.encrypt(JSON.stringify(data), secretKey).toString();
 };
 
+const decryptData = (encryptedData) => {
+  const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
+  return bytes.toString(CryptoJS.enc.Utf8);
+};
+
 const SideNavBar = () => {
   const [isExpanded, setExpandState] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
