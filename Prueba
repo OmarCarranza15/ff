@@ -1,10 +1,24 @@
-En el código del `Login`, parece que estás encriptando el nombre de usuario usando `CryptoJS.AES.encrypt` y almacenándolo en `sessionStorage`. Si el nombre de usuario se almacena correctamente en `sessionStorage` pero se muestra con comillas en el `TopBar`, probablemente se deba a cómo se está manejando el valor en el `TopBar`.
+Si el nombre de usuario sigue mostrándose con comillas, es posible que el problema esté en cómo se guarda o se procesa el valor en el `sessionStorage` o en cómo se maneja el valor desencriptado. Vamos a abordar esto de la siguiente manera:
 
-A continuación, realizaré algunos ajustes para asegurarnos de que el nombre de usuario se maneje correctamente tanto en el `Login` como en el `TopBar`:
+### 1. Verifica el Almacenamiento en `sessionStorage`
 
-### Ajustes en `Login.jsx`
+Asegúrate de que el valor guardado en `sessionStorage` no tenga comillas adicionales. Revisa cómo se guarda el valor en `sessionStorage` en la función `handleSubmit` del `Login`.
 
-Asegúrate de que el nombre de usuario se encripte correctamente y que no haya comillas adicionales en el momento de guardar el nombre en `sessionStorage`. Puedes agregar un `console.log` para verificar cómo se almacena.
+### 2. Revisa el Proceso de Encriptación y Desencriptación
+
+Confirma que la encriptación y desencriptación se realicen correctamente y que no introduzcan comillas. Verifica los pasos en `Login` y `TopBar` para asegurarte de que se maneja correctamente.
+
+### 3. Elimina Espacios y Comillas Adicionales
+
+Puedes eliminar espacios en blanco y comillas adicionales en el proceso de desencriptación.
+
+### Código Revisado
+
+A continuación se muestra cómo ajustar el código para garantizar que se manejen adecuadamente los valores encriptados y desencriptados:
+
+#### `Login.jsx`
+
+Verifica si el nombre se almacena correctamente y sin comillas adicionales.
 
 ```js
 const handleSubmit = async (e) => {
@@ -55,9 +69,9 @@ const handleSubmit = async (e) => {
 };
 ```
 
-### Ajustes en `TopBar.jsx`
+#### `TopBar.jsx`
 
-Desencripta el nombre del usuario y asegúrate de que no tenga comillas adicionales. Verifica el valor desencriptado con un `console.log`.
+Asegúrate de que el valor desencriptado esté libre de comillas adicionales.
 
 ```js
 import React, { useEffect, useState } from "react";
@@ -75,19 +89,24 @@ const Image = styled.img`
 const secretKey = 'mySecretKey'; // Clave secreta para desencriptar datos
 
 const decryptData = (encryptedData) => {
-  const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
-  return bytes.toString(CryptoJS.enc.Utf8).trim(); // Asegúrate de eliminar espacios en blanco
+  try {
+    const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
+    return bytes.toString(CryptoJS.enc.Utf8).trim(); // Asegúrate de eliminar espacios en blanco
+  } catch (error) {
+    console.error("Error al desencriptar datos:", error);
+    return '';
+  }
 };
 
-const TopBar = ({ userName }) => {
+const TopBar = () => {
   const [username, setUsername] = useState('');
 
   useEffect(() => {
     const storedUsername = sessionStorage.getItem('username');
     if (storedUsername) {
       const decryptedUsername = decryptData(storedUsername); // Desencriptar nombre de usuario
-      setUsername(decryptedUsername);
       console.log("Decrypted Username:", decryptedUsername); // Verifica el valor desencriptado
+      setUsername(decryptedUsername);
     }
   }, []);
 
@@ -114,10 +133,10 @@ const TopBar = ({ userName }) => {
 export default TopBar;
 ```
 
-### Verificación
+### Pasos Adicionales
 
-- **Encriptación y Almacenamiento:** Usa `console.log` en `Login` para confirmar que el nombre de usuario se encripta correctamente y no contiene comillas adicionales.
+1. **Verifica en la Consola del Navegador:** Usa `console.log` para revisar los valores encriptados y desencriptados en la consola del navegador.
 
-- **Desencriptación y Renderizado:** Verifica en `TopBar` que el valor desencriptado no contenga comillas adicionales.
+2. **Revisa el Almacenamiento:** Abre las herramientas de desarrollo de tu navegador y revisa el contenido de `sessionStorage` para asegurarte de que los valores estén almacenados correctamente.
 
-Estos pasos deberían ayudarte a identificar y solucionar el problema con las comillas alrededor del nombre de usuario.
+Estos ajustes deben ayudarte a solucionar el problema con las comillas alrededor del nombre del usuario.
