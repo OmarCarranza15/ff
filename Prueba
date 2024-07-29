@@ -1,32 +1,85 @@
-Paises.jsx:305 
-        
-        
-        GET http://localhost:3000/dependencias/1 404 (Not Found)
-dispatchXhrRequest @ xhr.js:169
-xhr @ xhr.js:13
-dispatchRequest @ dispatchRequest.js:43
-_request @ Axios.js:148
-request @ Axios.js:39
-Axios.<computed> @ Axios.js:170
-wrap @ bind.js:5
-saveChanges @ Paises.jsx:305
-await in saveChanges (asincrónica)
-onClick @ Paises.jsx:433
-callCallback @ react-dom.development.js:3724
-invokeGuardedCallbackDev @ react-dom.development.js:3768
-invokeGuardedCallback @ react-dom.development.js:3825
-invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:3839
-executeDispatch @ react-dom.development.js:7982
-processDispatchQueueItemsInOrder @ react-dom.development.js:8008
-processDispatchQueue @ react-dom.development.js:8019
-dispatchEventsForPlugins @ react-dom.development.js:8028
-(anónimo) @ react-dom.development.js:8188
-batchedUpdates$1 @ react-dom.development.js:22611
-batchedUpdates @ react-dom.development.js:3572
-dispatchEventForPluginEventSystem @ react-dom.development.js:8187
-dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ react-dom.development.js:5694
-dispatchEvent @ react-dom.development.js:5688
-dispatchDiscreteEvent @ react-dom.development.js:5665
-Mostrar 22 más cuadros
-Mostrar menos
-Paises.jsx:365  Error al guardar los cambios AxiosError {message: 'Request failed with status code 404', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+.png$:31 
+ Uncaught 
+Error: Cannot find module './Hondura.png'
+    at webpackContextResolve (.png$:31:1)
+    at webpackContext (.png$:26:1)
+    at SideNavBar.jsx:105:1
+    at Array.map (<anonymous>)
+    at SideNavBar (SideNavBar.jsx:102:1)
+    at renderWithHooks (react-dom.development.js:13468:1)
+    at updateFunctionComponent (react-dom.development.js:17040:1)
+    at beginWork (react-dom.development.js:18759:1)
+    at HTMLUnknownElement.callCallback (react-dom.development.js:3724:1)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:3768:1)
+    at invokeGuardedCallback (react-dom.development.js:3825:1)
+    at beginWork$1 (react-dom.development.js:23728:1)
+    at performUnitOfWork (react-dom.development.js:22979:1)
+    at workLoopSync (react-dom.development.js:22899:1)
+    at renderRootSync (react-dom.development.js:22872:1)
+    at recoverFromConcurrentError (react-dom.development.js:22364:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:22277:1)
+    at workLoop (scheduler.development.js:227:1)
+    at flushWork (scheduler.development.js:205:1)
+    at performWorkUntilDeadline (scheduler.development.js:442:1)
+    at run (setImmediate.js:39:1)
+    at runIfPresent (setImmediate.js:67:1)
+    at onGlobalMessage (setImmediate.js:104:1)
+Paises.jsx:100 
+ The above error occurred in the <SideNavBar> component:
+
+    at SideNavBar (http://localhost:3001/static/js/main.chunk.js:10536:94)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:172800:6)
+    at div
+    at O (http://localhost:3001/static/js/0.chunk.js:172800:6)
+    at Paises (http://localhost:3001/static/js/main.chunk.js:6380:72)
+    at ProtectedRoute (http://localhost:3001/static/js/main.chunk.js:7025:3)
+    at RenderedRoute (http://localhost:3001/static/js/0.chunk.js:158771:5)
+    at Routes (http://localhost:3001/static/js/0.chunk.js:159462:5)
+    at div
+    at Router (http://localhost:3001/static/js/0.chunk.js:159396:15)
+    at BrowserRouter (http://localhost:3001/static/js/0.chunk.js:157337:5)
+    at div
+    at div
+    at div
+    at div
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+react-dom.development.js:23288 
+ Uncaught 
+Error: Cannot find module './Hondura.png'
+    at webpackContextResolve (.png$:31:1)
+    at webpackContext (.png$:26:1)
+    at SideNavBar.jsx:105:1
+    at Array.map (<anonymous>)
+    at SideNavBar (SideNavBar.jsx:102:1)
+    at renderWithHooks (react-dom.development.js:13468:1)
+    at updateFunctionComponent (react-dom.development.js:17040:1)
+    at beginWork (react-dom.development.js:18759:1)
+    at beginWork$1 (react-dom.development.js:23706:1)
+    at performUnitOfWork (react-dom.development.js:22979:1)
+    at workLoopSync (react-dom.development.js:22899:1)
+    at renderRootSync (react-dom.development.js:22872:1)
+    at recoverFromConcurrentError (react-dom.development.js:22364:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:22277:1)
+    at workLoop (scheduler.development.js:227:1)
+    at flushWork (scheduler.development.js:205:1)
+    at performWorkUntilDeadline (scheduler.development.js:442:1)
+    at run (setImmediate.js:39:1)
+    at runIfPresent (setImmediate.js:67:1)
+    at onGlobalMessage (setImmediate.js:104:1)
+VM2006:2 
+ Uncaught 
+ReferenceError: process is not defined
+    at 4043 (<anonymous>:2:13168)
+    at r (<anonymous>:2:306599)
+    at 8048 (<anonymous>:2:9496)
+    at r (<anonymous>:2:306599)
+    at 8641 (<anonymous>:2:1379)
+    at r (<anonymous>:2:306599)
+    at <anonymous>:2:315627
+    at <anonymous>:2:324225
+    at <anonymous>:2:324229
+    at e.onload (index.js:1714:1)
