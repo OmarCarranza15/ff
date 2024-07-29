@@ -1,39 +1,115 @@
-Aquí están los códigos específicos actualizados para manejar la auditoría y desencriptar el `userId`:
+Aquí están los fragmentos específicos que debes modificar o agregar:
 
-### 1. **Desencriptar `userId` y realizar auditoría**
+### 1. **Desencriptar `userId` en `MatrizPais`**
+
+Modifica el `useEffect` para desencriptar el `userId`:
 
 ```jsx
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useLocation } from 'react-router-dom';
-import { decryptData } from './utils'; // Asegúrate de tener esta función
+useEffect(() => {
+  const searchParams = new URLSearchParams(location.search);
+  const paisIdEncrypted = searchParams.get("pais");
+  const paisNombreEncrypted = searchParams.get("Nombre");
+  const userIdEncrypted = searchParams.get("userId");
 
-const MatrizPais = () => {
-  const location = useLocation();
-  const [selectedCountryId, setSelectedCountryId] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [records, setRecords] = useState([]);
-  const [modalValues, setModalValues] = useState({
-    ID_Pais: '',
-    Rol: '',
-    Ticket: '',
-    Observaciones: '',
-    Puesto_Jefe: '',
-    Estado_Perfil: '',
-    ID_Puesto: '',
-    ID_Aplicaciones: '',
-    Cod_Menu: '',
-  });
-  const [errors, setErrors] = useState({});
-  const [showModal, setShowModal] = useState(false);
-  const [editMode, setEditMode] = useState(null);
-  const [editedRow, setEditedRow] = useState({});
-  const [userId, setUserId] = useState(null);
+  const paisId = decryptData(paisIdEncrypted);
+  const paisNombre = decryptData(paisNombreEncrypted);
+  const decryptedUserId = decryptData(userIdEncrypted);
 
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const paisIdEncrypted = searchParams.get("pais");
-    const paisNombreEncrypted = searchParams.get("Nombre");
-    const userIdEncrypted = searchParams.get("userId");
+  setSelectedCountryId(paisId);
+  setSelectedCountry(paisNombre);
+  setUserId(decryptedUserId);
 
-    const paisId = decryptData(paisIdEncrypted);
+  // Fetch data function
+  const fetchData = async () => {
+    // Fetch data logic here
+  };
+
+  fetchData();
+}, [location.search]);
+```
+
+### 2. **Guardar cambios y auditoría en `MatrizPais`**
+
+Actualiza la función `saveModal` para registrar la acción en la tabla de auditoría:
+
+```jsx
+const saveModal = async () => {
+  const newErrors = {}; // Add validation logic
+  if (Object.values(newErrors).every((error) => error === '')) {
+    try {
+      const newPerfil = {
+        Estado_Perfil: 1,
+        ID_Pais: selectedCountryId,
+        ID_Aplicaciones: parseInt(modalValues.ID_Aplicaciones, 10),
+        ID_Puesto: parseInt(modalValues.ID_Puesto, 10),
+        Rol: modalValues.Rol,
+        Ticket: parseInt(modalValues.Ticket, 10),
+        Observaciones: modalValues.Observaciones,
+        Puesto_Jefe: modalValues.Puesto_Jefe,
+        Cod_Menu: modalValues.Cod_Menu,
+      };
+
+      await axios.post('http://localhost:3000/perfil', newPerfil);
+
+      await axios.post('http://localhost:3000/auditoria', {
+        Columna: 'Perfil',
+        Campo_Original: '',
+        Campo_Nuevo: JSON.stringify(newPerfil),
+        Matriz: 'Perfil',
+        Accion: 1, // 1 for Insert
+        ID_Usuario: userId,
+      });
+
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error al insertar un nuevo Perfil:', error);
+    }
+  }
+};
+```
+
+Actualiza la función `saveChanges` para registrar la acción en la tabla de auditoría:
+
+```jsx
+const saveChanges = async (id) => {
+  try {
+    const updateRow = {
+      ...editedRow,
+      Estado_Perfil: editedRow.Estado_Perfil === 'En Servicio' ? 1 : 2,
+    };
+
+    await axios.put(`http://localhost:3000/perfil/${id}`, updateRow);
+
+    await axios.post('http://localhost:3000/auditoria', {
+      Columna: 'Perfil',
+      Campo_Original: JSON.stringify(records.find((row) => row.id === id)),
+      Campo_Nuevo: JSON.stringify(updateRow),
+      Matriz: 'Perfil',
+      Accion: 2, // 2 for Update
+      ID_Usuario: userId,
+    });
+
+    const updatedRecords = records.map((row) =>
+      row.id === id ? { ...editedRow } : row
+    );
+    setRecords(updatedRecords);
+    setEditMode(null);
+  } catch (error) {
+    console.error('Error al actualizar el perfil:', error);
+  }
+};
+```
+
+### 3. **Función de desencriptación en `utils.js`**
+
+Agrega la función `decryptData`:
+
+```js
+// utils.js
+export const decryptData = (encryptedData) => {
+  // Implement your decryption logic here
+  return encryptedData; // Modify this line based on your decryption method
+};
+```
+
+Estos fragmentos son las partes esenciales que debes modificar o agregar en tu código para implementar la funcionalidad de auditoría y desencriptar el `userId`.
