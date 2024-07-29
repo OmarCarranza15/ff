@@ -137,8 +137,9 @@ CREATE TABLE Usuario (
 	FOREIGN KEY (ID_RolUsuario) REFERENCES RolUsuario(ID)
 );
 
-CREATE TABLE Auditoria (
+	CREATE TABLE Auditoria (
 	ID INT PRIMARY KEY IDENTITY,
+	Columna NVARCHAR(100),
 	Campo_Original NVARCHAR(100),
 	Cmapo_Nuevo NVARCHAR(100),
 	Matriz NVARCHAR(100),
