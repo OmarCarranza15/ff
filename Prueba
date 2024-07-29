@@ -1,161 +1,55 @@
-const SaveModal = async () => {
-    const newErrors = {
-        ID_Pais: "",
-        ID_Puesto: "",
-        ID_Aplicaciones: "",
-        Estado_Perfil: "",
-        Rol: "",
-        Puesto_Jefe: "",
-        Observaciones: "",
-        Ticket: "",
-        Cod_Menu: "",
+const saveChanges = async (id) => {
+  try {
+    // Obtén los datos originales del perfil
+    const originalProfile = records.find((row) => row.id === id);
+
+    // Prepara los datos actualizados
+    const updateRow = {
+      ...editedRow,
+      Estado_Perfil: editedRow.Estado_Perfil === "En Servicio" ? 1 : 2,
     };
 
-    // Validaciones
-    if (!modalValues.ID_Puesto) {
-        newErrors.puesto = "El campo Puesto es obligatorio";
+    // Realiza la actualización del perfil
+    await axios.put(`http://localhost:3000/perfil/${id}`, updateRow);
+
+    // Registra los cambios en la auditoría
+    const changes = [];
+
+    Object.keys(updateRow).forEach((key) => {
+      if (updateRow[key] !== originalProfile[key]) {
+        changes.push({
+          Columna: key,
+          Campo_Original: originalProfile[key] || "",
+          Campo_Nuevo: updateRow[key] || "",
+          Matriz: originalProfile.N_Pais, // El nombre del país o el identificador relevante
+          Accion: 1, // Acción: 1 para editar
+          ID_Usuario: /* ID del usuario actual */, // Asegúrate de obtener el ID del usuario actual
+        });
+      }
+    });
+
+    // Insertar los cambios en la tabla de auditoría
+    if (changes.length > 0) {
+      await axios.post(`http://localhost:3000/auditoria`, changes);
     }
-    if (!modalValues.ID_Aplicaciones) {
-        newErrors.aplicacion = "El campo Aplicación es obligatorio";
-    }
-    if (!modalValues.Rol.trim()) {
-        newErrors.Rol = "El rol es obligatorio";
-    }
-    if (!modalValues.Ticket.trim()) {
-    } else if (!/^\d+$/.test(modalValues.Ticket)) {
-        newErrors.Ticket = "Solo se aceptan Dígitos";
-    }
-    if (!modalValues.Puesto_Jefe.trim()) {
-        newErrors.Puesto_Jefe =
-            "El nombre del puesto del jefe inmediato es obligatorio.";
-    } else if (!/^[a-zA-Z\s]+$/.test(modalValues.Puesto_Jefe)) {
-        newErrors.Puesto_Jefe =
-            "El campo del jefe inmediato solo acepta letras y espacios en blanco.";
+
+    // Realiza actualizaciones adicionales si es necesario
+    if (editedRow.ID_Ambiente !== originalProfile.ID_Ambiente) {
+      await axios.put(`http://localhost:3000/aplicacion/${editedRow.ID_Aplicaciones}`, {
+        ID_Ambiente: editedRow.ID_Ambiente,
+      });
     }
 
-    setErrors(newErrors);
+    // Realiza actualizaciones adicionales según sea necesario...
 
-    // Si no hay errores, proceder a insertar el nuevo perfil
-    if (Object.values(newErrors).every((error) => error === "")) {
-        try {
-            // Verificar si el perfil ya existe en la base de datos
-            console.log("Verificando si el perfil ya existe...");
-            const response = await axios.get(`http://localhost:3000/perfil`);
-            console.log("Datos recibidos del servidor:", response.data);
+    // Actualiza la UI
+    const updatedRecords = records.map((row) =>
+      row.id === id ? { ...row, ...updateRow } : row
+    );
+    setRecords(updatedRecords);
 
-            const perfiles = response.data;
-
-            const rollExistente = perfiles.some(
-                (perfil) => perfil.Rol.toLowerCase() === modalValues.Rol.toLowerCase()
-            );
-            const jefeinExistente = perfiles.some(
-                (perfil) =>
-                    perfil.Puesto_Jefe.toLowerCase() ===
-                    modalValues.Puesto_Jefe.toLowerCase()
-            );
-            const paisExistente = perfiles.some(
-                (perfil) => perfil.ID_Pais.toString() === modalValues.ID_Pais
-            );
-            const puestoExistente = perfiles.some(
-                (perfil) => perfil.ID_Puesto.toString() === modalValues.ID_Puesto
-            );
-            const aplicacionExistente = perfiles.some(
-                (perfil) =>
-                    perfil.ID_Aplicaciones.toString() === modalValues.ID_Aplicaciones
-            );
-
-            if (
-                rollExistente &&
-                jefeinExistente &&
-                paisExistente &&
-                puestoExistente &&
-                aplicacionExistente
-            ) {
-                setErrors({
-                    ...newErrors,
-                    PerError:
-                        "El perfil ya existe, cambiar uno de los valores Rol, Jefe Inmediato, Puesto, Aplicacion o Pais",
-                });
-                return;
-            }
-
-            // Datos del nuevo perfil
-            const newPerfil = {
-                Estado_Perfil: 1,
-                ID_Pais: selectedCountryId,
-                ID_Aplicaciones: parseInt(modalValues.ID_Aplicaciones, 10),
-                ID_Puesto: parseInt(modalValues.ID_Puesto, 10),
-                Rol: modalValues.Rol,
-                Ticket: parseInt(modalValues.Ticket, 10),
-                Observaciones: modalValues.Observaciones,
-                Puesto_Jefe: modalValues.Puesto_Jefe,
-                Cod_Menu: modalValues.Cod_Menu,
-            };
-
-            console.log("Enviando datos:", newPerfil);
-
-            // Enviar solicitud POST para insertar el nuevo perfil
-            const insertResponse = await axios.post(
-                `http://localhost:3000/perfil`,
-                newPerfil
-            );
-            console.log("Respuesta de inserción:", insertResponse.data);
-
-            // Registrar en auditoría
-            const auditEntry = {
-                action: "INSERT",
-                table: "Perfil",
-                oldValue: null,
-                newValue: newPerfil,
-                timestamp: new Date().toISOString(),
-                userId: "USER_ID" // Reemplaza con el ID del usuario actual si está disponible
-            };
-
-            await axios.post(`http://localhost:3000/auditoria`, auditEntry);
-
-            // Actualizar la lista de perfiles con el nuevo perfil
-            const aplicacionResponse = await axios.get(
-                `http://localhost:3000/aplicacion/${modalValues.ID_Aplicaciones}`
-            );
-
-            const puestoResponse = await axios.get(
-                `http://localhost:3000/puesto/${modalValues.ID_Puesto}`
-            );
-
-            const updatedRecords = [
-                ...records,
-                {
-                    id: insertResponse.data.id,
-                    Rol: modalValues.Rol,
-                    Observaciones: modalValues.Observaciones,
-                    Puesto_Jefe: modalValues.Puesto_Jefe,
-                    Ticket: parseInt(modalValues.Ticket, 10),
-                    Estado_Perfil: 1,
-                    ID_Pais: selectedCountryId,
-                    ID_Aplicaciones: modalValues.ID_Aplicaciones,
-                    N_Aplicaciones: aplicacionResponse.data.N_Aplicaciones,
-                    ID_Puesto: modalValues.ID_Puesto,
-                    N_Puesto: puestoResponse.data.N_Puesto,
-                    Cod_Menu: modalValues.Cod_Menu,
-                },
-            ];
-
-            setRecords(updatedRecords);
-            setShowModal(false); // Ocultar el modal después de guardar
-            setModalValues({
-                ID_Pais: "",
-                Rol: "",
-                Ticket: "",
-                Observaciones: "",
-                Puesto_Jefe: "",
-                Estado_Perfil: "",
-                ID_Puesto: "",
-                ID_Aplicaciones: "",
-                Cod_Menu: "",
-            }); // Limpiar los valores del modal
-            window.location.reload();
-        } catch (error) {
-            console.error("Error al insertar un nuevo Perfil:", error);
-        }
-    }
+    setEditMode(null); // Salir del modo de edición
+  } catch (error) {
+    console.error("Error al guardar los cambios:", error);
+  }
 };
