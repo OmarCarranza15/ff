@@ -28,9 +28,13 @@ const saveChanges = async (id) => {
       }
     });
 
+    // Verifica los cambios que se están enviando
+    console.log("Cambios para registrar:", changes);
+
     // Insertar los cambios en la tabla de auditoría
     if (changes.length > 0) {
-      await axios.post(`http://localhost:3000/auditoria`, changes);
+      const response = await axios.post(`http://localhost:3000/auditoria`, changes);
+      console.log("Respuesta del servidor:", response.data);
     }
 
     // Realiza actualizaciones adicionales si es necesario
