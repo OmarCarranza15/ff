@@ -44,7 +44,7 @@ const decryptData = (encryptedData) => {
 
 
 
-function LandingPage() {
+function MatrizPais() {
   const [records, setRecords] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -1357,4 +1357,4 @@ function LandingPage() {
   );
 }
 
-export default LandingPage;
+export default MatrizPais;
