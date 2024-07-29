@@ -1,14 +1,547 @@
-CREATE TRIGGER trg_Auditoria_Insert_Perfiles
-ON Perfiles
-AFTER INSERT
-AS
-BEGIN
-    INSERT INTO Auditoria (Tabla, Accion, ID_Usuario, createdAt, updatedAt)
-    SELECT 
-        'Perfiles' AS Tabla,
-        1 AS Accion, -- 1 para inserción
-        0 AS ID_Usuario, -- Valor predeterminado, ajusta según tu implementación
-        GETDATE() AS createdAt,
-        GETDATE() AS updatedAt
-    FROM inserted;
-END;
+useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const paisIdEncrypted  = searchParams.get("pais");
+    const paisNombreEncrypted  = searchParams.get("Nombre");
+
+
+    const paisId = decryptData(paisIdEncrypted);
+    const paisNombre = decryptData(paisNombreEncrypted);
+
+    setSelectedCountryId(paisId);
+    setSelectedCountry(paisNombre);
+
+    //console.log('Nombre del Pais:', paisNombre);
+
+    const encrypPermissions = sessionStorage.getItem("userPermissions");
+    if (encrypPermissions) {
+      const storedPermissions = decryptData(encrypPermissions);
+      //console.log('Permisos:', storedPermissions);
+      setPermissions(JSON.parse(storedPermissions));
+    }
+
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(`http://localhost:3000/perfil/`);
+        const data = response.data;
+        const filteredData = data.filter(
+          (perfil) => perfil.ID_Pais === parseInt(paisId, 10)
+        );
+        const mappedData = await Promise.all(
+          filteredData.map(async (perfil) => {
+            const puestoResponse = await axios.get(
+              `http://localhost:3000/puesto/${perfil.ID_Puesto}`
+            );
+            const aplicacionResponse = await axios.get(
+              `http://localhost:3000/aplicacion/${perfil.ID_Aplicaciones}`
+            );
+            const rsocialResponse = await axios.get(
+              `http://localhost:3000/rsocial/${puestoResponse.data.ID_RSocial}`
+            );
+            const divisionResponse = await axios.get(
+              `http://localhost:3000/division/${puestoResponse.data.ID_Division}`
+            );
+            const departamentoResponse = await axios.get(
+              `http://localhost:3000/departamento/${puestoResponse.data.ID_Departamento}`
+            );
+            const centrocostosResponse = await axios.get(
+              `http://localhost:3000/centrocosto/${puestoResponse.data.ID_CentroCostos}`
+            );
+            const paisResponse = await axios.get(
+              `http://localhost:3000/pais/${perfil.ID_Pais}`
+            );
+            const ambienteResponse = await axios.get(
+              `http://localhost:3000/ambiente/${aplicacionResponse.data.ID_Ambiente}`
+            );
+
+            return {
+              N_RSocial: rsocialResponse.data.N_RSocial,
+              N_Division: divisionResponse.data.N_Division,
+              N_Puesto: puestoResponse.data.N_Puesto,
+              N_Pais: paisResponse.data.N_Pais,
+              N_Departamento: departamentoResponse.data.N_Departamento,
+              Rol: perfil.Rol,
+              N_Aplicaciones: aplicacionResponse.data.N_Aplicaciones,
+              N_Ambiente: ambienteResponse.data.N_Ambiente,
+              Puesto_Jefe: perfil.Puesto_Jefe,
+              Ticket: perfil.Ticket,
+              Observaciones: perfil.Observaciones,
+              Estado_Perfil:
+                perfil.Estado_Perfil === 1 ? "En Servicio" : "Suspendido",
+              id: perfil.id,
+              ID_Pais: perfil.ID_Pais,
+              ID_Aplicaciones: perfil.ID_Aplicaciones,
+              ID_Puesto: perfil.ID_Puesto,
+              Cod_Menu: perfil.Cod_Menu,
+              ID_Ambiente: aplicacionResponse.data.ID_Ambiente,
+              ID_RSocial: puestoResponse.data.ID_RSocial,
+              ID_Division: puestoResponse.data.ID_Division,
+              ID_Departamento: puestoResponse.data.ID_Departamento,
+              ID_CentroCostos: puestoResponse.data.ID_CentroCostos,
+              Nombre: centrocostosResponse.data.Nombre,
+            };
+          })
+        );
+        setRecords(mappedData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error al obtener los perfiles:", error);
+        setLoading(false);
+      }
+    };
+
+    const fetchPuestos = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/puesto/`);
+        const allPuestos = response.data;
+        const filteredPuestos = allPuestos.filter(
+          (puestos) => puestos.ID_Pais === parseInt(paisId, 10)
+        );
+        setPuestos(filteredPuestos);
+      } catch (error) {
+        console.error("Error al obtener la lista de puestos", error);
+      }
+    };
+    const fetchRsocial = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/rsocial/`);
+        setRsocial(response.data);
+      } catch (error) {
+        console.error("Error al obtener la lista de razon social", error);
+      }
+    };
+    const fetchDivision = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/division/`);
+        setDivision(response.data);
+      } catch (error) {
+        console.error("Error al obtener la lista de division", error);
+      }
+    };
+    const fetchDepartamento = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/departamento/`);
+        setDepartamento(response.data);
+      } catch (error) {
+        console.error("Error al obtener la lista de departamentos", error);
+      }
+    };
+    const fetchCentrocostos = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/centrocosto/`);
+        setCentrocostos(response.data);
+      } catch (error) {
+        console.error("Error al obtener la lista de centro de costos", error);
+      }
+    };
+    const fetchAplicacion = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/aplicacion/`);
+        const allAplicaciones = response.data;
+        const filteredAplicaciones = allAplicaciones.filter(
+          (aplicacion) => aplicacion.ID_Pais === parseInt(paisId, 10)
+        );
+        setAplicacion(filteredAplicaciones);
+      } catch (error) {
+        console.error("Error al obtener la lista de aplicaciones", error);
+      }
+    };
+    const fetchAmbiente = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/ambiente/`);
+        setAmbiente(response.data);
+      } catch (error) {
+        console.error("Error al obtener la lista de ambientes", error);
+      }
+    };
+    fetchAmbiente();
+    fetchAplicacion();
+    fetchCentrocostos();
+    fetchDepartamento();
+    fetchDivision();
+    fetchRsocial();
+    fetchPuestos();
+    fetchData();
+  }, [location.search]);
+
+  const handleFilterChange = (event, column) => {
+    const { value } = event.target;
+    setFilters((prevFilters) => ({ ...prevFilters, [column]: value }));
+  };
+
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
+
+  const handleInsert = () => {
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalValues({
+      ID_Pais: "",
+      Rol: "",
+      Ticket: "",
+      Observaciones: "",
+      Puesto_Jefe: "",
+      Cod_Menu: "",
+      Estado_Perfil: "",
+      ID_Puesto: "",
+      ID_Aplicaciones: "",
+    });
+    setErrors({
+      ID_Pais: "",
+      Rol: "",
+      Ticket: "",
+      Observaciones: "",
+      Puesto_Jefe: "",
+      Cod_Menu: "",
+      Estado_Perfil: "",
+      ID_Puesto: "",
+      ID_Aplicaciones: "",
+    });
+    setT24(false);
+  };
+
+  const handleModalChange = (e, fieldName) => {
+    const value = e.target.value;
+
+    // Actualizar el valor del campo en modalValues
+    setModalValues((prevModalValues) => ({
+      ...prevModalValues,
+      [fieldName]: value,
+    }));
+
+    // Encontrar la aplicación seleccionada en la lista de aplicaciones
+    const selectedApplication = aplicacion.find(
+      (app) => app.id === parseInt(value)
+    ); // Asegúrate de convertir a entero si es necesario
+
+    // Verificar si la aplicación seleccionada es T24
+    const isT24 = selectedApplication
+      ? selectedApplication.N_Aplicaciones === "T24"
+      : false;
+
+    // Actualizar el estado T24
+    setT24(isT24);
+
+    // Log para verificar en consola la aplicación seleccionada
+    //console.log('Aplicación seleccionada:', selectedApplication);
+  };
+
+  const SaveModal = async () => {
+    const newErrors = {
+      ID_Pais: "",
+      ID_Puesto: "",
+      ID_Aplicaciones: "",
+      Estado_Perfil: "",
+      Rol: "",
+      Puesto_Jefe: "",
+      Observaciones: "",
+      Ticket: "",
+      Cod_Menu: "",
+    };
+
+    if (!modalValues.ID_Puesto) {
+      newErrors.puesto = "El campo Puesto es obligatorio";
+    }
+    if (!modalValues.ID_Aplicaciones) {
+      newErrors.aplicacion = "El campo Aplicación es obligatorio";
+    }
+    if (!modalValues.Rol.trim()) {
+      newErrors.Rol = "El rol es obligatorio";
+    }
+    if (!modalValues.Ticket.trim()) {
+    } else if (!/^\d+$/.test(modalValues.Ticket)) {
+      newErrors.Ticket = "Solo se aceptan Dígitos";
+    }
+    if (!modalValues.Puesto_Jefe.trim()) {
+      newErrors.Puesto_Jefe =
+        "El nombre del puesto del jefe inmediato es obligatorio.";
+    } else if (!/^[a-zA-Z\s]+$/.test(modalValues.Puesto_Jefe)) {
+      newErrors.Puesto_Jefe =
+        "El campo del jefe inmediato solo acepta letras y espacios en blanco.";
+    }
+
+    setErrors(newErrors);
+
+    // Si no hay errores, proceder a insertar el nuevo perfil
+    if (Object.values(newErrors).every((error) => error === "")) {
+      try {
+        // Verificar si el perfil ya existe en la base de datos
+        console.log("Verificando si el perfil ya existe...");
+        const response = await axios.get(`http://localhost:3000/perfil`);
+        console.log("Datos recibidos del servidor:", response.data);
+
+        const perfiles = response.data;
+
+        const rollExistente = perfiles.some(
+          (perfil) => perfil.Rol.toLowerCase() === modalValues.Rol.toLowerCase()
+        );
+        const jefeinExistente = perfiles.some(
+          (perfil) =>
+            perfil.Puesto_Jefe.toLowerCase() ===
+            modalValues.Puesto_Jefe.toLowerCase()
+        );
+        const paisExistente = perfiles.some(
+          (perfil) => perfil.ID_Pais.toString() === modalValues.ID_Pais
+        );
+        const puestoExistente = perfiles.some(
+          (perfil) => perfil.ID_Puesto.toString() === modalValues.ID_Puesto
+        );
+        const aplicacionExistente = perfiles.some(
+          (perfil) =>
+            perfil.ID_Aplicaciones.toString() === modalValues.ID_Aplicaciones
+        );
+
+        if (
+          rollExistente &&
+          jefeinExistente &&
+          paisExistente &&
+          puestoExistente &&
+          aplicacionExistente
+        ) {
+          setErrors({
+            ...newErrors,
+            PerError:
+              "El perfil ya existe, cambiar uno de los valores Rol, Jefe Inmediato, Puesto, Aplicacion o Pais",
+          });
+          return;
+        }
+
+        // Datos del nuevo perfil
+        const newPerfil = {
+          Estado_Perfil: 1,
+          ID_Pais: selectedCountryId,
+          ID_Aplicaciones: parseInt(modalValues.ID_Aplicaciones, 10),
+          ID_Puesto: parseInt(modalValues.ID_Puesto, 10),
+          Rol: modalValues.Rol,
+          Ticket: parseInt(modalValues.Ticket, 10),
+          Observaciones: modalValues.Observaciones,
+          Puesto_Jefe: modalValues.Puesto_Jefe,
+          Cod_Menu: modalValues.Cod_Menu,
+        };
+
+        console.log("Enviando datos:", newPerfil);
+
+        // Enviar solicitud POST para insertar el nuevo perfil
+        const insertResponse = await axios.post(
+          `http://localhost:3000/perfil`,
+          newPerfil
+        );
+        console.log("Respuesta de inserción:", insertResponse.data);
+
+        // Actualizar la lista de perfiles con el nuevo perfil
+        /*const paisResponse = await axios.get(
+          `http://localhost:3000/pais/${modalValues.ID_Pais}`
+        );*/
+        const aplicacionResponse = await axios.get(
+          `http://localhost:3000/aplicacion/${modalValues.ID_Aplicaciones}`
+        );
+
+        const puestoResponse = await axios.get(
+          `http://localhost:3000/puesto/${modalValues.ID_Puesto}`
+        );
+
+        console.log("Datos de respuesta para actualizar la UI:", {
+          aplicacionResponse: aplicacionResponse.data,
+          puestoResponse: puestoResponse.data,
+        });
+
+        const updatedRecords = [
+          ...records,
+          {
+            id: insertResponse.data.id,
+            Rol: modalValues.Rol,
+            Observaciones: modalValues.Observaciones,
+            Puesto_Jefe: modalValues.Puesto_Jefe,
+            Ticket: parseInt(modalValues.Ticket, 10),
+            Estado_Perfil: 1,
+            ID_Pais: selectedCountryId,
+            ID_Aplicaciones: modalValues.ID_Aplicaciones,
+            N_Aplicaciones: aplicacionResponse.data.N_Aplicaciones,
+            ID_Puesto: modalValues.ID_Puesto,
+            N_Puesto: puestoResponse.data.N_Puesto,
+            Cod_Menu: modalValues.Cod_Menu,
+          },
+        ];
+
+        setRecords(updatedRecords);
+        setShowModal(false); // Ocultar el modal después de guardar
+        setModalValues({
+          ID_Pais: "",
+          Rol: "",
+          Ticket: "",
+          Observaciones: "",
+          Puesto_Jefe: "",
+          Estado_Perfil: "",
+          ID_Puesto: "",
+          ID_Aplicaciones: "",
+          Cod_Menu: "",
+        }); // Limpiar los valores del modal
+        window.location.reload();
+      } catch (error) {
+        console.error("Error al insertar un nuevo Perfil:", error);
+      }
+    }
+  };
+
+  const startEdit = (row) => {
+    setEditedRow({ ...row });
+    setEditMode(row.id);
+  };
+
+  const handleEditChange = (event, field) => {
+    const { value } = event.target;
+    setEditedRow((prevState) => {
+      const updatedRow = {
+        ...prevState,
+        [field]: value,
+        ...(field === "ID_Aplicaciones" && {
+          N_Aplicaciones: aplicacion.find((p) => p.id === parseInt(value))
+            .N_Aplicaciones,
+        }),
+        ...(field === "ID_Puesto" && {
+          N_Puesto: puestos.find((p) => p.id === parseInt(value)).N_Puesto,
+        }),
+        ...(field === "ID_Ambiente" && {
+          N_Ambiente: ambiente.find((p) => p.id === parseInt(value)).N_Ambiente,
+        }),
+        ...(field === "ID_RSocial" && {
+          N_RSocial: rsocial.find((p) => p.id === parseInt(value)).N_RSocial,
+        }),
+        ...(field === "ID_Division" && {
+          N_Division: division.find((p) => p.id === parseInt(value)).N_Division,
+        }),
+        ...(field === "ID_Departamento" && {
+          N_Departamento: departamento.find((p) => p.id === parseInt(value))
+            .N_Departamento,
+        }),
+        ...(field === "ID_CentroCostos" && {
+          Nombre: centrocosto.find((p) => p.id === parseInt(value)).Nombre,
+        }),
+      };
+
+      // Si la aplicación no es T24, borrar el Cod_Menu
+      if (field === "ID_Aplicaciones" && updatedRow.N_Aplicaciones !== "T24") {
+        updatedRow.Cod_Menu = "";
+      }
+
+      return updatedRow;
+    });
+    validateInput(field, value);
+  };
+
+  const validateInput = (field, value) => {
+    let newErrors = { ...errors };
+    if (field === "Ticket") {
+      if (!/^\d+$/.test(modalValues.Ticket)) {
+        newErrors.Ticket = "Solo se aceptan Digitos";
+      }
+    } else if (field === "ID_Aplicaciones") {
+      if (!value.trim()) {
+        newErrors.ID_Aplicaciones = "El campo Aplicacion es obligatorio";
+      } else {
+        newErrors.ID_Aplicaciones = "";
+      }
+    } else if (field === "ID_Puesto") {
+      if (!value.trim()) {
+        newErrors.ID_Puesto = "El campo Puesto es obligatorio";
+      } else {
+        newErrors.ID_Puesto = "";
+      }
+    } else if (field === "Rol") {
+      if (!value.trim()) {
+        newErrors.Rol = "El campo Rol es obligatorio";
+      } else {
+        newErrors.Rol = "";
+      }
+    } else if (field === "Puesto_Jefe") {
+      if (!value.trim()) {
+        newErrors.Puesto_Jefe = "EL campo puesto es obligatorio";
+      } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+        newErrors.Puesto_Jefe =
+          "El campo del jefe inmediato solo acepta letras y espacios en blanco.";
+      } else {
+        newErrors.Puesto_Jefe = "";
+      }
+    }
+    setErrors(newErrors);
+  };
+
+  const saveChanges = async (id) => {
+    try {
+      const updateRow = {
+        ...editedRow,
+        Estado_Perfil: editedRow.Estado_Perfil === "En Servicio" ? 1 : 2,
+      };
+
+      await axios.put(`http://localhost:3000/perfil/${id}`, updateRow);
+
+      if (
+        editedRow.ID_Ambiente !==
+        records.find((row) => row.id === id).ID_Ambiente
+      ) {
+        await axios.put(
+          `http://localhost:3000/aplicacion/${editedRow.ID_Aplicaciones}`,
+          {
+            ID_Ambiente: editedRow.ID_Ambiente,
+          }
+        );
+      }
+
+      if (
+        editedRow.ID_RSocial !== records.find((row) => row.id === id).ID_RSocial
+      ) {
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
+          ID_RSocial: editedRow.ID_RSocial,
+        });
+      }
+
+      if (
+        editedRow.ID_Division !==
+        records.find((row) => row.id === id).ID_Division
+      ) {
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
+          ID_Division: editedRow.ID_Division,
+        });
+      }
+
+      if (
+        editedRow.ID_Departamento !==
+        records.find((row) => row.id === id).ID_Departamento
+      ) {
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
+          ID_Departamento: editedRow.ID_Departamento,
+        });
+      }
+
+      if (
+        editedRow.ID_CentroCostos !==
+        records.find((row) => row.id === id).ID_CentroCostos
+      ) {
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
+          ID_CentroCostos: editedRow.ID_CentroCostos,
+        });
+      }
+
+      const updatedRecords = records.map((row) =>
+        row.id === id ? { ...editedRow } : row
+      );
+      //setRecords(updatedRecordsPuesto);
+      setRecords(updatedRecords);
+      setEditedRow(null);
+      setEditMode(null);
+
+      console.log("Cambios guardados correctamente");
+      window.location.reload();
+    } catch (error) {
+      console.error("Error al guardar los cambios", error);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditedRow(null);
+    setEditMode(null);
+  };
