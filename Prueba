@@ -1,165 +1,109 @@
+Para agregar la restricción de no permitir la edición del nombre de un país si ya existe en alguna tabla de tu base de datos, debes realizar algunas modificaciones en tu código. Aquí te muestro cómo hacerlo:
 
-import React, { useState, useEffect } from "react";
-import CryptoJS from "crypto-js";
-import styled from "styled-components";
-import "../styles/SideNavBar.css";
-import axios from "axios";
-import "bootstrap/dist/css/bootstrap.min.css";
-import defaultFlag from '../imgs/default.png'; // Ruta a la imagen por defecto
+1. **Agregar una función para verificar si el país existe en otras tablas:**
 
-const Banderas = styled.img`
-  width: 20px;
-  height: 20px;
-`;
+   Primero, necesitas una función que verifique si el país que intentas modificar existe en otras tablas. Esta función hará una solicitud a tu backend para realizar la verificación.
 
-const secretKey = 'mySecretKey'; // Clave secreta para encriptar datos
+   ```javascript
+   const checkIfCountryIsUsed = async (paisName) => {
+     try {
+       const response = await axios.get(`http://localhost:3000/pais/checkIfUsed?N_Pais=${paisName}`);
+       return response.data.isUsed;
+     } catch (error) {
+       console.error("Error checking if country is used:", error);
+       return false;
+     }
+   };
+   ```
 
-const encryptData = (data) => {
-  return CryptoJS.AES.encrypt(JSON.stringify(data), secretKey).toString();
-};
+2. **Modificar la función `saveChanges` para incluir esta verificación:**
 
-const decryptData = (encryptedData) => {
-  const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
-  return bytes.toString(CryptoJS.enc.Utf8);
-};
+   Antes de guardar los cambios, verifica si el país ya está en uso.
 
-const SideNavBar = () => {
-  const [isExpanded, setExpandState] = useState(false);
-  const [activeMenu, setActiveMenu] = useState(null);
-  const [paises, setPaises] = useState([]);
-  const [userRole, setUserRole] = useState(null);
-  const [userCountries, setUserCountries] = useState([]);
+   ```javascript
+   const saveChanges = async (id) => {
+     try {
+       // Verificar si el país ya está en uso en otras tablas
+       const isUsed = await checkIfCountryIsUsed(editedRow.N_Pais);
 
-  useEffect(() => {
-    const encryptedRole = sessionStorage.getItem('userRole');
-    if (encryptedRole) {
-      const decryptedRole = decryptData(encryptedRole);
-      setUserRole(decryptedRole);
-    }
+       if (isUsed) {
+         const errorNotification = document.createElement("div");
+         errorNotification.className = "error-notification";
+         errorNotification.innerHTML = `
+           <span class="error-icon">!</span>
+           <span class="error-message">
+             El País que intenta actualizar ya está en uso en otras tablas.
+             Por favor, ingrese un nombre de país diferente.
+           </span>
+         `;
+         document.body.appendChild(errorNotification);
 
-    const fetchUserRole = async () => {
-      if (!userRole) return; // Esperar a que el rol sea desencriptado
-      try {
-        const response = await axios.get(`http://localhost:3000/rolusuario/${userRole}`);
-        const paisesPermitidos = response.data.Paises ? response.data.Paises.split(',').map(id => id.trim()) : [];
-        setUserCountries(paisesPermitidos);
-      } catch (error) {
-        console.error("Error al obtener el rol del usuario", error);
-      }
-    };
+         // Ocultar la notificación después de 2 segundos
+         setTimeout(() => {
+           errorNotification.remove();
+         }, 2000);
+         return;
+       }
 
-    fetchUserRole();
+       // Check if the updated country is already registered
+       const existingCountry = records.find(
+         (row) => row.N_Pais.toLowerCase() === editedRow.N_Pais.toLowerCase()
+       );
 
-    const fetchPaises = async () => {
-      try {
-        const response = await axios.get(`http://localhost:3000/pais/`);
-        setPaises(response.data);
-      } catch (error) {
-        console.error("Error al obtener la lista de paises", error);
-      }
-    };
-    fetchPaises();
-  }, [userRole]);
+       if (existingCountry && existingCountry.id !== id) {
+         setErrors({ N_Pais: "El país ya está registrado" });
+         return;
+       }
 
-  const handleImageError = (e) => {
-    e.target.src = defaultFlag; // Establecer la imagen por defecto en caso de error
-  };
+       await axios.put(`http://localhost:3000/pais/${id}`, updateRow);
 
-  const menuItems = [
-    {
-      title: "Matriz de Perfiles",
-      icon: <GrTable />,
-      subNav: [
-        {
-          title: "Reportes",
-          path: "/reportes",
-          icon: <GrDocumentDownload />,
-        },
-      ].concat(
-        paises
-          .filter(pais => userCountries.includes(pais.id.toString())) // Filtrar según los países del usuario
-          .map((pais) => {
-            // Verificar si el nombre de la imagen es válido
-            const imagePath = `../imgs/${pais.N_Pais}.png`;
-            return {
-              title: pais.N_Pais,
-              icon: (
-                <Banderas
-                  src={require(`${imagePath}`)}
-                  alt="Flag image"
-                  onError={handleImageError} // Manejar el error de carga de la imagen
-                />
-              ),
-              path: `/matrizPais?pais=${encodeURIComponent(encryptData(pais.id))}&Nombre=${encodeURIComponent(encryptData(pais.N_Pais))}`,
-            };
-          })
-      ),
-    },
-    // Otros elementos del menú...
-  ];
+       const updatedRecords = records.map((row) =>
+         row.id === id ? { ...editedRow } : row
+       );
 
-  const toggleSubMenu = (index) => {
-    setActiveMenu(activeMenu === index ? null : index);
-  };
+       setRecords(updatedRecords);
+       setEditedRow(null);
+       setEditMode(null);
 
-  const expandSidebar = () => {
-    setExpandState(true);
-  };
+       // Notificación de datos actualizados
+       const toastElement = document.createElement("div");
+       toastElement.className = "toast-notification";
+       toastElement.innerHTML = "País actualizado con éxito!";
 
-  const collapseSidebar = () => {
-    setExpandState(false);
-  };
+       document.body.appendChild(toastElement);
 
-  return (
-    <div
-      className={
-        isExpanded
-          ? "side-nav-container"
-          : "side-nav-container side-nav-container-NX"
-      }
-      onMouseEnter={expandSidebar}
-      onMouseLeave={collapseSidebar}
-    >
-      <div className="nav-upper">
-        <div className="nav-menu">
-          {menuItems
-            .filter(item => userRole === '1' || item.title === "Matriz de Perfiles") // Filtrar según el rol del usuario
-            .map((menuItem, index) => (
-              <div key={index}>
-                <button
-                  className={isExpanded ? "menu-item" : "menu-item menu-item-NX"}
-                  onClick={() => toggleSubMenu(index)}
-                >
-                  <div className="menu-item-icon">{menuItem.icon}</div>
-                  {isExpanded && <p>{menuItem.title}</p>}
-                </button>
-                {isExpanded && activeMenu === index && menuItem.subNav && (
-                  <div className="sub-menu">
-                    {menuItem.subNav.map((subItem, subIndex) => (
-                      <a
-                        href={subItem.path}
-                        className="sub-menu-item"
-                        key={subIndex}
-                      >
-                        <div className="sub-menu-item-icon">{subItem.icon}</div>
-                        <p>{subItem.title}</p>
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-        </div>
-      </div>
-      <div className="nav-footer">
-        {isExpanded && (
-          <div className="nav-details">
-            <div className="nav-footer-info"></div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+       // Ocultar la notificación después de 1 segundo
+       setTimeout(() => {
+         toastElement.remove();
+         window.location.reload(); // Recargar la pagina despues de 1 segundo
+       }, 1000);
+     } catch (error) {
+       console.error("Error al guardar los cambios", error);
+     }
+   };
+   ```
 
-export default SideNavBar;
+3. **En el backend, deberás crear un endpoint para verificar si el país está en uso en otras tablas.**
+
+   Aquí te muestro un ejemplo en pseudocódigo usando Express.js para tu backend:
+
+   ```javascript
+   app.get('/pais/checkIfUsed', async (req, res) => {
+     const { N_Pais } = req.query;
+     try {
+       // Realiza consultas a las tablas donde el país podría estar en uso
+       const isUsedInOtherTables = await checkCountryUsageInOtherTables(N_Pais);
+       res.json({ isUsed: isUsedInOtherTables });
+     } catch (error) {
+       console.error("Error checking country usage:", error);
+       res.status(500).json({ isUsed: false });
+     }
+   });
+
+   const checkCountryUsageInOtherTables = async (N_Pais) => {
+     // Aquí deberías implementar la lógica para verificar en otras tablas
+     // Retorna true si el país está en uso, de lo contrario false
+   };
+   ```
+
+Estas modificaciones aseguran que no puedas editar un país a menos que no esté en uso en otras partes de tu sistema.
