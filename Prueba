@@ -1,85 +1,165 @@
-.png$:31 
- Uncaught 
-Error: Cannot find module './Hondura.png'
-    at webpackContextResolve (.png$:31:1)
-    at webpackContext (.png$:26:1)
-    at SideNavBar.jsx:105:1
-    at Array.map (<anonymous>)
-    at SideNavBar (SideNavBar.jsx:102:1)
-    at renderWithHooks (react-dom.development.js:13468:1)
-    at updateFunctionComponent (react-dom.development.js:17040:1)
-    at beginWork (react-dom.development.js:18759:1)
-    at HTMLUnknownElement.callCallback (react-dom.development.js:3724:1)
-    at Object.invokeGuardedCallbackDev (react-dom.development.js:3768:1)
-    at invokeGuardedCallback (react-dom.development.js:3825:1)
-    at beginWork$1 (react-dom.development.js:23728:1)
-    at performUnitOfWork (react-dom.development.js:22979:1)
-    at workLoopSync (react-dom.development.js:22899:1)
-    at renderRootSync (react-dom.development.js:22872:1)
-    at recoverFromConcurrentError (react-dom.development.js:22364:1)
-    at performConcurrentWorkOnRoot (react-dom.development.js:22277:1)
-    at workLoop (scheduler.development.js:227:1)
-    at flushWork (scheduler.development.js:205:1)
-    at performWorkUntilDeadline (scheduler.development.js:442:1)
-    at run (setImmediate.js:39:1)
-    at runIfPresent (setImmediate.js:67:1)
-    at onGlobalMessage (setImmediate.js:104:1)
-Paises.jsx:100 
- The above error occurred in the <SideNavBar> component:
 
-    at SideNavBar (http://localhost:3001/static/js/main.chunk.js:10536:94)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:172800:6)
-    at div
-    at O (http://localhost:3001/static/js/0.chunk.js:172800:6)
-    at Paises (http://localhost:3001/static/js/main.chunk.js:6380:72)
-    at ProtectedRoute (http://localhost:3001/static/js/main.chunk.js:7025:3)
-    at RenderedRoute (http://localhost:3001/static/js/0.chunk.js:158771:5)
-    at Routes (http://localhost:3001/static/js/0.chunk.js:159462:5)
-    at div
-    at Router (http://localhost:3001/static/js/0.chunk.js:159396:15)
-    at BrowserRouter (http://localhost:3001/static/js/0.chunk.js:157337:5)
-    at div
-    at div
-    at div
-    at div
-    at App
+import React, { useState, useEffect } from "react";
+import CryptoJS from "crypto-js";
+import styled from "styled-components";
+import "../styles/SideNavBar.css";
+import axios from "axios";
+import "bootstrap/dist/css/bootstrap.min.css";
+import defaultFlag from '../imgs/default.png'; // Ruta a la imagen por defecto
 
-Consider adding an error boundary to your tree to customize error handling behavior.
-Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
-react-dom.development.js:23288 
- Uncaught 
-Error: Cannot find module './Hondura.png'
-    at webpackContextResolve (.png$:31:1)
-    at webpackContext (.png$:26:1)
-    at SideNavBar.jsx:105:1
-    at Array.map (<anonymous>)
-    at SideNavBar (SideNavBar.jsx:102:1)
-    at renderWithHooks (react-dom.development.js:13468:1)
-    at updateFunctionComponent (react-dom.development.js:17040:1)
-    at beginWork (react-dom.development.js:18759:1)
-    at beginWork$1 (react-dom.development.js:23706:1)
-    at performUnitOfWork (react-dom.development.js:22979:1)
-    at workLoopSync (react-dom.development.js:22899:1)
-    at renderRootSync (react-dom.development.js:22872:1)
-    at recoverFromConcurrentError (react-dom.development.js:22364:1)
-    at performConcurrentWorkOnRoot (react-dom.development.js:22277:1)
-    at workLoop (scheduler.development.js:227:1)
-    at flushWork (scheduler.development.js:205:1)
-    at performWorkUntilDeadline (scheduler.development.js:442:1)
-    at run (setImmediate.js:39:1)
-    at runIfPresent (setImmediate.js:67:1)
-    at onGlobalMessage (setImmediate.js:104:1)
-VM2006:2 
- Uncaught 
-ReferenceError: process is not defined
-    at 4043 (<anonymous>:2:13168)
-    at r (<anonymous>:2:306599)
-    at 8048 (<anonymous>:2:9496)
-    at r (<anonymous>:2:306599)
-    at 8641 (<anonymous>:2:1379)
-    at r (<anonymous>:2:306599)
-    at <anonymous>:2:315627
-    at <anonymous>:2:324225
-    at <anonymous>:2:324229
-    at e.onload (index.js:1714:1)
+const Banderas = styled.img`
+  width: 20px;
+  height: 20px;
+`;
+
+const secretKey = 'mySecretKey'; // Clave secreta para encriptar datos
+
+const encryptData = (data) => {
+  return CryptoJS.AES.encrypt(JSON.stringify(data), secretKey).toString();
+};
+
+const decryptData = (encryptedData) => {
+  const bytes = CryptoJS.AES.decrypt(encryptedData, secretKey);
+  return bytes.toString(CryptoJS.enc.Utf8);
+};
+
+const SideNavBar = () => {
+  const [isExpanded, setExpandState] = useState(false);
+  const [activeMenu, setActiveMenu] = useState(null);
+  const [paises, setPaises] = useState([]);
+  const [userRole, setUserRole] = useState(null);
+  const [userCountries, setUserCountries] = useState([]);
+
+  useEffect(() => {
+    const encryptedRole = sessionStorage.getItem('userRole');
+    if (encryptedRole) {
+      const decryptedRole = decryptData(encryptedRole);
+      setUserRole(decryptedRole);
+    }
+
+    const fetchUserRole = async () => {
+      if (!userRole) return; // Esperar a que el rol sea desencriptado
+      try {
+        const response = await axios.get(`http://localhost:3000/rolusuario/${userRole}`);
+        const paisesPermitidos = response.data.Paises ? response.data.Paises.split(',').map(id => id.trim()) : [];
+        setUserCountries(paisesPermitidos);
+      } catch (error) {
+        console.error("Error al obtener el rol del usuario", error);
+      }
+    };
+
+    fetchUserRole();
+
+    const fetchPaises = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/pais/`);
+        setPaises(response.data);
+      } catch (error) {
+        console.error("Error al obtener la lista de paises", error);
+      }
+    };
+    fetchPaises();
+  }, [userRole]);
+
+  const handleImageError = (e) => {
+    e.target.src = defaultFlag; // Establecer la imagen por defecto en caso de error
+  };
+
+  const menuItems = [
+    {
+      title: "Matriz de Perfiles",
+      icon: <GrTable />,
+      subNav: [
+        {
+          title: "Reportes",
+          path: "/reportes",
+          icon: <GrDocumentDownload />,
+        },
+      ].concat(
+        paises
+          .filter(pais => userCountries.includes(pais.id.toString())) // Filtrar según los países del usuario
+          .map((pais) => {
+            // Verificar si el nombre de la imagen es válido
+            const imagePath = `../imgs/${pais.N_Pais}.png`;
+            return {
+              title: pais.N_Pais,
+              icon: (
+                <Banderas
+                  src={require(`${imagePath}`)}
+                  alt="Flag image"
+                  onError={handleImageError} // Manejar el error de carga de la imagen
+                />
+              ),
+              path: `/matrizPais?pais=${encodeURIComponent(encryptData(pais.id))}&Nombre=${encodeURIComponent(encryptData(pais.N_Pais))}`,
+            };
+          })
+      ),
+    },
+    // Otros elementos del menú...
+  ];
+
+  const toggleSubMenu = (index) => {
+    setActiveMenu(activeMenu === index ? null : index);
+  };
+
+  const expandSidebar = () => {
+    setExpandState(true);
+  };
+
+  const collapseSidebar = () => {
+    setExpandState(false);
+  };
+
+  return (
+    <div
+      className={
+        isExpanded
+          ? "side-nav-container"
+          : "side-nav-container side-nav-container-NX"
+      }
+      onMouseEnter={expandSidebar}
+      onMouseLeave={collapseSidebar}
+    >
+      <div className="nav-upper">
+        <div className="nav-menu">
+          {menuItems
+            .filter(item => userRole === '1' || item.title === "Matriz de Perfiles") // Filtrar según el rol del usuario
+            .map((menuItem, index) => (
+              <div key={index}>
+                <button
+                  className={isExpanded ? "menu-item" : "menu-item menu-item-NX"}
+                  onClick={() => toggleSubMenu(index)}
+                >
+                  <div className="menu-item-icon">{menuItem.icon}</div>
+                  {isExpanded && <p>{menuItem.title}</p>}
+                </button>
+                {isExpanded && activeMenu === index && menuItem.subNav && (
+                  <div className="sub-menu">
+                    {menuItem.subNav.map((subItem, subIndex) => (
+                      <a
+                        href={subItem.path}
+                        className="sub-menu-item"
+                        key={subIndex}
+                      >
+                        <div className="sub-menu-item-icon">{subItem.icon}</div>
+                        <p>{subItem.title}</p>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+        </div>
+      </div>
+      <div className="nav-footer">
+        {isExpanded && (
+          <div className="nav-details">
+            <div className="nav-footer-info"></div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default SideNavBar;
