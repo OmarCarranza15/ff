@@ -1,10 +1,127 @@
-CREATE TABLE Auditoria (
-	ID INT PRIMARY KEY IDENTITY,
-	Tabla NVARCHAR(100),
-	Accion INT,
-	ID_Usuario INT,
-	createdAt DATETIME2 DEFAULT GETDATE(),
-	updatedAt DATETIME2 DEFAULT GETDATE(),
-	FOREIGN KEY (ID_Usuario) REFERENCES Usuario(ID)
+Con la estructura que has proporcionado, aquí están los triggers necesarios para auditar las inserciones y modificaciones en las tablas especificadas. Asegúrate de crear los triggers en cada tabla que deseas auditar. Aquí tienes un ejemplo para algunas de tus tablas. Puedes ajustar estos ejemplos para cada tabla en tu base de datos.
 
-);
+### 1. Trigger para Inserciones y Modificaciones en `Perfiles`
+
+#### Trigger para Inserciones
+
+```sql
+CREATE TRIGGER trg_Auditoria_Insert_Perfiles
+ON Perfiles
+AFTER INSERT
+AS
+BEGIN
+    INSERT INTO Auditoria (Tabla, Accion, ID_Usuario, createdAt, updatedAt)
+    SELECT 
+        'Perfiles' AS Tabla,
+        1 AS Accion, -- 1 para inserción
+        i.ID_Usuario, -- Ajusta si no hay columna ID_Usuario en Perfiles
+        GETDATE() AS createdAt,
+        GETDATE() AS updatedAt
+    FROM inserted i;
+END;
+```
+
+#### Trigger para Modificaciones
+
+```sql
+CREATE TRIGGER trg_Auditoria_Update_Perfiles
+ON Perfiles
+AFTER UPDATE
+AS
+BEGIN
+    INSERT INTO Auditoria (Tabla, Accion, ID_Usuario, createdAt, updatedAt)
+    SELECT 
+        'Perfiles' AS Tabla,
+        2 AS Accion, -- 2 para modificación
+        i.ID_Usuario, -- Ajusta si no hay columna ID_Usuario en Perfiles
+        GETDATE() AS createdAt,
+        GETDATE() AS updatedAt
+    FROM inserted i;
+END;
+```
+
+### 2. Trigger para Inserciones y Modificaciones en `Puestos`
+
+#### Trigger para Inserciones
+
+```sql
+CREATE TRIGGER trg_Auditoria_Insert_Puestos
+ON Puestos
+AFTER INSERT
+AS
+BEGIN
+    INSERT INTO Auditoria (Tabla, Accion, ID_Usuario, createdAt, updatedAt)
+    SELECT 
+        'Puestos' AS Tabla,
+        1 AS Accion, -- 1 para inserción
+        i.ID_Usuario, -- Ajusta si no hay columna ID_Usuario en Puestos
+        GETDATE() AS createdAt,
+        GETDATE() AS updatedAt
+    FROM inserted i;
+END;
+```
+
+#### Trigger para Modificaciones
+
+```sql
+CREATE TRIGGER trg_Auditoria_Update_Puestos
+ON Puestos
+AFTER UPDATE
+AS
+BEGIN
+    INSERT INTO Auditoria (Tabla, Accion, ID_Usuario, createdAt, updatedAt)
+    SELECT 
+        'Puestos' AS Tabla,
+        2 AS Accion, -- 2 para modificación
+        i.ID_Usuario, -- Ajusta si no hay columna ID_Usuario en Puestos
+        GETDATE() AS createdAt,
+        GETDATE() AS updatedAt
+    FROM inserted i;
+END;
+```
+
+### 3. Trigger para Inserciones y Modificaciones en `CentroCostos`
+
+#### Trigger para Inserciones
+
+```sql
+CREATE TRIGGER trg_Auditoria_Insert_CentroCostos
+ON CentroCostos
+AFTER INSERT
+AS
+BEGIN
+    INSERT INTO Auditoria (Tabla, Accion, ID_Usuario, createdAt, updatedAt)
+    SELECT 
+        'CentroCostos' AS Tabla,
+        1 AS Accion, -- 1 para inserción
+        i.ID_Usuario, -- Ajusta si no hay columna ID_Usuario en CentroCostos
+        GETDATE() AS createdAt,
+        GETDATE() AS updatedAt
+    FROM inserted i;
+END;
+```
+
+#### Trigger para Modificaciones
+
+```sql
+CREATE TRIGGER trg_Auditoria_Update_CentroCostos
+ON CentroCostos
+AFTER UPDATE
+AS
+BEGIN
+    INSERT INTO Auditoria (Tabla, Accion, ID_Usuario, createdAt, updatedAt)
+    SELECT 
+        'CentroCostos' AS Tabla,
+        2 AS Accion, -- 2 para modificación
+        i.ID_Usuario, -- Ajusta si no hay columna ID_Usuario en CentroCostos
+        GETDATE() AS createdAt,
+        GETDATE() AS updatedAt
+    FROM inserted i;
+END;
+```
+
+### Notas:
+- **Columna `ID_Usuario`**: En los triggers, se asume que hay una columna `ID_Usuario` en cada tabla que estás auditando. Si esta columna no existe en una tabla, tendrás que ajustar el trigger o agregar una columna adecuada para identificar al usuario.
+- **Acción**: Usa `1` para inserciones y `2` para modificaciones. Puedes ajustar estos valores según tu esquema de acciones.
+
+Repite el proceso para las demás tablas que deseas auditar, ajustando el nombre de la tabla y los campos según sea necesario.
