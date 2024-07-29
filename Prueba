@@ -1,116 +1,32 @@
-Aquí tienes el código modificado para mostrar un mensaje cuando el país está siendo usado en otra tabla:
-
-```javascript
-const saveChanges = async (id) => {
-  try {
-    const updateRow = {
-      ...editedRow,
-    };
-
-    await axios.post('http://localhost:3000/auditoria', {
-      Tabla: `Paises`,
-      Accion: 2, // 2 for Update
-      ID_Usuario: userId,
-      Fecha: new Date(),
-    });
-
-    // Verificar si el país ya existe
-    if (editedRow && editedRow.N_Pais) {
-      console.log("Checking if country exists...");
-      const response = await axios.get(
-        `http://localhost:3000/pais?N_Pais=${editedRow.N_Pais}`
-      );
-
-      console.log("Response:", response.data);
-
-      if (
-        response.data.some(
-          (pais) =>
-            pais.N_Pais.toLowerCase() === editedRow.N_Pais.toLowerCase()
-        )
-      ) {
-        const errorNotification = document.createElement("div");
-        errorNotification.className = "error-notification";
-        errorNotification.innerHTML = `
-          <span class="error-icon">!</span>
-          <span class="error-message">
-            El País que intenta actualizar ya existe en la base de datos.
-            Por favor, ingrese un país diferente.
-          </span>
-        `;
-        document.body.appendChild(errorNotification);
-
-        // Ocultar la notificación después de 2 segundos
-        setTimeout(() => {
-          errorNotification.remove();
-        }, 2000);
-        return;
-      }
-
-      // Verificar si el país está siendo utilizado en otra tabla
-      const checkDependenciesResponse = await axios.get(
-        `http://localhost:3000/dependencias/${id}`
-      );
-
-      if (checkDependenciesResponse.data.hasDependencies) {
-        const dependencyNotification = document.createElement("div");
-        dependencyNotification.className = "error-notification";
-        dependencyNotification.innerHTML = `
-          <span class="error-icon">!</span>
-          <span class="error-message">
-            Este país está siendo utilizado en otra tabla. No se puede actualizar.
-          </span>
-        `;
-        document.body.appendChild(dependencyNotification);
-
-        // Ocultar la notificación después de 2 segundos
-        setTimeout(() => {
-          dependencyNotification.remove();
-        }, 2000);
-        return;
-      }
-    } else {
-      console.error("Error: editedRow.N_Pais is undefined or empty");
-      setErrors({ N_Pais: "El campo país no puede estar vacío" });
-      return;
-    }
-
-    // Verificar si el país actualizado ya está registrado
-    const existingCountry = records.find(
-      (row) => row.N_Pais.toLowerCase() === editedRow.N_Pais.toLowerCase()
-    );
-
-    if (existingCountry && existingCountry.id !== id) {
-      setErrors({ N_Pais: "El país ya está registrado" });
-      return;
-    }
-
-    await axios.put(`http://localhost:3000/pais/${id}`, updateRow);
-
-    const updatedRecords = records.map((row) =>
-      row.id === id ? { ...editedRow } : row
-    );
-
-    setRecords(updatedRecords);
-    setEditedRow(null);
-    setEditMode(null);
-
-    // Notificación de datos actualizados
-    const toastElement = document.createElement("div");
-    toastElement.className = "toast-notification";
-    toastElement.innerHTML = "País actualizado con éxito!";
-
-    document.body.appendChild(toastElement);
-
-    // Ocultar la notificación después de 1 segundo
-    setTimeout(() => {
-      toastElement.remove();
-      window.location.reload(); // Recargar la pagina despues de 1 segundo
-    }, 1000);
-  } catch (error) {
-    console.error("Error al guardar los cambios", error);
-  }
-};
-```
-
-He añadido la verificación de dependencias antes de permitir la actualización del país y he actualizado el mensaje de error en consecuencia. Asegúrate de tener un endpoint adecuado en tu API para verificar las dependencias.
+Paises.jsx:305 
+        
+        
+        GET http://localhost:3000/dependencias/1 404 (Not Found)
+dispatchXhrRequest @ xhr.js:169
+xhr @ xhr.js:13
+dispatchRequest @ dispatchRequest.js:43
+_request @ Axios.js:148
+request @ Axios.js:39
+Axios.<computed> @ Axios.js:170
+wrap @ bind.js:5
+saveChanges @ Paises.jsx:305
+await in saveChanges (asincrónica)
+onClick @ Paises.jsx:433
+callCallback @ react-dom.development.js:3724
+invokeGuardedCallbackDev @ react-dom.development.js:3768
+invokeGuardedCallback @ react-dom.development.js:3825
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:3839
+executeDispatch @ react-dom.development.js:7982
+processDispatchQueueItemsInOrder @ react-dom.development.js:8008
+processDispatchQueue @ react-dom.development.js:8019
+dispatchEventsForPlugins @ react-dom.development.js:8028
+(anónimo) @ react-dom.development.js:8188
+batchedUpdates$1 @ react-dom.development.js:22611
+batchedUpdates @ react-dom.development.js:3572
+dispatchEventForPluginEventSystem @ react-dom.development.js:8187
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ react-dom.development.js:5694
+dispatchEvent @ react-dom.development.js:5688
+dispatchDiscreteEvent @ react-dom.development.js:5665
+Mostrar 22 más cuadros
+Mostrar menos
+Paises.jsx:365  Error al guardar los cambios AxiosError {message: 'Request failed with status code 404', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
