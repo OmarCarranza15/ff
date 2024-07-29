@@ -1,59 +1,10 @@
-const saveChanges = async (id) => {
-  try {
-    // Obtén los datos originales del perfil
-    const originalProfile = records.find((row) => row.id === id);
+CREATE TABLE Auditoria (
+	ID INT PRIMARY KEY IDENTITY,
+	Tabla NVARCHAR(100),
+	Accion INT,
+	ID_Usuario INT,
+	createdAt DATETIME2 DEFAULT GETDATE(),
+	updatedAt DATETIME2 DEFAULT GETDATE(),
+	FOREIGN KEY (ID_Usuario) REFERENCES Usuario(ID)
 
-    // Prepara los datos actualizados
-    const updateRow = {
-      ...editedRow,
-      Estado_Perfil: editedRow.Estado_Perfil === "En Servicio" ? 1 : 2,
-    };
-
-    // Realiza la actualización del perfil
-    await axios.put(`http://localhost:3000/perfil/${id}`, updateRow);
-
-    // Registra los cambios en la auditoría
-    const changes = [];
-
-    Object.keys(updateRow).forEach((key) => {
-      if (updateRow[key] !== originalProfile[key]) {
-        changes.push({
-          Columna: key,
-          Campo_Original: originalProfile[key] || "",
-          Campo_Nuevo: updateRow[key] || "",
-          Matriz: originalProfile.N_Pais, // El nombre del país o el identificador relevante
-          Accion: 1, // Acción: 1 para editar
-          ID_Usuario: /* ID del usuario actual */, // Asegúrate de obtener el ID del usuario actual
-        });
-      }
-    });
-
-    // Verifica los cambios que se están enviando
-    console.log("Cambios para registrar:", changes);
-
-    // Insertar los cambios en la tabla de auditoría
-    if (changes.length > 0) {
-      const response = await axios.post(`http://localhost:3000/auditoria`, changes);
-      console.log("Respuesta del servidor:", response.data);
-    }
-
-    // Realiza actualizaciones adicionales si es necesario
-    if (editedRow.ID_Ambiente !== originalProfile.ID_Ambiente) {
-      await axios.put(`http://localhost:3000/aplicacion/${editedRow.ID_Aplicaciones}`, {
-        ID_Ambiente: editedRow.ID_Ambiente,
-      });
-    }
-
-    // Realiza actualizaciones adicionales según sea necesario...
-
-    // Actualiza la UI
-    const updatedRecords = records.map((row) =>
-      row.id === id ? { ...row, ...updateRow } : row
-    );
-    setRecords(updatedRecords);
-
-    setEditMode(null); // Salir del modo de edición
-  } catch (error) {
-    console.error("Error al guardar los cambios:", error);
-  }
-};
+);
