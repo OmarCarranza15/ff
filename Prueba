@@ -1,113 +1,141 @@
-const saveChanges = async (id) => {
-    try {
-      const updateRow = {
-        ...editedRow,
-        Ambientes: editedRow.Ambientes.join(", "),
-      };
-      // Verificar si la aplicación ya existe en la base de datos para el mismo país
-      if (editedRow && editedRow.ID_Pais && editedRow.N_Aplicaciones) {
-        const response = await axios.get(`http://localhost:3000/aplicacion`);
-        console.log("Response:", response.data);
+Vamos a solucionar ambos problemas:
 
-        const aplicacionExists = response.data.some((division) => {
-          if (
-            division.ID_Pais === parseInt(editedRow.ID_Pais) &&
-            division.id !== id
-          ) {
-            const editedAplicacionName = editedRow.N_Aplicaciones
-              ? editedRow.N_Aplicaciones.toLowerCase()
-              : "";
-            return (
-              division.N_Aplicaciones.toLowerCase() === editedAplicacionName
-            );
-          }
-          return false;
-        });
+1. **Ambientes que aparecen cuando no deberían:**
 
-        if (aplicacionExists) {
-          setErrors({ division: "La aplicaciónX ya existe en este país" });
+   Para solucionar esto, asegúrate de que los ambientes solo se muestren cuando se está editando una aplicación y no cuando se edita otro campo. Ajusta tu lógica para que los ambientes se gestionen de acuerdo con el tipo de edición.
 
-          const errorNotification = document.createElement("div");
-          errorNotification.className = "error-notification";
-          errorNotification.innerHTML = `
-            <span class="error-icon">!</span>
-            <span class="error-message">
-              La aplicación que intenta registrar ya existe en la base de datos para este país.
-              Por favor, ingrese una aplicación diferente.
-            </span>
-          `;
+   Aquí tienes un ejemplo de cómo podrías manejar esto:
 
-          document.body.appendChild(errorNotification);
+   ```javascript
+   const saveChanges = async (id) => {
+     try {
+       // Prepara los datos para actualizar
+       const updateRow = {
+         ...editedRow,
+         Ambientes: editMode === 'application' ? editedRow.Ambientes.join(", ") : originalRow.Ambientes,
+       };
 
-          // Ocultar la notificación después de 2 segundos
-          setTimeout(() => {
-            errorNotification.remove();
-          }, 2000);
-          return;
-        }
-      } else {
-        console.error(
-          "Error: editedRow.division or editedRow.ID_Pais is undefined or empty"
-        );
-        setErrors({
-          division: "El campo División o País no puede estar vacío",
-        });
-        return;
-      }
+       // Verificar si la aplicación ya existe
+       if (editedRow && editedRow.ID_Pais && editedRow.N_Aplicaciones) {
+         const response = await axios.get(`http://localhost:3000/aplicacion`);
+         console.log("Response:", response.data);
 
-      await axios.put(`http://localhost:3000/aplicacion/${id}`, updateRow);
+         const aplicacionExists = response.data.some((division) => {
+           if (
+             division.ID_Pais === parseInt(editedRow.ID_Pais) &&
+             division.id !== id
+           ) {
+             const editedAplicacionName = editedRow.N_Aplicaciones
+               ? editedRow.N_Aplicaciones.toLowerCase()
+               : "";
+             return (
+               division.N_Aplicaciones.toLowerCase() === editedAplicacionName
+             );
+           }
+           return false;
+         });
 
-        // Obtener el valor original del campo
-    const originalRow = records.find((row) => row.id === id);
+         if (aplicacionExists) {
+           setErrors({ division: "La aplicación ya existe en este país" });
 
-    const editedIndex = records.findIndex((row) => row.id === id) + 1;
+           const errorNotification = document.createElement("div");
+           errorNotification.className = "error-notification";
+           errorNotification.innerHTML = `
+             <span class="error-icon">!</span>
+             <span class="error-message">
+               La aplicación que intenta registrar ya existe en la base de datos para este país.
+               Por favor, ingrese una aplicación diferente.
+             </span>
+           `;
 
-    // Construir los valores para la auditoría
-    const originalCountry = originalRow.N_Pais;
-    const originalAplicacion = originalRow.N_Aplicaciones;
-    const originalAmbientes = originalRow.Ambientes;
-    const editedCountry = editedRow.N_Pais;
-    const editedAplicacion = editedRow.N_Aplicaciones;
-    const editedAmbientes = editedRow.Ambientes;
-    
+           document.body.appendChild(errorNotification);
 
-    const hasCountryChanged = originalCountry !== editedCountry;
-    const hasAplicacionChanged = originalAplicacion !== editedAplicacion;
-    const hasAmbienteChanged = originalAmbientes !== editedAmbientes;
+           // Ocultar la notificación después de 2 segundos
+           setTimeout(() => {
+             errorNotification.remove();
+           }, 2000);
+           return;
+         }
+       } else {
+         console.error("Error: editedRow.division or editedRow.ID_Pais is undefined or empty");
+         setErrors({ division: "El campo División o País no puede estar vacío" });
+         return;
+       }
 
-    const auditoriaData = {
-      Campo_Original: [
-        hasCountryChanged ? `País: ${originalCountry}` : '',
-        hasAplicacionChanged ? `Aplicacion:  ${originalAplicacion}` : '',
-        hasAmbienteChanged ? `Ambientes: ${originalAmbientes}` : ''
-      ].filter(Boolean).join(', '),
-      Campo_Nuevo: [
-        hasCountryChanged ? `País: ${editedCountry}` : '',
-        hasAplicacionChanged ? `Aplicacion: ${editedAplicacion}` : '',
-        hasAmbienteChanged ? `Ambientes: ${editedAmbientes}`: ''
-      ].filter(Boolean).join(', '),
-      Tabla: 'Aplicaciones',
-      Accion: 2, // Modificación
-      ID_Usuario: userId,
-      N: editedIndex
-    };
+       // Realiza la actualización
+       await axios.put(`http://localhost:3000/aplicacion/${id}`, updateRow);
 
-    if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
-      await axios.post('http://localhost:3000/auditoria', auditoriaData);
-    }
+       // Obtiene el valor original del campo
+       const originalRow = records.find((row) => row.id === id);
 
-      const updatedRecords = records.map((row) =>
-        row.id === id ? { ...editedRow } : row
-      );
+       const editedIndex = records.findIndex((row) => row.id === id) + 1;
 
-      //setRecords(updatedRecordsPuesto);
-      setRecords(updatedRecords);
-      setEditedRow(null);
-      setEditMode(null);
+       // Construir los valores para la auditoría
+       const originalCountry = originalRow.N_Pais;
+       const originalAplicacion = originalRow.N_Aplicaciones;
+       const originalAmbientes = editMode === 'application' ? originalRow.Ambientes.map(getAmbienteNameById).join(", ") : originalRow.Ambientes;
+       const editedCountry = editedRow.N_Pais;
+       const editedAplicacion = editedRow.N_Aplicaciones;
+       const editedAmbientes = editMode === 'application' ? editedRow.Ambientes.map(getAmbienteNameById).join(", ") : originalRow.Ambientes.map(getAmbienteNameById).join(", ");
 
-      console.log("Cambios guardados correctamente");
-      window.location.reload();
-    } catch (error) {
-      console.error("Error al guardar los cambios", error);
-    }
-  };
+       const hasCountryChanged = originalCountry !== editedCountry;
+       const hasAplicacionChanged = originalAplicacion !== editedAplicacion;
+       const hasAmbienteChanged = originalAmbientes !== editedAmbientes;
+
+       const auditoriaData = {
+         Campo_Original: [
+           hasCountryChanged ? `País: ${originalCountry}` : '',
+           hasAplicacionChanged ? `Aplicacion:  ${originalAplicacion}` : '',
+           hasAmbienteChanged ? `Ambientes: ${originalAmbientes}` : ''
+         ].filter(Boolean).join(', '),
+         Campo_Nuevo: [
+           hasCountryChanged ? `País: ${editedCountry}` : '',
+           hasAplicacionChanged ? `Aplicacion: ${editedAplicacion}` : '',
+           hasAmbienteChanged ? `Ambientes: ${editedAmbientes}`: ''
+         ].filter(Boolean).join(', '),
+         Tabla: 'Aplicaciones',
+         Accion: 2, // Modificación
+         ID_Usuario: userId,
+         N: editedIndex
+       };
+
+       if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
+         await axios.post('http://localhost:3000/auditoria', auditoriaData);
+       }
+
+       const updatedRecords = records.map((row) =>
+         row.id === id ? { ...editedRow } : row
+       );
+
+       setRecords(updatedRecords);
+       setEditedRow(null);
+       setEditMode(null);
+
+       console.log("Cambios guardados correctamente");
+       window.location.reload();
+     } catch (error) {
+       console.error("Error al guardar los cambios", error);
+     }
+   };
+   ```
+
+   En este código:
+   - `editMode` controla cuándo se deben mostrar los ambientes. Solo los ambientes se actualizan si `editMode` es `'application'`.
+   - `originalAmbientes` y `editedAmbientes` solo se convierten a nombres si se está editando una aplicación.
+
+2. **Mostrar nombres de ambientes en lugar de IDs en el campo nuevo:**
+
+   Asegúrate de que el campo nuevo en la auditoría muestra los nombres en lugar de los IDs. Usa la función `getAmbienteNameById` para convertir los IDs a nombres.
+
+   Asegúrate de que `getAmbienteNameById` sea una función que convierta IDs de ambientes a nombres:
+
+   ```javascript
+   const getAmbienteNameById = (id) => {
+     const ambiente = ambientesList.find((a) => a.id === id);
+     return ambiente ? ambiente.name : id;
+   };
+   ```
+
+   Ajusta tu lógica en la auditoría para usar esta función y convertir los IDs a nombres tanto en `Campo_Original` como en `Campo_Nuevo`.
+
+Espero que esto resuelva tus problemas. Si necesitas más ayuda, por favor avísame.
