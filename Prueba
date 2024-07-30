@@ -1,82 +1,88 @@
 const SaveModal = async () => {
-    const newErrors = { pais: "", division: "" };
+  const newErrors = { pais: "", division: "" };
 
-    if (!modalValues.ID_Pais) {
-      newErrors.pais = "El campo Pais es obligatorio";
-    }
+  if (!modalValues.ID_Pais) {
+    newErrors.pais = "El campo País es obligatorio";
+  }
 
-    if (!modalValues.division.trim()) {
-      newErrors.division = "El campo división es obligatorio";
-    } else if (!/^[a-zA-Z\s]+$/.test(modalValues.division)) {
-      newErrors.division =
-        "El campo division solo acepta letras y espacios en blanco";
-    }
+  if (!modalValues.division.trim()) {
+    newErrors.division = "El campo división es obligatorio";
+  } else if (!/^[a-zA-Z\s]+$/.test(modalValues.division)) {
+    newErrors.division =
+      "El campo división solo acepta letras y espacios en blanco";
+  }
 
-    setErrors(newErrors);
+  setErrors(newErrors);
 
-    if (Object.values(newErrors).every((error) => error === "")) {
-      try {
-        // Verificar si la Division ya existe en la base de datos
-        const response = await axios.get(`http://localhost:3000/division`);
-        const divisionExists = response.data.some(
-          (division) =>
-            division.ID_Pais === parseInt(modalValues.ID_Pais) &&
-            division.N_Division.toLowerCase() ===
-              modalValues.division.toLowerCase()
-        );
-        if (divisionExists) {
-          setErrors({ division: "La División ya existe en este país" });
-          return;
-        }
+  if (Object.values(newErrors).every((error) => error === "")) {
+    try {
+      // Verificar si la División ya existe en la base de datos
+      const response = await axios.get(`http://localhost:3000/division`);
+      const divisionExists = response.data.some(
+        (division) =>
+          division.ID_Pais === parseInt(modalValues.ID_Pais) &&
+          division.N_Division.toLowerCase() === modalValues.division.toLowerCase()
+      );
+      if (divisionExists) {
+        setErrors({ division: "La División ya existe en este país" });
+        return;
+      }
 
-        // Insertar una nueva division
-        const newDivision = {
+      // Insertar una nueva división
+      const newDivision = {
+        N_Division: modalValues.division,
+        ID_Pais: modalValues.ID_Pais,
+      };
+      const insertResponse = await axios.post(
+        `http://localhost:3000/division`,
+        newDivision
+      );
+
+      // Obtener información del país
+      const paisResponse = await axios.get(
+        `http://localhost:3000/pais/${modalValues.ID_Pais}`
+      );
+
+      // Preparar datos de auditoría
+      const auditoriaData = {
+        Campo_Original: '', // No hay un valor original para inserción
+        Campo_Nuevo: `(País)${paisResponse.data.N_Pais}, (División)${modalValues.division}`,
+        Tabla: 'Divisiones',
+        Accion: 1, // Inserción
+        ID_Usuario: userId
+      };
+
+      // Registrar en la auditoría
+      await axios.post('http://localhost:3000/auditoria', auditoriaData);
+
+      // Actualizar la lista de divisiones con la nueva división
+      const updatedRecords = [
+        ...records,
+        {
+          id: insertResponse.data.id,
           N_Division: modalValues.division,
           ID_Pais: modalValues.ID_Pais,
-        };
-        const insertResponse = await axios.post(
-          `http://localhost:3000/division`,
-          newDivision
-        );
+          N_Pais: paisResponse.data.N_Pais,
+        },
+      ];
+      setRecords(updatedRecords);
+      setShowModal(false); // Ocultar el modal después de guardar
+      setModalValues({ ID_Pais: "", division: "" }); // Limpiar los valores del modal
 
-        await axios.post('http://localhost:3000/auditoria', {
-          Tabla: `Division`,
-          Accion: 1, // 1 for Insert
-          ID_Usuario: userId
-        });
+      // Estilo de notificación
+      const toastElement = document.createElement("div");
+      toastElement.className = "toast-success";
+      toastElement.innerHTML = "¡División insertada correctamente!";
 
-        // Actualizar la lista de division con la nueva division
-        const paisResponse = await axios.get(
-          `http://localhost:3000/pais/${modalValues.ID_Pais}`
-        );
+      document.body.appendChild(toastElement);
 
-        const updatedRecords = [
-          ...records,
-          {
-            id: insertResponse.data.id,
-            N_Division: modalValues.division,
-            ID_Pais: modalValues.ID_Pais,
-            N_Pais: paisResponse.data.N_Pais,
-          },
-        ];
-        setRecords(updatedRecords);
-        setShowModal(false); // Ocultar el modal después de guardar
-        setModalValues({ ID_Pais: "", departamento: "" }); // Limpiar los valores del modal
-
-        // Estilo de notificacion
-        const toastElement = document.createElement("div");
-        toastElement.className = "toast-success";
-        toastElement.innerHTML = "¡División insertada correctamente!";
-
-        document.body.appendChild(toastElement);
-
-        // Ocultar la notificacion luego de 1 segundo
-        setTimeout(() => {
-          toastElement.remove();
-          window.location.reload(); // Recargar la pagina despues de 1 segundos
-        }, 1000);
-      } catch (error) {
-        console.error("Error al insertar un nuevo departamento:", error);
-      }
+      // Ocultar la notificación luego de 1 segundo
+      setTimeout(() => {
+        toastElement.remove();
+        window.location.reload(); // Recargar la página después de 1 segundo
+      }, 1000);
+    } catch (error) {
+      console.error("Error al insertar una nueva división:", error);
     }
-  };
+  }
+};
