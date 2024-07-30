@@ -1,11 +1,15 @@
- if (originalRow.N_Division !== editedRow.N_Division || originalRow.ID_Pais !== editedRow.ID_Pais) {
-  const auditoriaData = {
-    Campo_Original: `<b>(País)</b>${originalRow.N_Pais ? originalRow.N_Pais + ',  ' : ''}<b>(División)</b>${originalRow.N_Division || ''}`,
-    Campo_Nuevo: `<b>(País)</b>${editedRow.N_Pais ? editedRow.N_Pais + ',  ' : ''}<b>(División)</b>${editedRow.N_Division || ''}`,
-    Tabla: 'Divisiones',
-    Accion: 2, // Modificación
-    ID_Usuario: userId
-  };
+ // Obtener el valor original del campo
+    const originalRow = records.find((row) => row.id === id);
 
-  await axios.post('http://localhost:3000/auditoria', auditoriaData);
-}
+    // Solo registrar en la auditoría los campos que han cambiado
+    if (originalRow.N_Division !== editedRow.N_Division || originalRow.N_Pais !== editedRow.N_Pais) {
+      const auditoriaData = {
+        Campo_Original: `(País)${originalRow.N_Pais ? originalRow.N_Pais + ',  ' : ''}(División)${originalRow.N_Division || ''}`,
+        Campo_Nuevo: `(País)${editedRow.N_Pais ? editedRow.N_Pais + ',  ' : ''}(División)${editedRow.N_Division || ''}`,
+        Tabla: 'Divisiones',
+        Accion: 2, // Modificación
+        ID_Usuario: userId
+      };
+
+      await axios.post('http://localhost:3000/auditoria', auditoriaData);
+    }
