@@ -58,10 +58,24 @@ const saveChanges = async (id) => {
     // Obtener el valor original del campo
     const originalRow = records.find((row) => row.id === id);
 
-    // Solo registrar en la auditoría los campos que han cambiado
+    // Construir los valores para la auditoría
+    const originalCountry = originalRow.N_Pais;
+    const originalDivision = originalRow.N_Division;
+    const editedCountry = editedRow.N_Pais;
+    const editedDivision = editedRow.N_Division;
+
+    const hasCountryChanged = originalCountry !== editedCountry;
+    const hasDivisionChanged = originalDivision !== editedDivision;
+
     const auditoriaData = {
-      Campo_Original: `${originalRow.N_Pais && originalRow.N_Pais !== editedRow.N_Pais ? `(País)${originalRow.N_Pais}` : ''}${originalRow.N_Division && originalRow.N_Division !== editedRow.N_Division ? (originalRow.N_Pais ? ', ' : '') + `(División)${originalRow.N_Division}` : ''}`,
-      Campo_Nuevo: `${editedRow.N_Pais && originalRow.N_Pais !== editedRow.N_Pais ? `(País)${editedRow.N_Pais}` : ''}${editedRow.N_Division && originalRow.N_Division !== editedRow.N_Division ? (editedRow.N_Pais ? ', ' : '') + `(División)${editedRow.N_Division}` : ''}`,
+      Campo_Original: [
+        hasCountryChanged ? `(País)${originalCountry}` : '',
+        hasDivisionChanged ? `(División)${originalDivision}` : ''
+      ].filter(Boolean).join(', '),
+      Campo_Nuevo: [
+        hasCountryChanged ? `(País)${editedCountry}` : '',
+        hasDivisionChanged ? `(División)${editedDivision}` : ''
+      ].filter(Boolean).join(', '),
       Tabla: 'Divisiones',
       Accion: 2, // Modificación
       ID_Usuario: userId
