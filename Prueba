@@ -1,37 +1,7 @@
-Para agregar los cambios necesarios en la tabla de `Auditoria` para registrar el número de país editado o insertado, debes ajustar los datos enviados en la solicitud de auditoría, incluyendo el número de país (`id`). Aquí está el código a agregar o modificar:
-
-1. **Agregar el número de país en la solicitud de auditoría al insertar un nuevo país:**
-
-   Reemplaza la sección en `SaveModal` donde se realiza la solicitud a la API de auditoría con el siguiente código:
-
-   ```javascript
-   // Guardar el campo nuevo en la auditoría
-   const auditoriaData = {
-     Campo_Nuevo: `(País)${modalValues.pais}`,
-     Tabla: 'Paises',
-     Accion: 1, 
-     ID_Usuario: userId,
-     N: records.find(record => record.N_Pais === modalValues.pais)?.id || null // Agrega el número de país aquí
-   };
-   await axios.post('http://localhost:3000/auditoria', auditoriaData);
-   ```
-
-2. **Agregar el número de país en la solicitud de auditoría al editar un país:**
-
-   Modifica la sección en `saveChanges` donde se realiza la solicitud a la API de auditoría con el siguiente código:
-
-   ```javascript
-   // Guardar el campo original y el campo nuevo en la auditoría
-   const auditoriaData = {
-     Campo_Original: `(País)${originalRow.N_Pais}`,
-     Campo_Nuevo: `(País)${editedRow.N_Pais}`,
-     Tabla: 'Paises',
-     Accion: 2,
-     ID_Usuario: userId,
-     N: originalRow.id // Agrega el número de país aquí
-   };
-
-   await axios.post('http://localhost:3000/auditoria', auditoriaData);
-   ```
-
-Asegúrate de que la columna `N` en tu tabla de auditoría sea capaz de almacenar el número del país. Esto debería permitirte registrar el número del país en la auditoría correctamente para ambos casos: inserción y edición.
+{
+      name: "N°",
+      selector: (row, index) => index + 1,
+      sortable: true,
+      minWidth: "50px",
+      maxWidth: "100px",
+    }
