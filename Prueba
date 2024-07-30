@@ -1,2 +1,66 @@
-./node_modules/date-fns/intervalToDuration.mjs
-Can't import the named export 'differenceInHours' from non EcmaScript module (only default export is available)
+Para ajustar los filtros y permitir búsquedas por fecha y hora con el formato correcto, puedes seguir estos pasos:
+
+### Actualización del Filtro de Fecha y Hora
+
+Si estás utilizando `date-fns` o `moment` para el formato de fecha y hora, necesitarás asegurarte de que el filtro pueda manejar el formato específico. Aquí te muestro cómo podrías ajustar los filtros para trabajar con fecha y hora correctamente.
+
+#### 1. Formato de Fecha y Hora
+
+Primero, asegúrate de que el formato de fecha y hora que estás utilizando en el filtro coincida con el formato de la base de datos. Si tu base de datos almacena la fecha y la hora en un formato específico, el filtro debe ser capaz de manejar ese formato.
+
+#### 2. Función de Formato de Filtro
+
+Modifica la función de filtro para que pueda buscar tanto por fecha como por hora. Aquí te muestro un ejemplo usando `moment`:
+
+```jsx
+import moment from 'moment';
+
+const formatDateForFilter = (date) => {
+  return moment(date).format('YYYY-MM-DD HH:mm'); // Asegúrate de que el formato coincida con el de tus datos
+};
+
+// Filtra los datos
+const filteredData = records.filter((row) => {
+  const formattedDate = formatDateForFilter(row.Fecha);
+
+  return (
+    (filters.Tabla === "" || row.Tabla.toLowerCase().includes(filters.Tabla.toLowerCase())) &&
+    (filters.Accion === "" || row.Accion.toLowerCase().includes(filters.Accion.toLowerCase())) &&
+    (filters.Fecha === "" || formattedDate.includes(filters.Fecha)) && // Usa el formato adecuado para el filtro
+    (filters.Nombre === "" || row.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase()))
+  );
+});
+```
+
+#### 3. Actualiza los Inputs de Filtro
+
+Asegúrate de que los campos de entrada en el filtro acepten tanto la fecha como la hora. Puedes usar un formato específico para permitir la entrada correcta de los datos:
+
+```jsx
+<FilterInput
+  type="text"
+  value={filters.Fecha}
+  onChange={(e) => handleFilterChange(e, "Fecha")}
+  placeholder="Buscar por Fecha y Hora (YYYY-MM-DD HH:mm)"
+/>
+```
+
+#### 4. Ajusta la Función de Cambio de Filtros
+
+Asegúrate de que la función que maneja el cambio de filtros esté configurada para manejar el formato correcto:
+
+```jsx
+const handleFilterChange = (event, column) => {
+  const { value } = event.target;
+  setFilters((prevFilters) => ({ ...prevFilters, [column]: value }));
+};
+```
+
+### Resumen
+
+1. **Formato**: Asegúrate de que el formato de fecha y hora en el filtro coincida con el formato de tus datos.
+2. **Función de Formato**: Usa una función para formatear la fecha y hora en el filtro.
+3. **Inputs de Filtro**: Asegúrate de que los campos de entrada permitan ingresar la fecha y la hora en el formato correcto.
+4. **Manejo de Cambios**: Ajusta la función que maneja el cambio de filtros para que se adapte al formato de fecha y hora.
+
+Estos ajustes te permitirán filtrar correctamente los registros por fecha y hora, teniendo en cuenta el formato que has elegido.
