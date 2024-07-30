@@ -1,0 +1,76 @@
+.top-bar {
+    background-color: var(--dark); /* Color de fondo ajustado */
+    color: var(--light);
+    height: 50px; /* Altura ajustada */
+    display: flex;
+    justify-content: flex-end; /* Alineación a la derecha */
+    align-items: center;
+    padding: 0 20px;
+}
+
+.top-bar-right {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centra los elementos horizontalmente */
+    justify-content: space-between; /* Distribuye los elementos de manera uniforme */
+}
+.user-name-container {
+    flex: 1; /* Ocupa todo el espacio disponible */
+    display: flex;
+    justify-content: center; /* Centra el contenido horizontalmente */
+  }
+
+.user-name {
+    margin-right: 50px; /* Espacio entre el nombre de usuario y el icono */
+    font-size: 1.2em;
+    justify-content: center; /* Centra el texto horizontalmente */
+    display: flex; /* Agrega display: flex para que justify-content funcione */
+    flex-grow: 1; /* Ocupa todo el espacio disponible */
+    text-align: center; /* Centra el texto horizontalmente */
+    margin: 0 auto; /* Centra el elemento horizontalmente */
+  width: fit-content; /* Ajusta el ancho del elemento al contenido */
+  text-align: center; /* Centra el texto horizontalmente */
+
+}
+
+.user-icon {
+    width: 20px; /* Tamaño del icono de usuario */
+    height: 30px;
+    margin-right: 10px;
+    color: var(--light); /* Color del icono ajustado */
+    cursor: pointer;
+    justify-content: center; /* Centra el texto horizontalmente */
+    display: flex; /* Agrega display: flex para que justify-content funcione */
+}
+
+.sesion-icon{
+  width: 25px; /* Tamaño del icono de usuario */
+  height: 30px;
+  margin-right: 10px;
+  color: var(--light); /* Color del icono ajustado */
+  cursor: pointer;
+  justify-content: center; /* Centra el texto horizontalmente */
+  display: flex; /* Agrega display: flex para que justify-content funcione */
+}
+.questionCircle{
+  width: 10%; /* Tamaño del icono de usuario */
+  height: 30px;
+}
+
+
+.nav {
+    width: 2.5%;
+    margin-left: 1px;
+    color: var(--light);
+    align-items: center;
+  }
+
+.nav-brand {
+    margin-right: auto;
+    color: var(--light);
+    align-items: center;
+  }
+
+.icon {
+    color: white;
+}
