@@ -1,116 +1,52 @@
-const saveChanges = async (id) => {
-  try {
-    // Verificar si Ambientes ha sido modificado
-    const hasAmbientesChanged = editedRow.Ambientes && editedRow.Ambientes.length > 0;
+Para agregar saltos de línea después de las comas en el campo "Campo_Nuevo" y mantener la lista continua para "Ambientes", puedes modificar el formato de los datos antes de mostrarlo. Aquí está el código que necesitas agregar para lograr esto:
 
-    // Construir la fila actualizada solo con los campos modificados
-    const updateRow = {
-      ...editedRow,
-      Ambientes: hasAmbientesChanged ? editedRow.Ambientes.join(", ") : undefined, // Solo incluir ambientes si han cambiado
-    };
+### 1. **Función para Formatear los Datos con Saltos de Línea**
 
-    // Verificar si la aplicación ya existe en la base de datos para el mismo país
-    if (editedRow && editedRow.ID_Pais && editedRow.N_Aplicaciones) {
-      const response = await axios.get(`http://localhost:3000/aplicacion`);
-      console.log("Response:", response.data);
+Agrega esta función para formatear el texto con saltos de línea después de una coma:
 
-      const aplicacionExists = response.data.some((division) => {
-        if (
-          division.ID_Pais === parseInt(editedRow.ID_Pais) &&
-          division.id !== id
-        ) {
-          const editedAplicacionName = editedRow.N_Aplicaciones
-            ? editedRow.N_Aplicaciones.toLowerCase()
-            : "";
-          return (
-            division.N_Aplicaciones.toLowerCase() === editedAplicacionName
-          );
-        }
-        return false;
-      });
-
-      if (aplicacionExists) {
-        setErrors({ division: "La aplicación ya existe en este país" });
-
-        const errorNotification = document.createElement("div");
-        errorNotification.className = "error-notification";
-        errorNotification.innerHTML = `
-          <span class="error-icon">!</span>
-          <span class="error-message">
-            La aplicación que intenta registrar ya existe en la base de datos para este país.
-            Por favor, ingrese una aplicación diferente.
-          </span>
-        `;
-
-        document.body.appendChild(errorNotification);
-
-        // Ocultar la notificación después de 2 segundos
-        setTimeout(() => {
-          errorNotification.remove();
-        }, 2000);
-        return;
-      }
-    } else {
-      console.error(
-        "Error: editedRow.division or editedRow.ID_Pais is undefined or empty"
-      );
-      setErrors({
-        division: "El campo División o País no puede estar vacío",
-      });
-      return;
-    }
-
-    // Obtener la lista de ambientes desde la base de datos
-    const ambientesResponse = await axios.get('http://localhost:3000/ambientes');
-    const ambientesList = ambientesResponse.data;
-
-    // Crear una función para mapear IDs a nombres
-    const getAmbienteNameById = (id) => {
-      const ambiente = ambientesList.find((a) => a.id === id);
-      return ambiente ? ambiente.name : id;
-    };
-
-    // Mapear ambientes a nombres
-    const originalRow = records.find((row) => row.id === id);
-    const originalAmbientes = originalRow.Ambientes ? originalRow.Ambientes.split(', ').map((id) => getAmbienteNameById(parseInt(id))).join(', ') : '';
-    const editedAmbientes = editedRow.Ambientes ? editedRow.Ambientes.map((id) => getAmbienteNameById(parseInt(id))).join(', ') : '';
-
-    const hasCountryChanged = originalRow.N_Pais !== editedRow.N_Pais;
-    const hasAplicacionChanged = originalRow.N_Aplicaciones !== editedRow.N_Aplicaciones;
-    const hasAmbienteChanged = originalAmbientes !== editedAmbientes;
-
-    const auditoriaData = {
-      Campo_Original: [
-        hasCountryChanged ? `País: ${originalRow.N_Pais}` : '',
-        hasAplicacionChanged ? `Aplicación: ${originalRow.N_Aplicaciones}` : '',
-        hasAmbienteChanged && hasAmbientesChanged ? `Ambientes: ${originalAmbientes}` : ''
-      ].filter(Boolean).join(', '),
-      Campo_Nuevo: [
-        hasCountryChanged ? `País: ${editedRow.N_Pais}` : '',
-        hasAplicacionChanged ? `Aplicación: ${editedRow.N_Aplicaciones}` : '',
-        hasAmbienteChanged && hasAmbientesChanged ? `Ambientes: ${editedAmbientes}` : ''
-      ].filter(Boolean).join(', '),
-      Tabla: 'Aplicaciones',
-      Accion: 2, // Modificación
-      ID_Usuario: userId,
-      N: records.findIndex((row) => row.id === id) + 1
-    };
-
-    if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
-      await axios.post('http://localhost:3000/auditoria', auditoriaData);
-    }
-
-    const updatedRecords = records.map((row) =>
-      row.id === id ? { ...editedRow } : row
-    );
-
-    setRecords(updatedRecords);
-    setEditedRow(null);
-    setEditMode(null);
-
-    console.log("Cambios guardados correctamente");
-    window.location.reload();
-  } catch (error) {
-    console.error("Error al guardar los cambios", error);
-  }
+```javascript
+const formatFieldWithLineBreaks = (text) => {
+  // Divide el texto en líneas por comas, y une las líneas con un salto de línea al final de cada coma
+  return text.split(', ').map((line, index, array) => 
+    index === array.length - 1 ? line : `${line},<br />`
+  ).join('');
 };
+```
+
+### 2. **Uso en las Celdas de la Tabla**
+
+Modifica el componente de la tabla para usar esta función en la columna "Campo_Nuevo". Aquí está el código actualizado para las columnas:
+
+```javascript
+const columns = [
+  // Otras columnas aquí...
+  {
+    name: "Campo Nuevo",
+    selector: (row) => row.Campo_Nuevo,
+    sortable: true,
+    minWidth: "200px",
+    maxWidth: "500px",
+    cell: (row) =>
+      editedRow && editedRow.id === row.id ? (
+        <input
+          type="text"
+          value={editedRow.Campo_Nuevo}
+          style={{
+            padding: "8px",
+            fontSize: "12px",
+            borderRadius: "5px",
+          }}
+        />
+      ) : (
+        <div dangerouslySetInnerHTML={{ __html: formatFieldWithLineBreaks(row.Campo_Nuevo) }} />
+      ),
+  },
+  // Otras columnas aquí...
+];
+```
+
+### **Explicación**:
+- La función `formatFieldWithLineBreaks` toma un texto y lo divide en partes usando la coma como delimitador. Luego, añade un salto de línea (`<br />`) después de cada coma, excepto la última.
+- La propiedad `dangerouslySetInnerHTML` en React permite renderizar HTML desde un string, en este caso, el texto formateado con saltos de línea.
+
+Este código asegura que cada elemento en "Campo_Nuevo" se muestre en una línea separada después de cada coma. Ajusta el formato según sea necesario para cumplir con tus requisitos específicos.
