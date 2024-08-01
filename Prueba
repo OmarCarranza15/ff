@@ -1,9 +1,125 @@
-const auditoriaData = {
-          Campo_Nuevo: `- Puesto: ${puestoResponse.data.N_Puesto}. - Aplicación: ${aplicacionResponse.data.N_Aplicaciones}.
-                        - Rol: ${modalValues.Rol}. - Jefe Inmediato: ${modalValues.Puesto_Jefe}. - Estado: En Servicio.
-                        - Ticket: ${modalValues.Ticket}. - Observación: ${modalValues.Observaciones}`,
-          Tabla: `Matriz de ${selectedCountry}`,
+const SaveModal = async () => {
+    const newErrors = {
+      Usuario: "",
+      Nombre: "",
+      Contrasenia: "",
+      ID_PuestoIn: "",
+      ID_RolUsuario: "",
+      Fec_Exp_Acceso: "",
+    };
+  
+    const newPassword = generateRandomPassword();
+  
+    // Validación de campos
+    if (!modalValues.Usuario.trim()) {
+      newErrors.Usuario = "El código de Usuario es obligatorio.";
+    }
+    if (!modalValues.Nombre.trim()) {
+      newErrors.Nombre = "El nombre del empleado es obligatorio.";
+    } else if (!/^[a-zA-Z\s]+$/.test(modalValues.Nombre)) {
+      newErrors.Nombre =
+        "El nombre del empleado solo acepta letras y espacios en blanco.";
+    }
+    if (!modalValues.ID_PuestoIn.trim()) {
+      newErrors.ID_PuestoIn = "El puesto interno es obligatorio.";
+    }
+    if (!modalValues.ID_RolUsuario.trim()) {
+      newErrors.ID_RolUsuario = "El Rol del Usuario es obligatorio.";
+    }
+    
+    setErrors(newErrors);
+  
+    if (Object.values(newErrors).every((error) => error === "")) {
+      try {
+        // Verificar si el Usuario ya existe en la base de datos
+        const response = await axios.get(`http://localhost:3000/usuarios`);
+        const usuarios = response.data;
+        const usuarioExistente = usuarios.some(
+          (usuario) =>
+            usuario.Usuario.toLowerCase() === modalValues.Usuario.toLowerCase()
+        );
+  
+        if (usuarioExistente) {
+          setErrors({ Usuario: "El código de usuario ya existe" });
+          return;
+        }
+  
+        // Datos del nuevo usuario
+        const newUsuario = {
+          Usuario: modalValues.Usuario,
+          Nombre: modalValues.Nombre,
+          Contrasenia: newPassword,
+          Fec_Creacion: new Date(),
+          Fec_Exp_Acceso: "2025-10-17",
+          Fec_Ult_Conexion: "2024-10-30",
+          Estado: 1,
+          ID_RolUsuario: modalValues.ID_RolUsuario,
+          ID_PuestoIn: modalValues.ID_PuestoIn,
+        };
+  
+        // Enviar solicitud POST para insertar el nuevo usuario
+        const insertResponse = await axios.post(
+          `http://localhost:3000/usuarios`,
+          newUsuario
+        );
+  
+        // Actualizar la lista de registros con el nuevo usuario
+        const rolusuarioResponse = rolusuario.find(
+          (rol) => rol.id === parseInt(modalValues.ID_RolUsuario)
+        );
+        const puestoinResponse = puestoin.find(
+          (puesto) => puesto.id === parseInt(modalValues.ID_PuestoIn)
+        );
+
+        const newIndex = records.length + 1;
+
+        // Preparar datos de auditoría
+        const auditoriaData = {
+          Campo_Nuevo: `- Puesto Interno: ${puestoinResponse.data.N_PuestoIn}, - Rol del Usuario: ${rolusuarioResponse.data.N_Rol}.
+                       - Usuario: ${modalValues.Usuario}. - Nombre: ${modalValues.Nombre}. 
+                       - Estado: Nuevo `,
+          Tabla: 'Puestos',
           Accion: 1, // Inserción
           ID_Usuario: userId,
           N: newIndex
         };
+
+      // Registrar en la auditoría
+       await axios.post('http://localhost:3000/auditoria', auditoriaData);
+  
+        const updatedRecords = [
+          ...records,
+          {
+            id: insertResponse.data.id,
+            Usuario: modalValues.Usuario,
+            Nombre: modalValues.Nombre,
+            Contrasenia: newPassword,
+            Fec_Exp_Acceso: modalValues.Fec_Exp_Acceso,
+            ID_RolUsuario: modalValues.ID_RolUsuario,
+            N_Rol: rolusuarioResponse?.N_Rol,
+            ID_PuestoIn: modalValues.ID_PuestoIn,
+            N_PuestoIn: puestoinResponse?.N_PuestoIn,
+          },
+        ];
+  
+        setRecords(updatedRecords);
+        handleCloseModal();
+  
+        // Notificación de éxito
+        const toastElement = document.createElement("div");
+        toastElement.className = "toast-success";
+        toastElement.innerHTML = "¡Usuario insertado correctamente!";
+        document.body.appendChild(toastElement);
+        setTimeout(() => {
+          toastElement.remove();
+          window.location.reload();
+        }, 1000);
+      } catch (error) {
+        console.error("Error al insertar un nuevo usuario:", error);
+      }
+    }
+  };
+
+
+index.js:1191  Error al insertar un nuevo usuario: TypeError: Cannot read properties of undefined (reading 'N_PuestoIn')
+    at SaveModal (Usuario.jsx:303:1)
