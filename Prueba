@@ -1,65 +1,70 @@
 {
-      name: "Aplicación",
-      selector: (row) => {
-        const aplicacionText = row.N_Aplicaciones || "";
-        const codMenuText = row.Cod_Menu || "";
-        return aplicacionText + (aplicacionText && codMenuText && aplicacionText === "T24" ? " - " : "") + (aplicacionText === "T24" ? codMenuText : "");
-      },
-      sortable: true,
-      minWidth: "350px",
-      maxWidth: "1000px",
-      cell: (row) => (
-        editMode && editedRow?.id === row.id ? (
-          <>
-            <StyledSelect
-              value={editedRow.ID_Aplicaciones}
-              onChange={(e) => handleEditChange(e, "ID_Aplicaciones")}
-            >
-              {aplicacion.map((aplicacion) => (
-                <option key={aplicacion.id} value={aplicacion.id}>
-                  {aplicacion.N_Aplicaciones}
-                </option>
-              ))}
-            </StyledSelect>
-            {editedRow.N_Aplicaciones === 'T24' && (
-              <StyledInput
-                type="text"
-                value={editedRow.Cod_Menu}
-                onChange={(e) => handleEditChange(e, "Cod_Menu")}
-                onKeyPress={(e) => {
-                  if (!/\d/.test(e.key)) {
-                    e.preventDefault();
-                  }
-                }}
-              />
-            )}
-          </>
-        ) : (
-          <div>
-            {row.N_Aplicaciones && (
-              <>
-                <span>{row.N_Aplicaciones}</span>
-                {row.N_Aplicaciones === 'T24' && row.Cod_Menu && <span> - {row.Cod_Menu}</span>}
-              </>
-            )}
-          </div>
-        )
-      ),
-    },
-    {
-      name: "Rol",
-      selector: (row) => row.Rol,
-      sortable: true,
-      minWidth: "370px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
+  name: "Aplicación",
+  selector: (row) => {
+    const aplicacionText = row.N_Aplicaciones || "";
+    // No necesitas mostrar Cod_Menu aquí
+    return aplicacionText;
+  },
+  sortable: true,
+  minWidth: "350px",
+  maxWidth: "1000px",
+  cell: (row) => (
+    editMode && editedRow?.id === row.id ? (
+      <>
+        <StyledSelect
+          value={editedRow.ID_Aplicaciones}
+          onChange={(e) => handleEditChange(e, "ID_Aplicaciones")}
+        >
+          {aplicacion.map((aplicacion) => (
+            <option key={aplicacion.id} value={aplicacion.id}>
+              {aplicacion.N_Aplicaciones}
+            </option>
+          ))}
+        </StyledSelect>
+        {/* La entrada para Cod_Menu ya no se muestra en la columna de Aplicación */}
+      </>
+    ) : (
+      <div>
+        {row.N_Aplicaciones}
+      </div>
+    )
+  ),
+},
+{
+  name: "Rol",
+  selector: (row) => {
+    const rolText = row.Rol || "";
+    const codMenuText = row.Cod_Menu || "";
+    return rolText + (row.N_Aplicaciones === "T24" && codMenuText ? ` - ${codMenuText}` : "");
+  },
+  sortable: true,
+  minWidth: "370px", // Ajusta el tamaño mínimo según sea necesario
+  maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
+  cell: (row) =>
+    editMode && editedRow?.id === row.id ? (
+      <>
+        <StyledInput
+          type="text"
+          value={editedRow.Rol}
+          onChange={(e) => handleEditChange(e, "Rol")}
+        />
+        {editedRow.N_Aplicaciones === 'T24' && (
           <StyledInput
             type="text"
-            value={editedRow.Rol}
-            onChange={(e) => handleEditChange(e, "Rol")}
+            value={editedRow.Cod_Menu}
+            onChange={(e) => handleEditChange(e, "Cod_Menu")}
+            onKeyPress={(e) => {
+              if (!/\d/.test(e.key)) {
+                e.preventDefault();
+              }
+            }}
           />
-        ) : (
-          <div>{row.Rol}</div>
-        ),
-    },
+        )}
+      </>
+    ) : (
+      <div>
+        {row.Rol}
+        {row.N_Aplicaciones === 'T24' && row.Cod_Menu && <span> - {row.Cod_Menu}</span>}
+      </div>
+    ),
+},
