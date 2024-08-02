@@ -1,12 +1,29 @@
+Parece que el problema con el campo `Cod_Menu` podría estar relacionado con cómo se actualiza el estado cuando se selecciona la aplicación "T24" o cómo se maneja el valor del campo. 
+
+Vamos a ajustar el código para asegurarnos de que el campo `Cod_Menu` siempre se muestre cuando "T24" esté seleccionado, y que no desaparezca al escribir. Aquí hay un enfoque revisado:
+
+1. **Asegúrate de que `T24` esté correctamente establecido**: Verifica si `T24` está correctamente establecido como `true` cuando la aplicación seleccionada es "T24". 
+2. **Mantén el estado del `Cod_Menu` visible**: Verifica que el estado de `Cod_Menu` se mantenga en el estado actual cuando el campo está visible.
+
+Revisemos y ajustemos el código relevante:
+
+### Código Modificado
+
+1. **Actualización de `handleModalChange`**:
+   Asegúrate de que el estado de `T24` se actualice correctamente al seleccionar una aplicación. También, confirma que `Cod_Menu` se maneje de manera adecuada.
+
+```javascript
 const handleModalChange = (e, fieldName) => {
-    const value = e.target.value;
+  const value = e.target.value;
 
-    // Actualizar el valor del campo en modalValues
-    setModalValues((prevModalValues) => ({
-      ...prevModalValues,
-      [fieldName]: value,
-    }));
+  // Actualizar el valor del campo en modalValues
+  setModalValues((prevModalValues) => ({
+    ...prevModalValues,
+    [fieldName]: value,
+  }));
 
+  // Si el campo que cambia es ID_Aplicaciones
+  if (fieldName === 'ID_Aplicaciones') {
     // Encontrar la aplicación seleccionada en la lista de aplicaciones
     const selectedApplication = aplicacion.find(
       (app) => app.id === parseInt(value)
@@ -19,186 +36,193 @@ const handleModalChange = (e, fieldName) => {
 
     // Actualizar el estado T24
     setT24(isT24);
+  }
+};
+```
 
-    // Log para verificar en consola la aplicación seleccionada
-    //console.log('Aplicación seleccionada:', selectedApplication);
-  };
+2. **Ajuste en la Modal**:
+   Asegúrate de que el campo `Cod_Menu` solo se muestre si `T24` es verdadero y que el valor del campo se mantenga visible cuando esté habilitado.
 
-
-{/* Modal para insertar una nuevo departamento */}
-      {showModal && (
-        <ModalBackground>
-          <ModalWrapper>
-            <ModalTitle>Nuevo Perfil {selectedCountry}</ModalTitle>
-            <div style={{ margin: "15px" }} />
-            <label
-              style={{ width: "100%", display: "block", textAlign: "left" }}
-            >
-              <span style={{ textAlign: "left" }}>Puesto:</span>
-            </label>
-            <select
-              class="form-select"
-              aria-label="Default select example"
-              value={modalValues.ID_Puesto}
-              onChange={(e) => handleModalChange(e, "ID_Puesto")}
-              error={errors.puesto}
-              required
-            >
-              <option value="">Seleccione un puesto</option>
-              {puestos.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.N_Puesto}
-                </option>
-              ))}
-            </select>
-            {errors.puesto && <ErrorMessage>{errors.puesto}</ErrorMessage>}
-
-            <div style={{ margin: "15px" }} />
-            <label
-              style={{ width: "100%", display: "block", textAlign: "left" }}
-            >
-              <span style={{ textAlign: "left" }}>Aplicación:</span>
-            </label>
-            <select
-              class="form-select"
-              aria-label="Default select example"
-              value={modalValues.ID_Aplicaciones}
-              onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
-              error={errors.aplicacion}
-              required
-            >
-              <option value="">Seleccione una aplicación</option>
-              {aplicacion.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.N_Aplicaciones}
-                </option>
-              ))}
-            </select>
-            {errors.aplicacion && (
-              <ErrorMessage>{errors.aplicacion}</ErrorMessage>
-            )}
-            <div style={{ margin: "15px" }} />
-            {T24 && (
-              <div>
-                <label
-                  style={{
-                    width: "100%",
-                    display: "block",
-                    textAlign: "left",
-                  }}
-                >
-                  Número de Menú:
-                </label>
-                <input
-                  class="form-control"
-                  type="text"
-                  value={modalValues.Cod_Menu}
-                  onChange={(e) => handleModalChange(e, "Cod_Menu")}
-                  placeholder="Ingrese el número de menu"
-                  {...(errors.Cod_Menu && { className: "is-invalid" })}
-                  required
-                />
-              </div>
-            )}
-            <div style={{ margin: "15px" }} />
-
-            <label
-              style={{ width: "100%", display: "block", textAlign: "left" }}
-            >
-              <span style={{ textAlign: "left" }}>Rol en la Aplicación:</span>
-            </label>
-            <input
-              class="form-control"
-              type="text"
-              value={modalValues.Rol}
-              onChange={(e) => handleModalChange(e, "Rol")}
-              placeholder="Ingrese el Rol"
-              error={errors.Rol}
-              required
-            />
-            {errors.Rol && <ErrorMessage>{errors.Rol}</ErrorMessage>}
-            <div style={{ margin: "15px" }} />
-
-            <label
-              style={{ width: "100%", display: "block", textAlign: "left" }}
-            >
-              <span style={{ textAlign: "left" }}>
-                Puesto del Jefe Inmediato:
-              </span>
-            </label>
-            <input
-              class="form-control"
-              type="text"
-              value={modalValues.Puesto_Jefe}
-              onChange={(e) => handleModalChange(e, "Puesto_Jefe")}
-              placeholder="Ingrese el Puesto del Jefe"
-              error={errors.Puesto_Jefe}
-              required
-            />
-            {errors.Puesto_Jefe && (
-              <ErrorMessage>{errors.Puesto_Jefe}</ErrorMessage>
-            )}
-            {errors.PerError && <ErrorMessage>{errors.PerError}</ErrorMessage>}
-            <div style={{ margin: "15px" }} />
-
-            <label
-              style={{ width: "100%", display: "block", textAlign: "left" }}
-            >
-              <span style={{ textAlign: "left" }}>Número de Ticket:</span>
-            </label>
-            <input
-              class="form-control"
-              type="text"
-              value={modalValues.Ticket}
-              onChange={(e) => handleModalChange(e, "Ticket")}
-              placeholder="Ingrese el número de ticket"
-              onKeyPress={(e) => {
-                if (!/\d/.test(e.key)) {
-                  e.preventDefault();
-                }
-              }}
-              error={errors.Ticket}
-              required
-            />
-            {errors.Ticket && <ErrorMessage>{errors.Ticket}</ErrorMessage>}
-            <div style={{ margin: "15px" }} />
-
-            <label
-              style={{ width: "100%", display: "block", textAlign: "left" }}
-            >
-              <span style={{ textAlign: "left" }}>Observaciones:</span>
-            </label>
-            <input
-              class="form-control"
-              type="text"
-              value={modalValues.Observaciones}
-              onChange={(e) => handleModalChange(e, "Observaciones")}
-              placeholder=""
-              error={errors.Observaciones}
-              required
-            />
-            {errors.Observaciones && (
-              <ErrorMessage>{errors.Observaciones}</ErrorMessage>
-            )}
-            <div style={{ margin: "15px" }} />
-            <ModalButtonGroup>
-              <button
-                type="button"
-                class="btn btn-success"
-                style={{ fontSize: "14px", padding: "10px 10px" }}
-                onClick={SaveModal}
-              >
-                Guardar
-              </button>
-              <button
-                type="button"
-                class="btn btn-secondary"
-                cancel
-                onClick={handleCloseModal}
-              >
-                Cancelar
-              </button>
-            </ModalButtonGroup>
-          </ModalWrapper>
-        </ModalBackground>
+```jsx
+{showModal && (
+  <ModalBackground>
+    <ModalWrapper>
+      <ModalTitle>Nuevo Perfil {selectedCountry}</ModalTitle>
+      <div style={{ margin: "15px" }} />
+      
+      {/* Campo para seleccionar puesto */}
+      <label
+        style={{ width: "100%", display: "block", textAlign: "left" }}
+      >
+        <span style={{ textAlign: "left" }}>Puesto:</span>
+      </label>
+      <select
+        className="form-select"
+        aria-label="Default select example"
+        value={modalValues.ID_Puesto}
+        onChange={(e) => handleModalChange(e, "ID_Puesto")}
+        required
+      >
+        <option value="">Seleccione un puesto</option>
+        {puestos.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.N_Puesto}
+          </option>
+        ))}
+      </select>
+      {errors.puesto && <ErrorMessage>{errors.puesto}</ErrorMessage>}
+      
+      <div style={{ margin: "15px" }} />
+      
+      {/* Campo para seleccionar aplicación */}
+      <label
+        style={{ width: "100%", display: "block", textAlign: "left" }}
+      >
+        <span style={{ textAlign: "left" }}>Aplicación:</span>
+      </label>
+      <select
+        className="form-select"
+        aria-label="Default select example"
+        value={modalValues.ID_Aplicaciones}
+        onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
+        required
+      >
+        <option value="">Seleccione una aplicación</option>
+        {aplicacion.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.N_Aplicaciones}
+          </option>
+        ))}
+      </select>
+      {errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
+      
+      <div style={{ margin: "15px" }} />
+      
+      {/* Campo para el número de menú, solo visible si T24 está seleccionado */}
+      {T24 && (
+        <div>
+          <label
+            style={{
+              width: "100%",
+              display: "block",
+              textAlign: "left",
+            }}
+          >
+            Número de Menú:
+          </label>
+          <input
+            className="form-control"
+            type="text"
+            value={modalValues.Cod_Menu}
+            onChange={(e) => handleModalChange(e, "Cod_Menu")}
+            placeholder="Ingrese el número de menú"
+            required
+          />
+        </div>
       )}
+      <div style={{ margin: "15px" }} />
+
+      {/* Otros campos */}
+      <label
+        style={{ width: "100%", display: "block", textAlign: "left" }}
+      >
+        <span style={{ textAlign: "left" }}>Rol en la Aplicación:</span>
+      </label>
+      <input
+        className="form-control"
+        type="text"
+        value={modalValues.Rol}
+        onChange={(e) => handleModalChange(e, "Rol")}
+        placeholder="Ingrese el Rol"
+        required
+      />
+      {errors.Rol && <ErrorMessage>{errors.Rol}</ErrorMessage>}
+      <div style={{ margin: "15px" }} />
+
+      <label
+        style={{ width: "100%", display: "block", textAlign: "left" }}
+      >
+        <span style={{ textAlign: "left" }}>
+          Puesto del Jefe Inmediato:
+        </span>
+      </label>
+      <input
+        className="form-control"
+        type="text"
+        value={modalValues.Puesto_Jefe}
+        onChange={(e) => handleModalChange(e, "Puesto_Jefe")}
+        placeholder="Ingrese el Puesto del Jefe"
+        required
+      />
+      {errors.Puesto_Jefe && <ErrorMessage>{errors.Puesto_Jefe}</ErrorMessage>}
+      {errors.PerError && <ErrorMessage>{errors.PerError}</ErrorMessage>}
+      <div style={{ margin: "15px" }} />
+
+      <label
+        style={{ width: "100%", display: "block", textAlign: "left" }}
+      >
+        <span style={{ textAlign: "left" }}>Número de Ticket:</span>
+      </label>
+      <input
+        className="form-control"
+        type="text"
+        value={modalValues.Ticket}
+        onChange={(e) => handleModalChange(e, "Ticket")}
+        placeholder="Ingrese el número de ticket"
+        onKeyPress={(e) => {
+          if (!/\d/.test(e.key)) {
+            e.preventDefault();
+          }
+        }}
+        required
+      />
+      {errors.Ticket && <ErrorMessage>{errors.Ticket}</ErrorMessage>}
+      <div style={{ margin: "15px" }} />
+
+      <label
+        style={{ width: "100%", display: "block", textAlign: "left" }}
+      >
+        <span style={{ textAlign: "left" }}>Observaciones:</span>
+      </label>
+      <input
+        className="form-control"
+        type="text"
+        value={modalValues.Observaciones}
+        onChange={(e) => handleModalChange(e, "Observaciones")}
+        placeholder=""
+        required
+      />
+      {errors.Observaciones && <ErrorMessage>{errors.Observaciones}</ErrorMessage>}
+      <div style={{ margin: "15px" }} />
+
+      <ModalButtonGroup>
+        <button
+          type="button"
+          className="btn btn-success"
+          style={{ fontSize: "14px", padding: "10px 10px" }}
+          onClick={SaveModal}
+        >
+          Guardar
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={handleCloseModal}
+        >
+          Cancelar
+        </button>
+      </ModalButtonGroup>
+    </ModalWrapper>
+  </ModalBackground>
+)}
+```
+
+### Cosas a Verificar
+
+1. **Asegúrate de que `T24` esté configurado correctamente**: Usa `console.log` para verificar si `T24` se actualiza correctamente cuando seleccionas una aplicación.
+
+2. **Asegúrate de que el `Cod_Menu` no se oculte incorrectamente**: Verifica si el campo `Cod_Menu` es visible solo cuando `T24` es verdadero y que el valor del campo no se borre.
+
+3. **Estilos y Clases**: Revisa los estilos y clases CSS para asegurarte de que no están causando problemas en la visibilidad del campo `Cod_Menu`.
+
+Si sigues teniendo problemas, por favor, proporciona más detalles sobre los errores o comportamientos observados para ajustar la solución.
