@@ -1,36 +1,59 @@
-Claro, aquí están las modificaciones que debes realizar en tu código:
+Entiendo, veamos algunos ajustes adicionales para solucionar el problema:
 
-1. **Asegúrate de que la fecha se convierte a la zona horaria correcta en `formatDate`:**
+1. **Asegúrate de que la fecha se maneje de manera consistente en `fetchData` y en el filtrado.**
 
-   Cambia:
-   ```javascript
-   return moment(date).tz(timeZone).format('YYYY-MM-DD --- h:mm A');
-   ```
-   A:
-   ```javascript
-   return moment(date).tz(timeZone).format('YYYY-MM-DD h:mm A');
-   ```
+   Asegúrate de que al recibir la fecha desde la API, se esté manejando correctamente. Debes convertir la fecha a la zona horaria correcta cuando se recibe y cuando se filtra.
 
-2. **Modifica `formatDateForFilter` para asegurar el mismo formato al filtrar:**
+2. **Verifica la fecha en el filtro y en la visualización.**
 
-   Cambia:
-   ```javascript
-   return moment(date).tz(timeZone).format('YYYY-MM-DD h:mm A');
-   ```
-   A:
-   ```javascript
-   return moment(date).format('YYYY-MM-DD h:mm A');
-   ```
+   **Actualiza `fetchData` para convertir la fecha correctamente:**
 
-3. **Actualiza la lógica de filtrado para usar `formatDateForFilter`:**
-
-   Cambia:
    ```javascript
-   (filters.createdAt === "" || formattedDate.includes(filters.createdAt))
-   ```
-   A:
-   ```javascript
-   (filters.createdAt === "" || moment(row.createdAt).format('YYYY-MM-DD h:mm A').includes(filters.createdAt))
+   const mappedData = await Promise.all(
+     data.map(async (auditoria) => {
+       const usuarioResponse = await axios.get(`http://localhost:3000/usuarios/${auditoria.ID_Usuario}`);
+       return {
+         id: auditoria.id,
+         N: auditoria.N,
+         Campo_Original: auditoria.Campo_Original,
+         Campo_Nuevo: auditoria.Campo_Nuevo,
+         Tabla: auditoria.Tabla,
+         Accion: auditoria.Accion === 1 ? "Insercion" : "Modificacion",
+         createdAt: moment(auditoria.createdAt).tz(timeZone).format('YYYY-MM-DD h:mm A'),
+         ID_Usuario: auditoria.ID_Usuario,
+         Nombre: usuarioResponse.data.Nombre,
+       }
+     })
+   );
    ```
 
-Estas modificaciones garantizan que las fechas se muestren y se filtren en la zona horaria correcta y en el formato consistente.
+   **Actualiza el formato de fecha en `formatDateForFilter`:**
+
+   ```javascript
+   const formatDateForFilter = (date) => {
+     return moment(date).format('YYYY-MM-DD h:mm A'); // Mantén el formato para el filtro
+   };
+   ```
+
+   **Modifica la lógica de filtrado para usar el formato de fecha adecuado:**
+
+   ```javascript
+   const filteredData = records.filter((row) => {
+     const formattedDate = formatDateForFilter(row.createdAt);
+
+     return (
+       (filters.Campo_Original === "" || row.Campo_Original.toLowerCase().includes(filters.Campo_Original.toLowerCase())) &&
+       (filters.Campo_Nuevo === "" || row.Campo_Nuevo.toLowerCase().includes(filters.Campo_Nuevo.toLowerCase())) &&
+       (filters.Tabla === "" || row.Tabla.toLowerCase().includes(filters.Tabla.toLowerCase())) &&
+       (filters.Accion === "" || row.Accion.toLowerCase().includes(filters.Accion.toLowerCase())) &&
+       (filters.createdAt === "" || formattedDate.includes(filters.createdAt)) &&
+       (filters.Nombre === "" || row.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase()))
+     );
+   });
+   ```
+
+3. **Verifica la entrada del usuario en el filtro.**
+
+   Asegúrate de que el formato de fecha ingresado por el usuario en el campo de filtro coincida exactamente con el formato que estás usando para mostrar las fechas. Podrías agregar validaciones para asegurarte de que la entrada del usuario esté en el formato correcto.
+
+Si después de estos cambios sigues teniendo problemas, considera agregar `console.log` para depurar y verificar que las fechas se están formateando y filtrando correctamente.
