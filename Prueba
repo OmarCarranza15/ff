@@ -1,35 +1,3 @@
-Para agregar una validación que asegure que el campo `Cod_Menu` sea obligatorio cuando se seleccione T24, puedes usar el siguiente enfoque:
-
-1. **Agregar Validación en el Formulario**:
-   - Puedes utilizar un estado para controlar los errores específicos de validación del campo `Cod_Menu` y actualizar este estado en función de si `T24` está seleccionado.
-
-2. **Mostrar Mensaje de Error**:
-   - Muestra un mensaje de error si el campo `Cod_Menu` está vacío cuando `T24` está seleccionado.
-
-Aquí está el código actualizado para incluir esta validación:
-
-### Código Modificado
-
-1. **Agregar Estado para Errores de Validación**:
-   Añade un estado para manejar el error de validación de `Cod_Menu`.
-
-```javascript
-const [errors, setErrors] = useState({
-  puesto: "",
-  aplicacion: "",
-  Cod_Menu: "",
-  Rol: "",
-  Puesto_Jefe: "",
-  Ticket: "",
-  Observaciones: "",
-  PerError: ""
-});
-```
-
-2. **Actualizar la Función `handleModalChange`**:
-   Actualiza la función `handleModalChange` para validar `Cod_Menu` cuando `T24` está seleccionado.
-
-```javascript
 const handleModalChange = (e, fieldName) => {
   const value = e.target.value;
 
@@ -39,107 +7,218 @@ const handleModalChange = (e, fieldName) => {
     [fieldName]: value,
   }));
 
-  // Si el campo que cambia es ID_Aplicaciones
-  if (fieldName === 'ID_Aplicaciones') {
-    // Encontrar la aplicación seleccionada en la lista de aplicaciones
-    const selectedApplication = aplicacion.find(
-      (app) => app.id === parseInt(value)
-    ); // Asegúrate de convertir a entero si es necesario
+  // Encontrar la aplicación seleccionada en la lista de aplicaciones
+  const selectedApplication = aplicacion.find(
+    (app) => app.id === parseInt(value)
+  ); // Asegúrate de convertir a entero si es necesario
 
-    // Verificar si la aplicación seleccionada es T24
-    const isT24 = selectedApplication
-      ? selectedApplication.N_Aplicaciones === "T24"
-      : false;
+  // Verificar si la aplicación seleccionada es T24
+  const isT24 = selectedApplication
+    ? selectedApplication.N_Aplicaciones === "T24"
+    : false;
 
-    // Actualizar el estado T24
-    setT24(isT24);
-    
-    // Si T24 está seleccionado, asegurarse de que Cod_Menu tenga un valor
-    if (isT24 && !modalValues.Cod_Menu) {
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        Cod_Menu: "El número de menú es obligatorio cuando T24 está seleccionado.",
-      }));
-    } else {
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        Cod_Menu: "",
-      }));
-    }
-  } else if (fieldName === 'Cod_Menu' && T24) {
-    // Validar Cod_Menu cuando T24 está seleccionado
-    if (!value) {
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        Cod_Menu: "El número de menú es obligatorio cuando T24 está seleccionado.",
-      }));
-    } else {
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        Cod_Menu: "",
-      }));
-    }
-  }
-};
-```
+  // Actualizar el estado T24
+  setT24(isT24);
 
-3. **Validación en el Guardado del Modal**:
-   Asegúrate de que la validación de `Cod_Menu` se ejecute antes de guardar el formulario.
-
-```javascript
-const SaveModal = () => {
-  let valid = true;
-
-  // Verificar si Cod_Menu es obligatorio y está vacío
-  if (T24 && !modalValues.Cod_Menu) {
+  // Si T24 está seleccionado y Cod_Menu está vacío, no permitas cambios en otros campos relacionados con Cod_Menu
+  if (isT24 && !modalValues.Cod_Menu) {
     setErrors((prevErrors) => ({
       ...prevErrors,
       Cod_Menu: "El número de menú es obligatorio cuando T24 está seleccionado.",
     }));
+  } else {
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      Cod_Menu: "",
+    }));
+  }
+};
+
+
+const SaveModal = async () => {
+  let valid = true;
+  const newErrors = {
+    ID_Pais: "",
+    ID_Puesto: "",
+    ID_Aplicaciones: "",
+    Estado_Perfil: "",
+    Rol: "",
+    Puesto_Jefe: "",
+    Observaciones: "",
+    Ticket: "",
+    Cod_Menu: "",
+  };
+
+  // Verificar si Cod_Menu es obligatorio cuando T24 está seleccionado
+  if (T24 && !modalValues.Cod_Menu) {
+    newErrors.Cod_Menu = "El número de menú es obligatorio cuando T24 está seleccionado.";
     valid = false;
   }
 
-  // Otros controles de validación...
+  // Verificar otros campos del formulario
+  if (!modalValues.ID_Puesto) {
+    newErrors.ID_Puesto = "El campo Puesto es obligatorio.";
+    valid = false;
+  }
+  if (!modalValues.ID_Aplicaciones) {
+    newErrors.ID_Aplicaciones = "El campo Aplicación es obligatorio.";
+    valid = false;
+  }
+  if (!modalValues.Rol.trim()) {
+    newErrors.Rol = "El rol es obligatorio.";
+    valid = false;
+  }
+  if (!modalValues.Ticket.trim() && !/^\d+$/.test(modalValues.Ticket)) {
+    newErrors.Ticket = "Solo se aceptan dígitos.";
+    valid = false;
+  }
+  if (!modalValues.Puesto_Jefe.trim()) {
+    newErrors.Puesto_Jefe = "El nombre del puesto del jefe inmediato es obligatorio.";
+    valid = false;
+  } else if (!/^[a-zA-Z\s]+$/.test(modalValues.Puesto_Jefe)) {
+    newErrors.Puesto_Jefe = "El campo del jefe inmediato solo acepta letras y espacios en blanco.";
+    valid = false;
+  }
+
+  setErrors(newErrors);
 
   if (valid) {
-    // Lógica para guardar los datos
-    // ...
+    try {
+      // Verificar si el perfil ya existe en la base de datos
+      console.log("Verificando si el perfil ya existe...");
+      const response = await axios.get(`http://localhost:3000/perfil`);
+      console.log("Datos recibidos del servidor:", response.data);
+
+      const perfiles = response.data;
+
+      const rollExistente = perfiles.some(
+        (perfil) => perfil.Rol.toLowerCase() === modalValues.Rol.toLowerCase()
+      );
+      const jefeinExistente = perfiles.some(
+        (perfil) =>
+          perfil.Puesto_Jefe.toLowerCase() ===
+          modalValues.Puesto_Jefe.toLowerCase()
+      );
+      const paisExistente = perfiles.some(
+        (perfil) => perfil.ID_Pais.toString() === modalValues.ID_Pais
+      );
+      const puestoExistente = perfiles.some(
+        (perfil) => perfil.ID_Puesto.toString() === modalValues.ID_Puesto
+      );
+      const aplicacionExistente = perfiles.some(
+        (perfil) =>
+          perfil.ID_Aplicaciones.toString() === modalValues.ID_Aplicaciones
+      );
+
+      if (
+        rollExistente &&
+        jefeinExistente &&
+        paisExistente &&
+        puestoExistente &&
+        aplicacionExistente
+      ) {
+        setErrors({
+          ...newErrors,
+          PerError:
+            "El perfil ya existe, cambiar uno de los valores Rol, Jefe Inmediato, Puesto, Aplicacion o Pais",
+        });
+        return;
+      }
+
+      // Datos del nuevo perfil
+      const newPerfil = {
+        Estado_Perfil: 1,
+        ID_Pais: selectedCountryId,
+        ID_Aplicaciones: parseInt(modalValues.ID_Aplicaciones, 10),
+        ID_Puesto: parseInt(modalValues.ID_Puesto, 10),
+        Rol: modalValues.Rol,
+        Ticket: parseInt(modalValues.Ticket, 10),
+        Observaciones: modalValues.Observaciones,
+        Puesto_Jefe: modalValues.Puesto_Jefe,
+        Cod_Menu: modalValues.Cod_Menu,
+      };
+
+      console.log("Enviando datos:", newPerfil);
+
+      // Enviar solicitud POST para insertar el nuevo perfil
+      const insertResponse = await axios.post(
+        `http://localhost:3000/perfil`,
+        newPerfil
+      );
+      console.log("Respuesta de inserción:", insertResponse.data);
+
+      const aplicacionResponse = await axios.get(
+        `http://localhost:3000/aplicacion/${modalValues.ID_Aplicaciones}`
+      );
+
+      const puestoResponse = await axios.get(
+        `http://localhost:3000/puesto/${modalValues.ID_Puesto}`
+      );
+
+      console.log("Datos de respuesta para actualizar la UI:", {
+        aplicacionResponse: aplicacionResponse.data,
+        puestoResponse: puestoResponse.data,
+      });
+
+      const newIndex = records.length + 1;
+
+      const createCampoNuevo = (modalValues) => {
+        let campoNuevo = `- Puesto: ${puestoResponse.data.N_Puesto}¬ - Aplicación: ${aplicacionResponse.data.N_Aplicaciones}¬
+                          - Rol: ${modalValues.Rol}¬ - Jefe Inmediato: ${modalValues.Puesto_Jefe}¬ - Estado: En Servicio ¬`;
+        if (modalValues.Ticket) {
+          campoNuevo += ` - Ticket: ${modalValues.Ticket}¬`;
+        }
+        if (modalValues.Observaciones) {
+          campoNuevo += `- Observación: ${modalValues.Observaciones}`;
+        }
+        return campoNuevo;
+      };
+
+      // Preparar datos de auditoría
+      const auditoriaData = {
+        Campo_Nuevo: createCampoNuevo(modalValues),
+        Tabla: `Matriz de ${selectedCountry}`,
+        Accion: 1, // Inserción
+        ID_Usuario: userId,
+        N: newIndex
+      };
+      // Registrar en la auditoría
+      await axios.post('http://localhost:3000/auditoria', auditoriaData);
+
+      const updatedRecords = [
+        ...records,
+        {
+          id: insertResponse.data.id,
+          Rol: modalValues.Rol,
+          Observaciones: modalValues.Observaciones,
+          Puesto_Jefe: modalValues.Puesto_Jefe,
+          Ticket: parseInt(modalValues.Ticket, 10),
+          Estado_Perfil: 1,
+          ID_Pais: selectedCountryId,
+          ID_Aplicaciones: modalValues.ID_Aplicaciones,
+          N_Aplicaciones: aplicacionResponse.data.N_Aplicaciones,
+          ID_Puesto: modalValues.ID_Puesto,
+          N_Puesto: puestoResponse.data.N_Puesto,
+          Cod_Menu: modalValues.Cod_Menu,
+        },
+      ];
+
+      setRecords(updatedRecords);
+      setShowModal(false); // Ocultar el modal después de guardar
+      setModalValues({
+        ID_Pais: "",
+        Rol: "",
+        Ticket: "",
+        Observaciones: "",
+        Puesto_Jefe: "",
+        Estado_Perfil: "",
+        ID_Puesto: "",
+        ID_Aplicaciones: "",
+        Cod_Menu: "",
+      }); // Limpiar los valores del modal
+      window.location.reload();
+    } catch (error) {
+      console.error("Error al insertar un nuevo Perfil:", error);
+    }
   }
 };
-```
-
-4. **Mostrar Mensaje de Error en el Modal**:
-   Asegúrate de que el mensaje de error se muestre si `Cod_Menu` no está completo.
-
-```jsx
-{T24 && (
-  <div>
-    <label
-      style={{
-        width: "100%",
-        display: "block",
-        textAlign: "left",
-      }}
-    >
-      Número de Menú:
-    </label>
-    <input
-      className={`form-control ${errors.Cod_Menu ? "is-invalid" : ""}`}
-      type="text"
-      value={modalValues.Cod_Menu}
-      onChange={(e) => handleModalChange(e, "Cod_Menu")}
-      placeholder="Ingrese el número de menú"
-      required
-    />
-    {errors.Cod_Menu && <ErrorMessage>{errors.Cod_Menu}</ErrorMessage>}
-  </div>
-)}
-```
-
-### Explicación
-
-- **Estado de Errores**: Mantén un estado para gestionar los errores y mostrar mensajes de error según sea necesario.
-- **Validación Dinámica**: La validación de `Cod_Menu` se activa solo cuando `T24` está seleccionado, y el mensaje de error se actualiza en consecuencia.
-- **Mensajes de Error**: Los mensajes de error se muestran bajo el campo correspondiente si hay un problema con la entrada.
-
-Este enfoque debería ayudarte a garantizar que el campo `Cod_Menu` sea obligatorio solo cuando se selecciona T24, y a mostrar un mensaje de error si el campo no se completa.
