@@ -1,3 +1,18 @@
+Parece que el problema con el campo `Cod_Menu` podría estar relacionado con cómo se actualiza el estado cuando se selecciona la aplicación "T24" o cómo se maneja el valor del campo. 
+
+Vamos a ajustar el código para asegurarnos de que el campo `Cod_Menu` siempre se muestre cuando "T24" esté seleccionado, y que no desaparezca al escribir. Aquí hay un enfoque revisado:
+
+1. **Asegúrate de que `T24` esté correctamente establecido**: Verifica si `T24` está correctamente establecido como `true` cuando la aplicación seleccionada es "T24". 
+2. **Mantén el estado del `Cod_Menu` visible**: Verifica que el estado de `Cod_Menu` se mantenga en el estado actual cuando el campo está visible.
+
+Revisemos y ajustemos el código relevante:
+
+### Código Modificado
+
+1. **Actualización de `handleModalChange`**:
+   Asegúrate de que el estado de `T24` se actualice correctamente al seleccionar una aplicación. También, confirma que `Cod_Menu` se maneje de manera adecuada.
+
+```javascript
 const handleModalChange = (e, fieldName) => {
   const value = e.target.value;
 
@@ -7,218 +22,207 @@ const handleModalChange = (e, fieldName) => {
     [fieldName]: value,
   }));
 
-  // Encontrar la aplicación seleccionada en la lista de aplicaciones
-  const selectedApplication = aplicacion.find(
-    (app) => app.id === parseInt(value)
-  ); // Asegúrate de convertir a entero si es necesario
+  // Si el campo que cambia es ID_Aplicaciones
+  if (fieldName === 'ID_Aplicaciones') {
+    // Encontrar la aplicación seleccionada en la lista de aplicaciones
+    const selectedApplication = aplicacion.find(
+      (app) => app.id === parseInt(value)
+    ); // Asegúrate de convertir a entero si es necesario
 
-  // Verificar si la aplicación seleccionada es T24
-  const isT24 = selectedApplication
-    ? selectedApplication.N_Aplicaciones === "T24"
-    : false;
+    // Verificar si la aplicación seleccionada es T24
+    const isT24 = selectedApplication
+      ? selectedApplication.N_Aplicaciones === "T24"
+      : false;
 
-  // Actualizar el estado T24
-  setT24(isT24);
-
-  // Si T24 está seleccionado y Cod_Menu está vacío, no permitas cambios en otros campos relacionados con Cod_Menu
-  if (isT24 && !modalValues.Cod_Menu) {
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      Cod_Menu: "El número de menú es obligatorio cuando T24 está seleccionado.",
-    }));
-  } else {
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      Cod_Menu: "",
-    }));
+    // Actualizar el estado T24
+    setT24(isT24);
   }
 };
+```
 
+2. **Ajuste en la Modal**:
+   Asegúrate de que el campo `Cod_Menu` solo se muestre si `T24` es verdadero y que el valor del campo se mantenga visible cuando esté habilitado.
 
-const SaveModal = async () => {
-  let valid = true;
-  const newErrors = {
-    ID_Pais: "",
-    ID_Puesto: "",
-    ID_Aplicaciones: "",
-    Estado_Perfil: "",
-    Rol: "",
-    Puesto_Jefe: "",
-    Observaciones: "",
-    Ticket: "",
-    Cod_Menu: "",
-  };
+```jsx
+{showModal && (
+  <ModalBackground>
+    <ModalWrapper>
+      <ModalTitle>Nuevo Perfil {selectedCountry}</ModalTitle>
+      <div style={{ margin: "15px" }} />
+      
+      {/* Campo para seleccionar puesto */}
+      <label
+        style={{ width: "100%", display: "block", textAlign: "left" }}
+      >
+        <span style={{ textAlign: "left" }}>Puesto:</span>
+      </label>
+      <select
+        className="form-select"
+        aria-label="Default select example"
+        value={modalValues.ID_Puesto}
+        onChange={(e) => handleModalChange(e, "ID_Puesto")}
+        required
+      >
+        <option value="">Seleccione un puesto</option>
+        {puestos.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.N_Puesto}
+          </option>
+        ))}
+      </select>
+      {errors.puesto && <ErrorMessage>{errors.puesto}</ErrorMessage>}
+      
+      <div style={{ margin: "15px" }} />
+      
+      {/* Campo para seleccionar aplicación */}
+      <label
+        style={{ width: "100%", display: "block", textAlign: "left" }}
+      >
+        <span style={{ textAlign: "left" }}>Aplicación:</span>
+      </label>
+      <select
+        className="form-select"
+        aria-label="Default select example"
+        value={modalValues.ID_Aplicaciones}
+        onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
+        required
+      >
+        <option value="">Seleccione una aplicación</option>
+        {aplicacion.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.N_Aplicaciones}
+          </option>
+        ))}
+      </select>
+      {errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
+      
+      <div style={{ margin: "15px" }} />
+      
+      {/* Campo para el número de menú, solo visible si T24 está seleccionado */}
+      {T24 && (
+        <div>
+          <label
+            style={{
+              width: "100%",
+              display: "block",
+              textAlign: "left",
+            }}
+          >
+            Número de Menú:
+          </label>
+          <input
+            className="form-control"
+            type="text"
+            value={modalValues.Cod_Menu}
+            onChange={(e) => handleModalChange(e, "Cod_Menu")}
+            placeholder="Ingrese el número de menú"
+            required
+          />
+        </div>
+      )}
+      <div style={{ margin: "15px" }} />
 
-  // Verificar si Cod_Menu es obligatorio cuando T24 está seleccionado
-  if (T24 && !modalValues.Cod_Menu) {
-    newErrors.Cod_Menu = "El número de menú es obligatorio cuando T24 está seleccionado.";
-    valid = false;
-  }
+      {/* Otros campos */}
+      <label
+        style={{ width: "100%", display: "block", textAlign: "left" }}
+      >
+        <span style={{ textAlign: "left" }}>Rol en la Aplicación:</span>
+      </label>
+      <input
+        className="form-control"
+        type="text"
+        value={modalValues.Rol}
+        onChange={(e) => handleModalChange(e, "Rol")}
+        placeholder="Ingrese el Rol"
+        required
+      />
+      {errors.Rol && <ErrorMessage>{errors.Rol}</ErrorMessage>}
+      <div style={{ margin: "15px" }} />
 
-  // Verificar otros campos del formulario
-  if (!modalValues.ID_Puesto) {
-    newErrors.ID_Puesto = "El campo Puesto es obligatorio.";
-    valid = false;
-  }
-  if (!modalValues.ID_Aplicaciones) {
-    newErrors.ID_Aplicaciones = "El campo Aplicación es obligatorio.";
-    valid = false;
-  }
-  if (!modalValues.Rol.trim()) {
-    newErrors.Rol = "El rol es obligatorio.";
-    valid = false;
-  }
-  if (!modalValues.Ticket.trim() && !/^\d+$/.test(modalValues.Ticket)) {
-    newErrors.Ticket = "Solo se aceptan dígitos.";
-    valid = false;
-  }
-  if (!modalValues.Puesto_Jefe.trim()) {
-    newErrors.Puesto_Jefe = "El nombre del puesto del jefe inmediato es obligatorio.";
-    valid = false;
-  } else if (!/^[a-zA-Z\s]+$/.test(modalValues.Puesto_Jefe)) {
-    newErrors.Puesto_Jefe = "El campo del jefe inmediato solo acepta letras y espacios en blanco.";
-    valid = false;
-  }
+      <label
+        style={{ width: "100%", display: "block", textAlign: "left" }}
+      >
+        <span style={{ textAlign: "left" }}>
+          Puesto del Jefe Inmediato:
+        </span>
+      </label>
+      <input
+        className="form-control"
+        type="text"
+        value={modalValues.Puesto_Jefe}
+        onChange={(e) => handleModalChange(e, "Puesto_Jefe")}
+        placeholder="Ingrese el Puesto del Jefe"
+        required
+      />
+      {errors.Puesto_Jefe && <ErrorMessage>{errors.Puesto_Jefe}</ErrorMessage>}
+      {errors.PerError && <ErrorMessage>{errors.PerError}</ErrorMessage>}
+      <div style={{ margin: "15px" }} />
 
-  setErrors(newErrors);
+      <label
+        style={{ width: "100%", display: "block", textAlign: "left" }}
+      >
+        <span style={{ textAlign: "left" }}>Número de Ticket:</span>
+      </label>
+      <input
+        className="form-control"
+        type="text"
+        value={modalValues.Ticket}
+        onChange={(e) => handleModalChange(e, "Ticket")}
+        placeholder="Ingrese el número de ticket"
+        onKeyPress={(e) => {
+          if (!/\d/.test(e.key)) {
+            e.preventDefault();
+          }
+        }}
+        required
+      />
+      {errors.Ticket && <ErrorMessage>{errors.Ticket}</ErrorMessage>}
+      <div style={{ margin: "15px" }} />
 
-  if (valid) {
-    try {
-      // Verificar si el perfil ya existe en la base de datos
-      console.log("Verificando si el perfil ya existe...");
-      const response = await axios.get(`http://localhost:3000/perfil`);
-      console.log("Datos recibidos del servidor:", response.data);
+      <label
+        style={{ width: "100%", display: "block", textAlign: "left" }}
+      >
+        <span style={{ textAlign: "left" }}>Observaciones:</span>
+      </label>
+      <input
+        className="form-control"
+        type="text"
+        value={modalValues.Observaciones}
+        onChange={(e) => handleModalChange(e, "Observaciones")}
+        placeholder=""
+        required
+      />
+      {errors.Observaciones && <ErrorMessage>{errors.Observaciones}</ErrorMessage>}
+      <div style={{ margin: "15px" }} />
 
-      const perfiles = response.data;
+      <ModalButtonGroup>
+        <button
+          type="button"
+          className="btn btn-success"
+          style={{ fontSize: "14px", padding: "10px 10px" }}
+          onClick={SaveModal}
+        >
+          Guardar
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={handleCloseModal}
+        >
+          Cancelar
+        </button>
+      </ModalButtonGroup>
+    </ModalWrapper>
+  </ModalBackground>
+)}
+```
 
-      const rollExistente = perfiles.some(
-        (perfil) => perfil.Rol.toLowerCase() === modalValues.Rol.toLowerCase()
-      );
-      const jefeinExistente = perfiles.some(
-        (perfil) =>
-          perfil.Puesto_Jefe.toLowerCase() ===
-          modalValues.Puesto_Jefe.toLowerCase()
-      );
-      const paisExistente = perfiles.some(
-        (perfil) => perfil.ID_Pais.toString() === modalValues.ID_Pais
-      );
-      const puestoExistente = perfiles.some(
-        (perfil) => perfil.ID_Puesto.toString() === modalValues.ID_Puesto
-      );
-      const aplicacionExistente = perfiles.some(
-        (perfil) =>
-          perfil.ID_Aplicaciones.toString() === modalValues.ID_Aplicaciones
-      );
+### Cosas a Verificar
 
-      if (
-        rollExistente &&
-        jefeinExistente &&
-        paisExistente &&
-        puestoExistente &&
-        aplicacionExistente
-      ) {
-        setErrors({
-          ...newErrors,
-          PerError:
-            "El perfil ya existe, cambiar uno de los valores Rol, Jefe Inmediato, Puesto, Aplicacion o Pais",
-        });
-        return;
-      }
+1. **Asegúrate de que `T24` esté configurado correctamente**: Usa `console.log` para verificar si `T24` se actualiza correctamente cuando seleccionas una aplicación.
 
-      // Datos del nuevo perfil
-      const newPerfil = {
-        Estado_Perfil: 1,
-        ID_Pais: selectedCountryId,
-        ID_Aplicaciones: parseInt(modalValues.ID_Aplicaciones, 10),
-        ID_Puesto: parseInt(modalValues.ID_Puesto, 10),
-        Rol: modalValues.Rol,
-        Ticket: parseInt(modalValues.Ticket, 10),
-        Observaciones: modalValues.Observaciones,
-        Puesto_Jefe: modalValues.Puesto_Jefe,
-        Cod_Menu: modalValues.Cod_Menu,
-      };
+2. **Asegúrate de que el `Cod_Menu` no se oculte incorrectamente**: Verifica si el campo `Cod_Menu` es visible solo cuando `T24` es verdadero y que el valor del campo no se borre.
 
-      console.log("Enviando datos:", newPerfil);
+3. **Estilos y Clases**: Revisa los estilos y clases CSS para asegurarte de que no están causando problemas en la visibilidad del campo `Cod_Menu`.
 
-      // Enviar solicitud POST para insertar el nuevo perfil
-      const insertResponse = await axios.post(
-        `http://localhost:3000/perfil`,
-        newPerfil
-      );
-      console.log("Respuesta de inserción:", insertResponse.data);
-
-      const aplicacionResponse = await axios.get(
-        `http://localhost:3000/aplicacion/${modalValues.ID_Aplicaciones}`
-      );
-
-      const puestoResponse = await axios.get(
-        `http://localhost:3000/puesto/${modalValues.ID_Puesto}`
-      );
-
-      console.log("Datos de respuesta para actualizar la UI:", {
-        aplicacionResponse: aplicacionResponse.data,
-        puestoResponse: puestoResponse.data,
-      });
-
-      const newIndex = records.length + 1;
-
-      const createCampoNuevo = (modalValues) => {
-        let campoNuevo = `- Puesto: ${puestoResponse.data.N_Puesto}¬ - Aplicación: ${aplicacionResponse.data.N_Aplicaciones}¬
-                          - Rol: ${modalValues.Rol}¬ - Jefe Inmediato: ${modalValues.Puesto_Jefe}¬ - Estado: En Servicio ¬`;
-        if (modalValues.Ticket) {
-          campoNuevo += ` - Ticket: ${modalValues.Ticket}¬`;
-        }
-        if (modalValues.Observaciones) {
-          campoNuevo += `- Observación: ${modalValues.Observaciones}`;
-        }
-        return campoNuevo;
-      };
-
-      // Preparar datos de auditoría
-      const auditoriaData = {
-        Campo_Nuevo: createCampoNuevo(modalValues),
-        Tabla: `Matriz de ${selectedCountry}`,
-        Accion: 1, // Inserción
-        ID_Usuario: userId,
-        N: newIndex
-      };
-      // Registrar en la auditoría
-      await axios.post('http://localhost:3000/auditoria', auditoriaData);
-
-      const updatedRecords = [
-        ...records,
-        {
-          id: insertResponse.data.id,
-          Rol: modalValues.Rol,
-          Observaciones: modalValues.Observaciones,
-          Puesto_Jefe: modalValues.Puesto_Jefe,
-          Ticket: parseInt(modalValues.Ticket, 10),
-          Estado_Perfil: 1,
-          ID_Pais: selectedCountryId,
-          ID_Aplicaciones: modalValues.ID_Aplicaciones,
-          N_Aplicaciones: aplicacionResponse.data.N_Aplicaciones,
-          ID_Puesto: modalValues.ID_Puesto,
-          N_Puesto: puestoResponse.data.N_Puesto,
-          Cod_Menu: modalValues.Cod_Menu,
-        },
-      ];
-
-      setRecords(updatedRecords);
-      setShowModal(false); // Ocultar el modal después de guardar
-      setModalValues({
-        ID_Pais: "",
-        Rol: "",
-        Ticket: "",
-        Observaciones: "",
-        Puesto_Jefe: "",
-        Estado_Perfil: "",
-        ID_Puesto: "",
-        ID_Aplicaciones: "",
-        Cod_Menu: "",
-      }); // Limpiar los valores del modal
-      window.location.reload();
-    } catch (error) {
-      console.error("Error al insertar un nuevo Perfil:", error);
-    }
-  }
-};
+Si sigues teniendo problemas, por favor, proporciona más detalles sobre los errores o comportamientos observados para ajustar la solución.
