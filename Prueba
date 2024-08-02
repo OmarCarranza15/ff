@@ -1,8 +1,120 @@
+Para resolver el problema de que el campo `Cod_Menu` esté deshabilitado y para asegurarte de que se comporte correctamente según la selección de "T24", aquí hay algunos pasos que puedes seguir:
+
+### 1. **Verifica si el Campo Está Deshabilitado**
+
+Asegúrate de que el campo `Cod_Menu` no esté deshabilitado en el JSX. Verifica si hay alguna propiedad `disabled` en el campo de entrada:
+
+```javascript
 <input
   type="text"
   className="form-control"
   value={modalValues.Cod_Menu}
   onChange={(e) => handleEditChange(e, "Cod_Menu")}
   placeholder="Ingrese el número de menú"
-  required
+  disabled={false} // Asegúrate de que esta propiedad no esté establecida a `true`
 />
+```
+
+### 2. **Verifica el Manejo del Estado `modalValues`**
+
+Asegúrate de que el campo `Cod_Menu` esté correctamente gestionado en el estado `modalValues`. Aquí está un ejemplo del estado inicial y cómo manejar el cambio:
+
+```javascript
+const [modalValues, setModalValues] = useState({
+  ID_Pais: "",
+  ID_Puesto: "",
+  ID_Aplicaciones: "",
+  Estado_Perfil: "",
+  Rol: "",
+  Puesto_Jefe: "",
+  Observaciones: "",
+  Ticket: "",
+  Cod_Menu: "" // Asegúrate de que esta propiedad esté bien inicializada
+});
+
+const handleEditChange = (e, field) => {
+  setModalValues({
+    ...modalValues,
+    [field]: e.target.value
+  });
+};
+```
+
+### 3. **Ajusta el Comportamiento Basado en la Selección de "T24"**
+
+Si `Cod_Menu` debe desaparecer cuando se selecciona "T24" y volver a aparecer cuando no se selecciona "T24", necesitas agregar lógica para manejar esto. Supongamos que tienes un campo select para "T24":
+
+```javascript
+<select
+  value={modalValues.ID_Aplicaciones}
+  onChange={(e) => handleSelectChange(e.target.value)}
+>
+  <option value="">Seleccione Aplicación</option>
+  <option value="T24">T24</option>
+  <option value="OtraAplicacion">Otra Aplicación</option>
+</select>
+```
+
+Y en tu `handleSelectChange` puedes ajustar el estado de `Cod_Menu`:
+
+```javascript
+const handleSelectChange = (selectedValue) => {
+  setModalValues({
+    ...modalValues,
+    ID_Aplicaciones: selectedValue,
+    Cod_Menu: selectedValue === "T24" ? "" : modalValues.Cod_Menu
+  });
+};
+```
+
+### 4. **Verifica los Errores y Validaciones**
+
+Asegúrate de que las validaciones y la lógica de error no estén afectando el campo `Cod_Menu`. Si `Cod_Menu` tiene algún error de validación, asegúrate de que no esté estableciendo el campo como deshabilitado.
+
+### 5. **Revisa el Código Completo del Modal**
+
+Aquí hay un ejemplo completo para ilustrar cómo manejar todo esto:
+
+```javascript
+// Código del modal
+const handleSave = async () => {
+  // Validación y lógica para guardar datos
+  // ...
+};
+
+return (
+  <div>
+    <form>
+      <select
+        value={modalValues.ID_Aplicaciones}
+        onChange={(e) => handleSelectChange(e.target.value)}
+      >
+        <option value="">Seleccione Aplicación</option>
+        <option value="T24">T24</option>
+        <option value="OtraAplicacion">Otra Aplicación</option>
+      </select>
+
+      <input
+        type="text"
+        className="form-control"
+        value={modalValues.Cod_Menu}
+        onChange={(e) => handleEditChange(e, "Cod_Menu")}
+        placeholder="Ingrese el número de menú"
+        disabled={modalValues.ID_Aplicaciones === "T24"} // Deshabilitar el campo si se selecciona "T24"
+      />
+
+      {/* Otros campos */}
+      
+      <button type="button" onClick={handleSave}>Guardar</button>
+    </form>
+  </div>
+);
+```
+
+### Resumen
+
+1. **Asegúrate de que el campo `Cod_Menu` no esté deshabilitado innecesariamente.**
+2. **Maneja el estado de `Cod_Menu` correctamente en función de la selección de "T24".**
+3. **Revisa las validaciones para asegurarte de que no estén afectando el campo.**
+
+Verifica estos puntos y ajusta tu código según sea necesario. Si el problema persiste, proporciona más detalles específicos del código donde configuras el estado y el campo `Cod_Menu`.
