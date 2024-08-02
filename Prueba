@@ -1,12 +1,14 @@
-Entiendo, veamos algunos ajustes adicionales para solucionar el problema:
+Si la hora sigue apareciendo incorrecta, es probable que haya un problema con la conversión de zona horaria. Vamos a revisar algunos pasos adicionales para solucionar el problema:
 
-1. **Asegúrate de que la fecha se maneje de manera consistente en `fetchData` y en el filtrado.**
+1. **Verifica la Hora en la Base de Datos:**
 
-   Asegúrate de que al recibir la fecha desde la API, se esté manejando correctamente. Debes convertir la fecha a la zona horaria correcta cuando se recibe y cuando se filtra.
+   Asegúrate de que los datos en la base de datos estén almacenados en la zona horaria UTC. La mayoría de las aplicaciones se benefician al almacenar fechas en UTC y luego convertirlas a la zona horaria local al presentarlas.
 
-2. **Verifica la fecha en el filtro y en la visualización.**
+2. **Ajusta la Conversión en `fetchData`:**
 
-   **Actualiza `fetchData` para convertir la fecha correctamente:**
+   Si estás seguro de que las fechas están almacenadas en UTC, asegúrate de que la conversión a la zona horaria local se haga correctamente. 
+
+   Cambia `fetchData` para convertir las fechas en UTC a la zona horaria de Honduras:
 
    ```javascript
    const mappedData = await Promise.all(
@@ -19,7 +21,7 @@ Entiendo, veamos algunos ajustes adicionales para solucionar el problema:
          Campo_Nuevo: auditoria.Campo_Nuevo,
          Tabla: auditoria.Tabla,
          Accion: auditoria.Accion === 1 ? "Insercion" : "Modificacion",
-         createdAt: moment(auditoria.createdAt).tz(timeZone).format('YYYY-MM-DD h:mm A'),
+         createdAt: moment.utc(auditoria.createdAt).tz(timeZone).format('YYYY-MM-DD h:mm A'),
          ID_Usuario: auditoria.ID_Usuario,
          Nombre: usuarioResponse.data.Nombre,
        }
@@ -27,33 +29,45 @@ Entiendo, veamos algunos ajustes adicionales para solucionar el problema:
    );
    ```
 
-   **Actualiza el formato de fecha en `formatDateForFilter`:**
+   En este código, `moment.utc` asegura que la fecha se interprete en UTC antes de convertirla a la zona horaria local con `tz`.
+
+3. **Formato de Fecha en el Filtro:**
+
+   Asegúrate de que `filters.createdAt` esté en el mismo formato que las fechas en `records`. Puedes agregar una validación para garantizar esto.
+
+4. **Verifica la Configuración de Zona Horaria:**
+
+   Si el problema persiste, asegúrate de que la zona horaria esté correctamente configurada en tu entorno de ejecución. En algunos casos, el sistema puede estar utilizando una configuración de zona horaria diferente de la esperada.
+
+5. **Depuración Adicional:**
+
+   Añade `console.log` en puntos clave para verificar las fechas:
 
    ```javascript
-   const formatDateForFilter = (date) => {
-     return moment(date).format('YYYY-MM-DD h:mm A'); // Mantén el formato para el filtro
+   console.log("Fecha en base de datos:", auditoria.createdAt);
+   console.log("Fecha en UTC:", moment.utc(auditoria.createdAt).format());
+   console.log("Fecha en zona horaria local:", moment.utc(auditoria.createdAt).tz(timeZone).format('YYYY-MM-DD h:mm A'));
+   ```
+
+   Esto te ayudará a ver cómo se está transformando la fecha en cada paso.
+
+6. **Considera Usar `Intl.DateTimeFormat`:**
+
+   Como alternativa a `moment`, puedes usar `Intl.DateTimeFormat` para formatear las fechas en función de la zona horaria:
+
+   ```javascript
+   const formatDate = (date) => {
+     const formatter = new Intl.DateTimeFormat('es-HN', {
+       timeZone: 'America/Tegucigalpa',
+       year: 'numeric',
+       month: '2-digit',
+       day: '2-digit',
+       hour: '2-digit',
+       minute: '2-digit',
+       second: '2-digit'
+     });
+     return formatter.format(new Date(date));
    };
    ```
 
-   **Modifica la lógica de filtrado para usar el formato de fecha adecuado:**
-
-   ```javascript
-   const filteredData = records.filter((row) => {
-     const formattedDate = formatDateForFilter(row.createdAt);
-
-     return (
-       (filters.Campo_Original === "" || row.Campo_Original.toLowerCase().includes(filters.Campo_Original.toLowerCase())) &&
-       (filters.Campo_Nuevo === "" || row.Campo_Nuevo.toLowerCase().includes(filters.Campo_Nuevo.toLowerCase())) &&
-       (filters.Tabla === "" || row.Tabla.toLowerCase().includes(filters.Tabla.toLowerCase())) &&
-       (filters.Accion === "" || row.Accion.toLowerCase().includes(filters.Accion.toLowerCase())) &&
-       (filters.createdAt === "" || formattedDate.includes(filters.createdAt)) &&
-       (filters.Nombre === "" || row.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase()))
-     );
-   });
-   ```
-
-3. **Verifica la entrada del usuario en el filtro.**
-
-   Asegúrate de que el formato de fecha ingresado por el usuario en el campo de filtro coincida exactamente con el formato que estás usando para mostrar las fechas. Podrías agregar validaciones para asegurarte de que la entrada del usuario esté en el formato correcto.
-
-Si después de estos cambios sigues teniendo problemas, considera agregar `console.log` para depurar y verificar que las fechas se están formateando y filtrando correctamente.
+Prueba estos pasos y verifica si se resuelve el problema con la hora.
