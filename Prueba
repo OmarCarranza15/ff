@@ -1,16 +1,33 @@
-Parece que el problema con el campo `Cod_Menu` podría estar relacionado con cómo se actualiza el estado cuando se selecciona la aplicación "T24" o cómo se maneja el valor del campo. 
+Para agregar una validación que asegure que el campo `Cod_Menu` sea obligatorio cuando se seleccione T24, puedes usar el siguiente enfoque:
 
-Vamos a ajustar el código para asegurarnos de que el campo `Cod_Menu` siempre se muestre cuando "T24" esté seleccionado, y que no desaparezca al escribir. Aquí hay un enfoque revisado:
+1. **Agregar Validación en el Formulario**:
+   - Puedes utilizar un estado para controlar los errores específicos de validación del campo `Cod_Menu` y actualizar este estado en función de si `T24` está seleccionado.
 
-1. **Asegúrate de que `T24` esté correctamente establecido**: Verifica si `T24` está correctamente establecido como `true` cuando la aplicación seleccionada es "T24". 
-2. **Mantén el estado del `Cod_Menu` visible**: Verifica que el estado de `Cod_Menu` se mantenga en el estado actual cuando el campo está visible.
+2. **Mostrar Mensaje de Error**:
+   - Muestra un mensaje de error si el campo `Cod_Menu` está vacío cuando `T24` está seleccionado.
 
-Revisemos y ajustemos el código relevante:
+Aquí está el código actualizado para incluir esta validación:
 
 ### Código Modificado
 
-1. **Actualización de `handleModalChange`**:
-   Asegúrate de que el estado de `T24` se actualice correctamente al seleccionar una aplicación. También, confirma que `Cod_Menu` se maneje de manera adecuada.
+1. **Agregar Estado para Errores de Validación**:
+   Añade un estado para manejar el error de validación de `Cod_Menu`.
+
+```javascript
+const [errors, setErrors] = useState({
+  puesto: "",
+  aplicacion: "",
+  Cod_Menu: "",
+  Rol: "",
+  Puesto_Jefe: "",
+  Ticket: "",
+  Observaciones: "",
+  PerError: ""
+});
+```
+
+2. **Actualizar la Función `handleModalChange`**:
+   Actualiza la función `handleModalChange` para validar `Cod_Menu` cuando `T24` está seleccionado.
 
 ```javascript
 const handleModalChange = (e, fieldName) => {
@@ -36,193 +53,93 @@ const handleModalChange = (e, fieldName) => {
 
     // Actualizar el estado T24
     setT24(isT24);
+    
+    // Si T24 está seleccionado, asegurarse de que Cod_Menu tenga un valor
+    if (isT24 && !modalValues.Cod_Menu) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        Cod_Menu: "El número de menú es obligatorio cuando T24 está seleccionado.",
+      }));
+    } else {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        Cod_Menu: "",
+      }));
+    }
+  } else if (fieldName === 'Cod_Menu' && T24) {
+    // Validar Cod_Menu cuando T24 está seleccionado
+    if (!value) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        Cod_Menu: "El número de menú es obligatorio cuando T24 está seleccionado.",
+      }));
+    } else {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        Cod_Menu: "",
+      }));
+    }
   }
 };
 ```
 
-2. **Ajuste en la Modal**:
-   Asegúrate de que el campo `Cod_Menu` solo se muestre si `T24` es verdadero y que el valor del campo se mantenga visible cuando esté habilitado.
+3. **Validación en el Guardado del Modal**:
+   Asegúrate de que la validación de `Cod_Menu` se ejecute antes de guardar el formulario.
+
+```javascript
+const SaveModal = () => {
+  let valid = true;
+
+  // Verificar si Cod_Menu es obligatorio y está vacío
+  if (T24 && !modalValues.Cod_Menu) {
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      Cod_Menu: "El número de menú es obligatorio cuando T24 está seleccionado.",
+    }));
+    valid = false;
+  }
+
+  // Otros controles de validación...
+
+  if (valid) {
+    // Lógica para guardar los datos
+    // ...
+  }
+};
+```
+
+4. **Mostrar Mensaje de Error en el Modal**:
+   Asegúrate de que el mensaje de error se muestre si `Cod_Menu` no está completo.
 
 ```jsx
-{showModal && (
-  <ModalBackground>
-    <ModalWrapper>
-      <ModalTitle>Nuevo Perfil {selectedCountry}</ModalTitle>
-      <div style={{ margin: "15px" }} />
-      
-      {/* Campo para seleccionar puesto */}
-      <label
-        style={{ width: "100%", display: "block", textAlign: "left" }}
-      >
-        <span style={{ textAlign: "left" }}>Puesto:</span>
-      </label>
-      <select
-        className="form-select"
-        aria-label="Default select example"
-        value={modalValues.ID_Puesto}
-        onChange={(e) => handleModalChange(e, "ID_Puesto")}
-        required
-      >
-        <option value="">Seleccione un puesto</option>
-        {puestos.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.N_Puesto}
-          </option>
-        ))}
-      </select>
-      {errors.puesto && <ErrorMessage>{errors.puesto}</ErrorMessage>}
-      
-      <div style={{ margin: "15px" }} />
-      
-      {/* Campo para seleccionar aplicación */}
-      <label
-        style={{ width: "100%", display: "block", textAlign: "left" }}
-      >
-        <span style={{ textAlign: "left" }}>Aplicación:</span>
-      </label>
-      <select
-        className="form-select"
-        aria-label="Default select example"
-        value={modalValues.ID_Aplicaciones}
-        onChange={(e) => handleModalChange(e, "ID_Aplicaciones")}
-        required
-      >
-        <option value="">Seleccione una aplicación</option>
-        {aplicacion.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.N_Aplicaciones}
-          </option>
-        ))}
-      </select>
-      {errors.aplicacion && <ErrorMessage>{errors.aplicacion}</ErrorMessage>}
-      
-      <div style={{ margin: "15px" }} />
-      
-      {/* Campo para el número de menú, solo visible si T24 está seleccionado */}
-      {T24 && (
-        <div>
-          <label
-            style={{
-              width: "100%",
-              display: "block",
-              textAlign: "left",
-            }}
-          >
-            Número de Menú:
-          </label>
-          <input
-            className="form-control"
-            type="text"
-            value={modalValues.Cod_Menu}
-            onChange={(e) => handleModalChange(e, "Cod_Menu")}
-            placeholder="Ingrese el número de menú"
-            required
-          />
-        </div>
-      )}
-      <div style={{ margin: "15px" }} />
-
-      {/* Otros campos */}
-      <label
-        style={{ width: "100%", display: "block", textAlign: "left" }}
-      >
-        <span style={{ textAlign: "left" }}>Rol en la Aplicación:</span>
-      </label>
-      <input
-        className="form-control"
-        type="text"
-        value={modalValues.Rol}
-        onChange={(e) => handleModalChange(e, "Rol")}
-        placeholder="Ingrese el Rol"
-        required
-      />
-      {errors.Rol && <ErrorMessage>{errors.Rol}</ErrorMessage>}
-      <div style={{ margin: "15px" }} />
-
-      <label
-        style={{ width: "100%", display: "block", textAlign: "left" }}
-      >
-        <span style={{ textAlign: "left" }}>
-          Puesto del Jefe Inmediato:
-        </span>
-      </label>
-      <input
-        className="form-control"
-        type="text"
-        value={modalValues.Puesto_Jefe}
-        onChange={(e) => handleModalChange(e, "Puesto_Jefe")}
-        placeholder="Ingrese el Puesto del Jefe"
-        required
-      />
-      {errors.Puesto_Jefe && <ErrorMessage>{errors.Puesto_Jefe}</ErrorMessage>}
-      {errors.PerError && <ErrorMessage>{errors.PerError}</ErrorMessage>}
-      <div style={{ margin: "15px" }} />
-
-      <label
-        style={{ width: "100%", display: "block", textAlign: "left" }}
-      >
-        <span style={{ textAlign: "left" }}>Número de Ticket:</span>
-      </label>
-      <input
-        className="form-control"
-        type="text"
-        value={modalValues.Ticket}
-        onChange={(e) => handleModalChange(e, "Ticket")}
-        placeholder="Ingrese el número de ticket"
-        onKeyPress={(e) => {
-          if (!/\d/.test(e.key)) {
-            e.preventDefault();
-          }
-        }}
-        required
-      />
-      {errors.Ticket && <ErrorMessage>{errors.Ticket}</ErrorMessage>}
-      <div style={{ margin: "15px" }} />
-
-      <label
-        style={{ width: "100%", display: "block", textAlign: "left" }}
-      >
-        <span style={{ textAlign: "left" }}>Observaciones:</span>
-      </label>
-      <input
-        className="form-control"
-        type="text"
-        value={modalValues.Observaciones}
-        onChange={(e) => handleModalChange(e, "Observaciones")}
-        placeholder=""
-        required
-      />
-      {errors.Observaciones && <ErrorMessage>{errors.Observaciones}</ErrorMessage>}
-      <div style={{ margin: "15px" }} />
-
-      <ModalButtonGroup>
-        <button
-          type="button"
-          className="btn btn-success"
-          style={{ fontSize: "14px", padding: "10px 10px" }}
-          onClick={SaveModal}
-        >
-          Guardar
-        </button>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={handleCloseModal}
-        >
-          Cancelar
-        </button>
-      </ModalButtonGroup>
-    </ModalWrapper>
-  </ModalBackground>
+{T24 && (
+  <div>
+    <label
+      style={{
+        width: "100%",
+        display: "block",
+        textAlign: "left",
+      }}
+    >
+      Número de Menú:
+    </label>
+    <input
+      className={`form-control ${errors.Cod_Menu ? "is-invalid" : ""}`}
+      type="text"
+      value={modalValues.Cod_Menu}
+      onChange={(e) => handleModalChange(e, "Cod_Menu")}
+      placeholder="Ingrese el número de menú"
+      required
+    />
+    {errors.Cod_Menu && <ErrorMessage>{errors.Cod_Menu}</ErrorMessage>}
+  </div>
 )}
 ```
 
-### Cosas a Verificar
+### Explicación
 
-1. **Asegúrate de que `T24` esté configurado correctamente**: Usa `console.log` para verificar si `T24` se actualiza correctamente cuando seleccionas una aplicación.
+- **Estado de Errores**: Mantén un estado para gestionar los errores y mostrar mensajes de error según sea necesario.
+- **Validación Dinámica**: La validación de `Cod_Menu` se activa solo cuando `T24` está seleccionado, y el mensaje de error se actualiza en consecuencia.
+- **Mensajes de Error**: Los mensajes de error se muestran bajo el campo correspondiente si hay un problema con la entrada.
 
-2. **Asegúrate de que el `Cod_Menu` no se oculte incorrectamente**: Verifica si el campo `Cod_Menu` es visible solo cuando `T24` es verdadero y que el valor del campo no se borre.
-
-3. **Estilos y Clases**: Revisa los estilos y clases CSS para asegurarte de que no están causando problemas en la visibilidad del campo `Cod_Menu`.
-
-Si sigues teniendo problemas, por favor, proporciona más detalles sobre los errores o comportamientos observados para ajustar la solución.
+Este enfoque debería ayudarte a garantizar que el campo `Cod_Menu` sea obligatorio solo cuando se selecciona T24, y a mostrar un mensaje de error si el campo no se completa.
