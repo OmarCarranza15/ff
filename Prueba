@@ -1,41 +1,73 @@
-const StyledDataTable = styled(DataTable)`
-  border-collapse: collapse;
-  width: 100%;
-  position: relative;
-  margin: 0 auto; /* Alinea el DataTable al centro horizontalmente */
+/* Error Notification */
+.error-notification {
+  position: fixed;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%); /* Solo centra horizontalmente */
+  background-color: #FF3737; 
+  color: #FFFFFF; 
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+}
 
-  th,
-  td {
-    border: 1px solid #ddd;
-    padding: 10px; /* Ajusta el padding según sea necesario */
-    text-align: left; /* Alineación del texto a la izquierda */
-    white-space: normal;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
+.error-icon {
+  font-size: 24px;
+  margin-right: 10px;
+}
 
-  th {
-    background-color: #f0f0f0;
-    text-align: center; /* Centra el texto en los encabezados */
-  }
+.error-message {
+  font-size: 16px;
+}
 
-  td {
-    min-width: 150px; /* Ajusta el ancho mínimo según sea necesario */
-    max-width: 300px; /* Ajusta el ancho máximo según sea necesario */
-    text-align: center;
-  }
+/* Toast Notification */
+.toast-notification {
+  position: fixed;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%); /* Solo centra horizontalmente */
+  background-color: #34C759; 
+  color: #FFFFFF; 
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+}
 
-  @media (max-width: 768px) {
-    th,
-    td {
-      padding: 8px;
-    }
-  }
+.toast-notification::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFFFFF' d='M21 6.757L9.343 19 3.757 13.243 5 11.757 9.343 17.243 21 6.757Z'/%3E%3C/svg%3E");
+  background-size: 24px 24px;
+  margin-right: 10px;
+}
 
-  @media (max-width: 480px) {
-    th,
-    td {
-      padding: 6px;
-    }
-  }
-`;
+/* Toast Success */
+.toast-success {
+  position: fixed;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%); /* Solo centra horizontalmente */
+  background-color: #34C759; 
+  color: #FFFFFF; 
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+}
+
+.toast-success::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFFFFF' d='M21 6.757L9.343 19 3.757 13.243 5 11.757 9.343 17.243 21 6.757Z'/%3E%3C/svg%3E");
+  background-size: 24px 24px;
+  margin-right: 10px;
+}
