@@ -1,84 +1,41 @@
-Si la solución anterior no funcionó, puede que haya otros factores involucrados. Aquí tienes algunas opciones adicionales para solucionar el problema:
+const StyledDataTable = styled(DataTable)`
+  border-collapse: collapse;
+  width: 100%;
+  position: relative;
+  margin: 0 auto; /* Alinea el DataTable al centro horizontalmente */
 
-1. **Revisar el Componente `StyledInput`**: Asegúrate de que `StyledInput` no esté causando el problema. Intenta usar un `input` estándar en lugar de `StyledInput` para verificar si el problema persiste.
+  th,
+  td {
+    border: 1px solid #ddd;
+    padding: 10px; /* Ajusta el padding según sea necesario */
+    text-align: left; /* Alineación del texto a la izquierda */
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
 
-2. **Verificar el Manejo del Estado**: Asegúrate de que el estado `editedRow` y la función `handleEditChange` estén manejando correctamente los cambios. Verifica si el estado se actualiza correctamente y si el cursor se mueve de acuerdo a las expectativas.
+  th {
+    background-color: #f0f0f0;
+    text-align: center; /* Centra el texto en los encabezados */
+  }
 
-3. **Revisar el Enfoque del Componente**: Verifica si el campo de entrada está siendo desenfocado por otro proceso. Intenta usar `useEffect` para asegurar que el campo de entrada esté correctamente enfocado después de actualizar el estado.
+  td {
+    min-width: 150px; /* Ajusta el ancho mínimo según sea necesario */
+    max-width: 300px; /* Ajusta el ancho máximo según sea necesario */
+    text-align: center;
+  }
 
-4. **Actualizar el Estado de Forma Correcta**: Asegúrate de que el estado `editedRow` se actualice de manera adecuada. A veces, el manejo de estado asíncrono puede causar problemas si no se maneja correctamente.
+  @media (max-width: 768px) {
+    th,
+    td {
+      padding: 8px;
+    }
+  }
 
-### Aquí tienes una versión modificada del código que incluye algunas de estas verificaciones:
-
-```javascript
-import React, { useState, useEffect, useRef } from "react";
-// ... (otras importaciones)
-
-function Paises() {
-  const [editedRow, setEditedRow] = useState(null);
-  const [editMode, setEditMode] = useState(false);
-
-  // Ref para el campo de entrada editado
-  const inputRef = useRef(null);
-
-  // ... (otros métodos)
-
-  const handleEditChange = (event, field) => {
-    const { value, selectionStart } = event.target;
-
-    setEditedRow((prevState) => ({
-      ...prevState,
-      [field]: value,
-    }));
-
-    // Ajusta la posición del cursor después de actualizar el estado
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.selectionStart = selectionStart;
-        inputRef.current.selectionEnd = selectionStart;
-      }
-    }, 0); // Asegúrate de que el cambio de estado se haya procesado
-  };
-
-  const columns = [
-    {
-      name: "País",
-      selector: (row) => row.id,
-      sortable: true,
-      minwidth: "200px",
-      maxwidth: "50px",
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-          <input
-            ref={inputRef} // Usa un input estándar para pruebas
-            type="text"
-            value={editedRow.N_Pais}
-            onChange={(e) => handleEditChange(e, "N_Pais")}
-            onKeyPress={(e) => {
-              if (!/[a-zA-ZñÑáéíóúÁÉÍÓÚ]/.test(e.key)) {
-                e.preventDefault();
-              }
-            }}
-          />
-        ) : (
-          <div>{row.N_Pais}</div>
-        ),
-    },
-    // ... (otras columnas)
-  ];
-
-  // ... (resto del componente)
-}
-
-export default Paises;
-```
-
-### Verificaciones:
-
-1. **`setTimeout`**: Se utiliza `setTimeout` con un retraso de 0 ms para asegurarse de que el cambio de estado se haya procesado antes de ajustar la posición del cursor.
-
-2. **`input` Estándar**: Usar un `input` estándar para asegurarse de que `StyledInput` no esté causando problemas.
-
-3. **Depuración**: Añadir `console.log` para verificar los valores de `value` y `selectionStart` dentro de `handleEditChange`.
-
-Prueba estos cambios y revisa si alguno de estos métodos soluciona el problema. Si el problema persiste, es posible que sea necesario investigar más a fondo el entorno o la configuración específica de tu aplicación.
+  @media (max-width: 480px) {
+    th,
+    td {
+      padding: 6px;
+    }
+  }
+`;
