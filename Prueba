@@ -1,60 +1,114 @@
-/* Estilos para la notificación de error */
-.error-notification {
-    position: fixed;
-    top: 15%;
-    left: 50%;
-    transform: translate(-50%, 0); /* Ajusta para centrar horizontalmente */
-    background-color: #FF3737; 
-    color: #FFFFFF; 
-    padding: 10px;
-    border-radius: 5px;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    pointer-events: none; /* Desactiva eventos del puntero */
-}
+Este comportamiento es inusual y puede estar relacionado con el manejo del cursor en el campo de edición del `DataTable`. Aquí hay algunas ideas para solucionar este problema:
 
-/* Estilos para el ícono de error */
-.error-icon {
-    font-size: 24px;
-    margin-right: 10px;
-}
+### 1. Verifica el Manejador de Eventos
 
-/* Estilos para el mensaje de error */
-.error-message {
-    font-size: 16px;
-}
+Asegúrate de que el campo de edición no tenga eventos o manejadores que puedan estar interfiriendo con la posición del cursor. Por ejemplo, revisa si hay algún `onChange` o `onInput` que pueda estar modificando el estado de la entrada de manera inesperada.
 
-/* Estilos para la notificación de éxito (toast) */
-.toast-notification,
-.toast-success {
-    position: fixed;
-    top: 15%;
-    left: 50%;
-    transform: translate(-50%, 0); /* Ajusta para centrar horizontalmente */
-    background-color: #34C759; 
-    color: #FFFFFF; 
-    padding: 10px;
-    border-radius: 5px;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    pointer-events: none; /* Desactiva eventos del puntero */
-}
+### 2. Revisa el Componente de Edición
 
-/* Estilos específicos para el ícono de éxito */
-.toast-notification::before,
-.toast-success::before {
-    content: "";
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFFFFF' d='M21 6.757L9.343 19 3.757 13.243 5 11.757 9.343 17.243 21 6.757Z'/%3E%3C/svg%3E");
-    background-size: 24px 24px;
-    margin-right: 10px;
-}
+Si estás usando un componente de edición personalizado, asegúrate de que maneje el cursor correctamente. A veces, los componentes personalizados pueden tener problemas con el cursor si no están bien configurados.
 
-/* Ajustes adicionales para el contenedor principal */
-body {
-    overflow: hidden; /* Evita el desplazamiento del contenido */
-}
+### 3. Verifica el Estilo del Campo de Edición
+
+Asegúrate de que el campo de edición tenga el estilo adecuado y no esté causando problemas con el cursor. A veces, un ancho o padding inadecuado puede afectar el comportamiento del cursor.
+
+### 4. Uso de `contentEditable`
+
+Si estás usando `contentEditable` para permitir la edición en línea, asegúrate de que no haya estilos CSS que puedan estar afectando el comportamiento del cursor. También revisa si hay alguna lógica que esté manipulando el contenido de forma que afecte al cursor.
+
+### 5. Prueba con un Componente de Entrada Básico
+
+Para identificar si el problema está en el componente de edición, prueba con un campo de entrada básico en lugar del componente personalizado. Esto puede ayudar a aislar el problema:
+
+```jsx
+<input
+  type="text"
+  value={editableValue}
+  onChange={(e) => setEditableValue(e.target.value)}
+/>
+```
+
+### 6. Revisa la Lógica de Actualización del Estado
+
+Si el valor del campo de entrada se actualiza de manera asíncrona, asegúrate de que no esté causando un problema con el cursor. La actualización del estado puede afectar la posición del cursor si se hace de manera incorrecta.
+
+### 7. Usa el `setSelectionRange` para Manejar el Cursor
+
+Si necesitas manipular la posición del cursor de manera precisa, puedes usar el método `setSelectionRange` para establecer la posición del cursor en un campo de texto:
+
+```jsx
+const handleEdit = (e) => {
+  const input = e.target;
+  input.setSelectionRange(start, end); // start y end son las posiciones deseadas
+};
+```
+
+### Ejemplo Completo
+
+Aquí hay un ejemplo simple de cómo podrías implementar un campo de edición básico con manejo del cursor:
+
+```jsx
+import React, { useState } from 'react';
+
+const EditableCell = ({ value, onChange }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableValue, setEditableValue] = useState(value);
+
+  const handleDoubleClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    onChange(editableValue);
+  };
+
+  const handleChange = (e) => {
+    setEditableValue(e.target.value);
+  };
+
+  return (
+    <td onDoubleClick={handleDoubleClick}>
+      {isEditing ? (
+        <input
+          type="text"
+          value={editableValue}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          autoFocus
+        />
+      ) : (
+        value
+      )}
+    </td>
+  );
+};
+
+const DataTable = ({ data, onCellChange }) => {
+  const handleCellChange = (rowIndex, value) => {
+    onCellChange(rowIndex, value);
+  };
+
+  return (
+    <table>
+      <tbody>
+        {data.map((row, rowIndex) => (
+          <tr key={rowIndex}>
+            {row.map((cell, cellIndex) => (
+              <EditableCell
+                key={cellIndex}
+                value={cell}
+                onChange={(newValue) => handleCellChange(rowIndex, newValue)}
+              />
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
+export default DataTable;
+```
+
+Prueba estas sugerencias y verifica si resuelven el problema con el cursor en el campo de edición.
