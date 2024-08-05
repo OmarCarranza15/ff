@@ -1,19 +1,22 @@
-El problema que describes podría deberse a cómo el navegador maneja el enfoque del campo de entrada. Aquí te dejo una solución alternativa que utiliza la referencia del campo de entrada para asegurar que el cursor se mantenga en su lugar mientras editas:
+Si la solución anterior no funcionó, puede que haya otros factores involucrados. Aquí tienes algunas opciones adicionales para solucionar el problema:
 
-1. **Crea una referencia para el campo de entrada**: Usa `useRef` para mantener una referencia al campo de entrada.
+1. **Revisar el Componente `StyledInput`**: Asegúrate de que `StyledInput` no esté causando el problema. Intenta usar un `input` estándar en lugar de `StyledInput` para verificar si el problema persiste.
 
-2. **Ajusta la posición del cursor**: Después de actualizar el valor del campo, ajusta la posición del cursor manualmente.
+2. **Verificar el Manejo del Estado**: Asegúrate de que el estado `editedRow` y la función `handleEditChange` estén manejando correctamente los cambios. Verifica si el estado se actualiza correctamente y si el cursor se mueve de acuerdo a las expectativas.
 
-Aquí está el código modificado con los cambios necesarios:
+3. **Revisar el Enfoque del Componente**: Verifica si el campo de entrada está siendo desenfocado por otro proceso. Intenta usar `useEffect` para asegurar que el campo de entrada esté correctamente enfocado después de actualizar el estado.
 
-### Modificaciones en el Componente `Paises`
+4. **Actualizar el Estado de Forma Correcta**: Asegúrate de que el estado `editedRow` se actualice de manera adecuada. A veces, el manejo de estado asíncrono puede causar problemas si no se maneja correctamente.
+
+### Aquí tienes una versión modificada del código que incluye algunas de estas verificaciones:
 
 ```javascript
 import React, { useState, useEffect, useRef } from "react";
 // ... (otras importaciones)
 
 function Paises() {
-  // ... (otros estados)
+  const [editedRow, setEditedRow] = useState(null);
+  const [editMode, setEditMode] = useState(false);
 
   // Ref para el campo de entrada editado
   const inputRef = useRef(null);
@@ -28,13 +31,13 @@ function Paises() {
       [field]: value,
     }));
 
-    // Ajusta la posición del cursor
-    if (inputRef.current) {
-      inputRef.current.selectionStart = selectionStart;
-      inputRef.current.selectionEnd = selectionStart;
-    }
-
-    validateInput(field, value); // Validación de los campos a editar
+    // Ajusta la posición del cursor después de actualizar el estado
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.selectionStart = selectionStart;
+        inputRef.current.selectionEnd = selectionStart;
+      }
+    }, 0); // Asegúrate de que el cambio de estado se haya procesado
   };
 
   const columns = [
@@ -46,8 +49,8 @@ function Paises() {
       maxwidth: "50px",
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
-          <StyledInput
-            ref={inputRef} // Asigna la referencia aquí
+          <input
+            ref={inputRef} // Usa un input estándar para pruebas
             type="text"
             value={editedRow.N_Pais}
             onChange={(e) => handleEditChange(e, "N_Pais")}
@@ -70,10 +73,12 @@ function Paises() {
 export default Paises;
 ```
 
-### Explicación:
+### Verificaciones:
 
-1. **Referencia del Campo de Entrada**: `const inputRef = useRef(null);` se usa para mantener una referencia al campo de entrada editado.
+1. **`setTimeout`**: Se utiliza `setTimeout` con un retraso de 0 ms para asegurarse de que el cambio de estado se haya procesado antes de ajustar la posición del cursor.
 
-2. **Ajuste de la Posición del Cursor**: Después de actualizar el valor en `handleEditChange`, se ajusta manualmente la posición del cursor para que se mantenga en el lugar donde estaba antes de realizar la edición.
+2. **`input` Estándar**: Usar un `input` estándar para asegurarse de que `StyledInput` no esté causando problemas.
 
-Asegúrate de probar estos cambios y ajustar la lógica si es necesario para adaptarla a tu aplicación específica.
+3. **Depuración**: Añadir `console.log` para verificar los valores de `value` y `selectionStart` dentro de `handleEditChange`.
+
+Prueba estos cambios y revisa si alguno de estos métodos soluciona el problema. Si el problema persiste, es posible que sea necesario investigar más a fondo el entorno o la configuración específica de tu aplicación.
