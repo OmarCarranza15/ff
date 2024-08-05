@@ -1,50 +1,79 @@
-const saveChanges = async (id) => {
-  try {
-    // No hacer nada si el estado es "Nuevo"
-    const currentRow = records.find((row) => row.id === id);
-    if (currentRow.Estado === "Nuevo") {
-      return; // Evitar la actualización
-    }
-
-    // Actualizar el estado normalmente si no es "Nuevo"
-    const updateRow = {
-      ...editedRow,
-      Estado:
-        editedRow.Estado === "Nuevo"
-          ? 1
-          : editedRow.Estado === "En Servicio"
-          ? 2
-          : editedRow.Estado === "Expirado"
-          ? 3
-          : currentRow.Estado,
-    };
-
-    // Resto del código...
-  } catch (error) {
-    console.error("Error al guardar los cambios", error);
-  }
-};
-
-// En la definición de columnas
-{
-  name: "Estado",
-  minWidth: "120px",
-  maxWidth: "120px",
-  selector: (row) =>
-    editMode === row.id ? (
-      row.Estado === "Nuevo" ? (
-        <div>{row.Estado}</div> // Mostrar texto si el estado es "Nuevo"
+const columns = [
+  {
+    name: "N°",
+    selector: (row, index) => index + 1,
+    sortable: true,
+    minWidth: "50px",
+    maxWidth: "100px",
+  },
+  {
+    name: "País",
+    selector: (row) => row.id,
+    sortable: true,
+    minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+    maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+    cell: (row) =>
+      editMode && editedRow?.id === row.id ? (
+        <input
+          type="text"
+          value={editedRow.N_Pais}
+          onChange={(e) => handleEditChange(e, "N_Pais")}
+          onKeyPress={(e) => {
+            if (!/[a-zA-ZñÑáéíóúÁÉÍÓÚ]/.test(e.key)) {
+              e.preventDefault();
+            }
+          }}
+          style={{ width: '100%' }} // Asegúrate de que el input ocupe el ancho completo
+        />
       ) : (
-        <StyledSelect
-          value={editedRow.Estado}
-          onChange={(e) => handleEditChange(e, "Estado")}
-        >
-          <option value={"En Servicio"}>En Servicio</option>
-          <option value={"Expirado"}>Expirado</option>
-        </StyledSelect>
-      )
-    ) : (
-      <div>{row.Estado}</div>
-    ),
-  sortable: true,
-}
+        <div>{row.N_Pais}</div>
+      ),
+  },
+  {
+    name: "Acciones",
+    cell: (row) =>
+      editMode === row.id ? (
+        <ButtonGroup>
+          <Button
+            type="button"
+            className="btn btn-outline-success"
+            onClick={() => saveChanges(row.id)}
+          >
+            Guardar
+          </Button>
+          <Button
+            type="button"
+            className="btn btn-outline-danger"
+            onClick={cancelEdit}
+          >
+            Cancelar
+          </Button>
+        </ButtonGroup>
+      ) : (
+        <ButtonGroup>
+          <Button
+            type="button"
+            className="btn btn-outline-primary"
+            onClick={() => startEdit(row)}
+          >
+            Editar
+          </Button>
+          <Button
+            type="button"
+            className="btn btn-outline-danger"
+            onClick={() => {
+              if (
+                window.confirm(
+                  "¿Estás seguro que deseas eliminar este registro?"
+                )
+              ) {
+                deleteRow(row.id);
+              }
+            }}
+          >
+            Eliminar
+          </Button>
+        </ButtonGroup>
+      ),
+  },
+];
