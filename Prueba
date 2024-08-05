@@ -1,73 +1,60 @@
-/* Error Notification */
+/* Estilos para la notificación de error */
 .error-notification {
-  position: fixed;
-  top: 15%;
-  left: 50%;
-  transform: translateX(-50%); /* Solo centra horizontalmente */
-  background-color: #FF3737; 
-  color: #FFFFFF; 
-  padding: 10px;
-  border-radius: 5px;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
+    position: fixed;
+    top: 15%;
+    left: 50%;
+    transform: translate(-50%, 0); /* Ajusta para centrar horizontalmente */
+    background-color: #FF3737; 
+    color: #FFFFFF; 
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    pointer-events: none; /* Desactiva eventos del puntero */
 }
 
+/* Estilos para el ícono de error */
 .error-icon {
-  font-size: 24px;
-  margin-right: 10px;
+    font-size: 24px;
+    margin-right: 10px;
 }
 
+/* Estilos para el mensaje de error */
 .error-message {
-  font-size: 16px;
+    font-size: 16px;
 }
 
-/* Toast Notification */
-.toast-notification {
-  position: fixed;
-  top: 15%;
-  left: 50%;
-  transform: translateX(-50%); /* Solo centra horizontalmente */
-  background-color: #34C759; 
-  color: #FFFFFF; 
-  padding: 10px;
-  border-radius: 5px;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-}
-
-.toast-notification::before {
-  content: "";
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFFFFF' d='M21 6.757L9.343 19 3.757 13.243 5 11.757 9.343 17.243 21 6.757Z'/%3E%3C/svg%3E");
-  background-size: 24px 24px;
-  margin-right: 10px;
-}
-
-/* Toast Success */
+/* Estilos para la notificación de éxito (toast) */
+.toast-notification,
 .toast-success {
-  position: fixed;
-  top: 15%;
-  left: 50%;
-  transform: translateX(-50%); /* Solo centra horizontalmente */
-  background-color: #34C759; 
-  color: #FFFFFF; 
-  padding: 10px;
-  border-radius: 5px;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
+    position: fixed;
+    top: 15%;
+    left: 50%;
+    transform: translate(-50%, 0); /* Ajusta para centrar horizontalmente */
+    background-color: #34C759; 
+    color: #FFFFFF; 
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    pointer-events: none; /* Desactiva eventos del puntero */
 }
 
+/* Estilos específicos para el ícono de éxito */
+.toast-notification::before,
 .toast-success::before {
-  content: "";
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFFFFF' d='M21 6.757L9.343 19 3.757 13.243 5 11.757 9.343 17.243 21 6.757Z'/%3E%3C/svg%3E");
-  background-size: 24px 24px;
-  margin-right: 10px;
+    content: "";
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFFFFF' d='M21 6.757L9.343 19 3.757 13.243 5 11.757 9.343 17.243 21 6.757Z'/%3E%3C/svg%3E");
+    background-size: 24px 24px;
+    margin-right: 10px;
+}
+
+/* Ajustes adicionales para el contenedor principal */
+body {
+    overflow: hidden; /* Evita el desplazamiento del contenido */
 }
