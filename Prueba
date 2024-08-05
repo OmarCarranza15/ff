@@ -1,80 +1,79 @@
-Para solucionar el problema del cursor en el campo de edición, donde el cursor se mueve al final del texto cuando se edita, puedes implementar el siguiente ajuste en tu componente `StyledInput`. Lo que necesitas es mantener la posición del cursor en la misma ubicación al editar el texto.
+El problema que describes podría deberse a cómo el navegador maneja el enfoque del campo de entrada. Aquí te dejo una solución alternativa que utiliza la referencia del campo de entrada para asegurar que el cursor se mantenga en su lugar mientras editas:
 
-Puedes hacerlo manejando el enfoque en el campo de entrada manualmente usando un efecto de React para actualizar la posición del cursor. A continuación te muestro cómo puedes modificar el componente `StyledInput` y la función `handleEditChange` para lograr esto:
+1. **Crea una referencia para el campo de entrada**: Usa `useRef` para mantener una referencia al campo de entrada.
 
-### Modificaciones
+2. **Ajusta la posición del cursor**: Después de actualizar el valor del campo, ajusta la posición del cursor manualmente.
 
-1. **Agrega un estado para la posición del cursor:**
+Aquí está el código modificado con los cambios necesarios:
 
-```javascript
-const [cursorPos, setCursorPos] = useState(0);
-```
-
-2. **Modifica el `handleEditChange` para guardar la posición del cursor antes de actualizar el texto:**
+### Modificaciones en el Componente `Paises`
 
 ```javascript
-const handleEditChange = (event, field) => {
-  const { value, selectionStart } = event.target;
-  setCursorPos(selectionStart);
-  
-  setEditedRow((prevState) => ({
-    ...prevState,
-    [field]: value,
-    ...(field === "ID_Pais" && {
-      N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais,
-    }),
-  }));
-  validateInput(field, value); // Validación de los campos a editar
-};
-```
+import React, { useState, useEffect, useRef } from "react";
+// ... (otras importaciones)
 
-3. **Asegúrate de que el `StyledInput` mantenga la posición del cursor:**
+function Paises() {
+  // ... (otros estados)
 
-```javascript
-const StyledInput = styled.input`
-  /* Aquí van tus estilos existentes */
+  // Ref para el campo de entrada editado
+  const inputRef = useRef(null);
 
-  &:focus {
-    outline: none;
-  }
-`;
-```
+  // ... (otros métodos)
 
-4. **En el renderizado del campo de entrada, usa el estado `cursorPos` para restablecer la posición del cursor después de actualizar el valor:**
+  const handleEditChange = (event, field) => {
+    const { value, selectionStart } = event.target;
 
-```javascript
-const handleEditChange = (event, field) => {
-  const { value, selectionStart } = event.target;
-  setCursorPos(selectionStart);
+    setEditedRow((prevState) => ({
+      ...prevState,
+      [field]: value,
+    }));
 
-  setEditedRow((prevState) => ({
-    ...prevState,
-    [field]: value,
-    ...(field === "ID_Pais" && {
-      N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais,
-    }),
-  }));
-  validateInput(field, value); // Validación de los campos a editar
-};
+    // Ajusta la posición del cursor
+    if (inputRef.current) {
+      inputRef.current.selectionStart = selectionStart;
+      inputRef.current.selectionEnd = selectionStart;
+    }
 
-// En el renderizado del campo de entrada
-{
-  editMode && editedRow?.id === row.id ? (
-    <StyledInput
-      type="text"
-      value={editedRow.N_Pais}
-      onChange={(e) => handleEditChange(e, "N_Pais")}
-      onKeyPress={(e) => {
-        if (!/[a-zA-ZñÑáéíóúÁÉÍÓÚ]/.test(e.key)) {
-          e.preventDefault();
-        }
-      }}
-      onFocus={(e) => e.target.setSelectionRange(cursorPos, cursorPos)}
-    />
-  ) : (
-    <div>{row.N_Pais}</div>
-  )
+    validateInput(field, value); // Validación de los campos a editar
+  };
+
+  const columns = [
+    {
+      name: "País",
+      selector: (row) => row.id,
+      sortable: true,
+      minwidth: "200px",
+      maxwidth: "50px",
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <StyledInput
+            ref={inputRef} // Asigna la referencia aquí
+            type="text"
+            value={editedRow.N_Pais}
+            onChange={(e) => handleEditChange(e, "N_Pais")}
+            onKeyPress={(e) => {
+              if (!/[a-zA-ZñÑáéíóúÁÉÍÓÚ]/.test(e.key)) {
+                e.preventDefault();
+              }
+            }}
+          />
+        ) : (
+          <div>{row.N_Pais}</div>
+        ),
+    },
+    // ... (otras columnas)
+  ];
+
+  // ... (resto del componente)
 }
+
+export default Paises;
 ```
 
-Con estas modificaciones, la posición del cursor debería mantenerse en el lugar correcto cuando editas el texto en el campo. Ajusta los estilos del `StyledInput` según sea necesario para asegurarte de que la experiencia de edición sea la deseada.
+### Explicación:
+
+1. **Referencia del Campo de Entrada**: `const inputRef = useRef(null);` se usa para mantener una referencia al campo de entrada editado.
+
+2. **Ajuste de la Posición del Cursor**: Después de actualizar el valor en `handleEditChange`, se ajusta manualmente la posición del cursor para que se mantenga en el lugar donde estaba antes de realizar la edición.
+
+Asegúrate de probar estos cambios y ajustar la lógica si es necesario para adaptarla a tu aplicación específica.
