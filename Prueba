@@ -1,79 +1,64 @@
-const columns = [
-  {
-    name: "N°",
-    selector: (row, index) => index + 1,
-    sortable: true,
-    minWidth: "50px",
-    maxWidth: "100px",
-  },
-  {
-    name: "País",
-    selector: (row) => row.id,
-    sortable: true,
-    minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
-    maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
-    cell: (row) =>
-      editMode && editedRow?.id === row.id ? (
-        <input
-          type="text"
-          value={editedRow.N_Pais}
-          onChange={(e) => handleEditChange(e, "N_Pais")}
-          onKeyPress={(e) => {
-            if (!/[a-zA-ZñÑáéíóúÁÉÍÓÚ]/.test(e.key)) {
-              e.preventDefault();
-            }
-          }}
-          style={{ width: '100%' }} // Asegúrate de que el input ocupe el ancho completo
-        />
-      ) : (
-        <div>{row.N_Pais}</div>
-      ),
-  },
-  {
-    name: "Acciones",
-    cell: (row) =>
-      editMode === row.id ? (
-        <ButtonGroup>
-          <Button
-            type="button"
-            className="btn btn-outline-success"
-            onClick={() => saveChanges(row.id)}
-          >
-            Guardar
-          </Button>
-          <Button
-            type="button"
-            className="btn btn-outline-danger"
-            onClick={cancelEdit}
-          >
-            Cancelar
-          </Button>
-        </ButtonGroup>
-      ) : (
-        <ButtonGroup>
-          <Button
-            type="button"
-            className="btn btn-outline-primary"
-            onClick={() => startEdit(row)}
-          >
-            Editar
-          </Button>
-          <Button
-            type="button"
-            className="btn btn-outline-danger"
-            onClick={() => {
-              if (
-                window.confirm(
-                  "¿Estás seguro que deseas eliminar este registro?"
-                )
-              ) {
-                deleteRow(row.id);
-              }
-            }}
-          >
-            Eliminar
-          </Button>
-        </ButtonGroup>
-      ),
-  },
-];
+Para cancelar el desplazamiento en tu aplicación React, puedes ajustar el estilo del contenedor para evitar el desplazamiento y permitir que el contenido del modal se ajuste a la pantalla sin causar desplazamiento.
+
+Aquí hay algunos cambios que puedes realizar para evitar el desplazamiento:
+
+1. **Añade un estilo global para desactivar el desplazamiento cuando el modal esté abierto**: Puedes agregar una clase CSS para aplicar el `overflow: hidden` al `body` cuando el modal esté visible.
+
+2. **Asegúrate de que el modal se ajuste al viewport**: Ajusta el estilo del modal para que se ajuste a la pantalla y no cause desplazamiento adicional.
+
+Actualiza el componente `Paises` para incluir un efecto que desactive el desplazamiento en el `body` cuando el modal está abierto. Aquí te muestro cómo hacerlo:
+
+```jsx
+import React, { useState, useEffect } from "react";
+// ... otras importaciones
+
+const Paises = () => {
+  // ... estado y useEffect
+
+  useEffect(() => {
+    // Maneja el estilo de desplazamiento del body cuando el modal está abierto
+    if (showModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto'; // Asegúrate de restablecer el estilo al desmontar el componente
+    };
+  }, [showModal]);
+
+  // ... funciones y JSX
+};
+
+export default Paises;
+```
+
+Asegúrate también de que el estilo del modal se ajuste al viewport. Aquí hay una sugerencia de estilo para tu modal:
+
+```css
+/* Asegúrate de que este estilo esté en tu archivo CSS correspondiente */
+.modal-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Asegúrate de que el modal esté por encima de otros elementos */
+}
+
+.modal-wrapper {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+}
+```
+
+Estos cambios deberían ayudarte a evitar el desplazamiento indeseado cuando el modal esté abierto. Si sigues teniendo problemas, verifica si hay algún otro elemento que esté causando el desplazamiento y ajusta su estilo en consecuencia.
