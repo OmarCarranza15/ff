@@ -1,14 +1,3 @@
-Para implementar la funcionalidad deseada en el botón de edición y el campo `StyledInput`, puedes seguir estos pasos:
-
-1. **Mantener el valor del país al editar**: Asegúrate de que el valor del `StyledInput` se mantenga mientras estés en modo de edición.
-
-2. **Vaciar el campo al hacer clic**: Modifica el `StyledInput` para que se vacíe cuando se haga clic en él, si estás en modo de edición.
-
-3. **Mostrar mensaje de error si el campo está vacío al guardar**: Añade validación para asegurarte de que el campo no esté vacío y muestra un mensaje de error si lo está.
-
-Aquí está el código actualizado para lograr lo que pides:
-
-```javascript
 import React, { useState } from 'react';
 import axios from 'axios';
 import StyledInput from './StyledInput'; // Asegúrate de que StyledInput está importado correctamente
@@ -56,15 +45,13 @@ const YourComponent = ({ pais, records, userId }) => {
   };
 
   const saveChanges = async (id) => {
-    try {
-      const updateRow = {
-        ...editedRow,
-      };
+    if (!editedRow.N_Pais.trim()) {
+      setErrors({ N_Pais: "El campo País no puede estar vacío" });
+      return;
+    }
 
-      if (!editedRow.N_Pais) {
-        setErrors({ N_Pais: "El campo país no puede estar vacío" });
-        return;
-      }
+    try {
+      const updateRow = { ...editedRow };
 
       const response = await axios.get(`http://localhost:3000/pais?N_Pais=${editedRow.N_Pais}`);
 
@@ -75,7 +62,7 @@ const YourComponent = ({ pais, records, userId }) => {
           <span class="error-icon">!</span>
           <span class="error-message">
             El País que intenta actualizar ya existe en la base de datos.
-            Por favor, ingrese una país diferente.
+            Por favor, ingrese un país diferente.
           </span>
         `;
         document.body.appendChild(errorNotification);
@@ -153,17 +140,20 @@ const YourComponent = ({ pais, records, userId }) => {
       maxWidth: "50px",
       cell: (row) =>
         editMode && editedRow?.id === row.id ? (
-          <StyledInput
-            type="text"
-            value={editedRow.N_Pais}
-            onChange={(e) => handleEditChange(e, "N_Pais")}
-            onClick={() => handleInputClick("N_Pais")}
-            onKeyPress={(e) => {
-              if (!/[a-zA-ZñÑáéíóúÁÉÍÓÚ]/.test(e.key)) {
-                e.preventDefault();
-              }
-            }}
-          />
+          <div>
+            <StyledInput
+              type="text"
+              value={editedRow.N_Pais}
+              onChange={(e) => handleEditChange(e, "N_Pais")}
+              onClick={() => handleInputClick("N_Pais")}
+              onKeyPress={(e) => {
+                if (!/[a-zA-ZñÑáéíóúÁÉÍÓÚ]/.test(e.key)) {
+                  e.preventDefault();
+                }
+              }}
+            />
+            {errors.N_Pais && <div className="error-message">{errors.N_Pais}</div>}
+          </div>
         ) : (
           <div>{row.N_Pais}</div>
         ),
@@ -219,9 +209,3 @@ const YourComponent = ({ pais, records, userId }) => {
 };
 
 export default YourComponent;
-```
-
-### Explicaciones:
-- **`handleInputClick`**: Vacía el campo `StyledInput` cuando se hace clic en él durante el modo de edición.
-- **Validación en `saveChanges`**: Verifica si `N_Pais` está vacío antes de realizar cualquier operación. Muestra un mensaje de error si es necesario.
-- **Actualización de `StyledInput`**: Asegúrate de que el valor del `StyledInput` se actualice y se vacíe correctamente durante la edición.
