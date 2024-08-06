@@ -47,12 +47,18 @@ const saveChanges = async (id) => {
     const updatedFields = {};
     if (editedRow.N_Rol !== originalRow.N_Rol) updatedFields.N_Rol = editedRow.N_Rol;
     if (editedRow.Des_Rol !== originalRow.Des_Rol) updatedFields.Des_Rol = editedRow.Des_Rol;
-    if (editedRow.Insertar !== undefined && editedRow.Insertar !== originalRow.Insertar) 
+
+    if (editedRow.Insertar !== undefined && editedRow.Insertar !== originalRow.Insertar) {
       updatedFields.Insertar = editedRow.Insertar ? 1 : 2;
-    if (editedRow.Editar !== undefined && editedRow.Editar !== originalRow.Editar) 
+    }
+
+    if (editedRow.Editar !== undefined && editedRow.Editar !== originalRow.Editar) {
       updatedFields.Editar = editedRow.Editar ? 1 : 2;
-    if (editedRow.Paises && editedRow.Paises.join(",") !== originalRow.Paises) 
+    }
+
+    if (editedRow.Paises && editedRow.Paises.join(",") !== originalRow.Paises) {
       updatedFields.Paises = editedRow.Paises.join(",");
+    }
 
     // Only send the request if there are updates
     if (Object.keys(updatedFields).length > 0) {
@@ -61,12 +67,36 @@ const saveChanges = async (id) => {
       const editedIndex = records.findIndex((row) => row.id === id) + 1;
 
       // Build audit log data
+      const originalInsertar = originalRow.Insertar === 1 ? "Habilitado" : "Deshabilitado";
+      const originalEditar = originalRow.Editar === 1 ? "Habilitado" : "Deshabilitado";
+      const originalPais = originalRow.Paises ? originalRow.Paises.split(",").map(
+        (id) => pais.find((a) => a.id === Number(id))?.N_Pais
+      ).join(", ") : '';
+
+      const editedInsertar = editedRow.Insertar === 1 ? "Habilitado" : "Deshabilitado";
+      const editedEditar = editedRow.Editar === 1 ? "Habilitado" : "Deshabilitado";
+      const editedPais = editedRow.Paises ? editedRow.Paises.map(
+        (id) => pais.find((a) => a.id === Number(id))?.N_Pais
+      ).join(", ") : '';
+
       const auditoriaData = {
-        Campo_Original: Object.keys(updatedFields)
-          .map((key) => `- ${key}: ${originalRow[key]}`)
+        Campo_Original: [
+          originalRow.N_Rol && editedRow.N_Rol !== originalRow.N_Rol ? `- Rol: ${originalRow.N_Rol}` : "",
+          originalRow.Des_Rol && editedRow.Des_Rol !== originalRow.Des_Rol ? `- Descripción: ${originalRow.Des_Rol}` : "",
+          originalRow.Insertar !== undefined && editedRow.Insertar !== originalRow.Insertar ? `- Permiso Insertar: ${originalInsertar}` : "",
+          originalRow.Editar !== undefined && editedRow.Editar !== originalRow.Editar ? `- Permiso Editar: ${originalEditar}` : "",
+          originalRow.Paises && editedRow.Paises.join(",") !== originalRow.Paises ? `- Paises: ${originalPais}` : "",
+        ]
+          .filter(Boolean)
           .join("¬ "),
-        Campo_Nuevo: Object.keys(updatedFields)
-          .map((key) => `- ${key}: ${updatedFields[key]}`)
+        Campo_Nuevo: [
+          editedRow.N_Rol && editedRow.N_Rol !== originalRow.N_Rol ? `- Rol: ${editedRow.N_Rol}` : "",
+          editedRow.Des_Rol && editedRow.Des_Rol !== originalRow.Des_Rol ? `- Descripción: ${editedRow.Des_Rol}` : "",
+          editedRow.Insertar !== undefined && editedRow.Insertar !== originalRow.Insertar ? `- Permiso Insertar: ${editedInsertar}` : "",
+          editedRow.Editar !== undefined && editedRow.Editar !== originalRow.Editar ? `- Permiso Editar: ${editedEditar}` : "",
+          editedRow.Paises && editedRow.Paises.join(",") !== originalRow.Paises ? `- Paises: ${editedPais}` : "",
+        ]
+          .filter(Boolean)
           .join("¬ "),
         Tabla: "Roles y Permisos",
         Accion: 2, // Modificación
