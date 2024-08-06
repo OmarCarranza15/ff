@@ -1,0 +1,42 @@
+
+/* Estilos para DataTable */
+.DataTableContainer {
+  width: 100%;
+  overflow-x: auto;
+  padding: 20px; /* Añadido para separar el contenido del borde */
+  justify-content: center;
+}
+
+.dataTable {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.dataTable th,
+.dataTable td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+.dataTable th {
+  background-color: #f0f0f0;
+}
+
+@media (max-width: 768px) {
+  .dataTable th,
+  .dataTable td {
+    padding: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dataTable th,
+  .dataTable td {
+    padding: 2px;
+  }
+}
+
+.Title {
+  color:#083cac;
+}
