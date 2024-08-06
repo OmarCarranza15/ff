@@ -1,18 +1,78 @@
-if (response.data.some(division => division.N_Division.toLowerCase() === editedRow.N_Division.toLowerCase()) && 
-      paisResponse.data.some(pais => pais.N_Pais.toLowerCase() === editedRow.N_Pais.toLowerCase())) {
-        const errorNotification = document.createElement("div");
-        errorNotification.className = "error-notification";
-        errorNotification.innerHTML = `
-          <span class="error-icon">!</span>
-          <span class="error-message">
-            El conjunto de Paies y Division que intenta actualizar ya existe en la base de datos.
-            Por favor, ingrese una país diferente.
-          </span>
-        `;
-        document.body.appendChild(errorNotification);
+const saveChanges = async (id) => {
+  if (!editedRow.N_Pais.trim() || !editedRow.N_Division.trim()) {
+    setErrors({ N_Pais: "El campo País no puede estar vacío", N_Division: "El campo División no puede estar vacío" });
+    showNotification("El campo País y División no pueden estar vacíos");
+    return;
+  }
 
-        setTimeout(() => {
-          errorNotification.remove();
-        }, 2000);
-        return;
-      }
+  try {
+    // Realizar las solicitudes en paralelo
+    const [paisResponse, divisionResponse] = await Promise.all([
+      axios.get(`http://localhost:3000/pais?N_Pais=${editedRow.N_Pais}`),
+      axios.get(`http://localhost:3000/division?N_Division=${editedRow.N_Division}`)
+    ]);
+
+    // Verificar si el país y la división ya existen
+    const paisExists = paisResponse.data.some(pais => pais.N_Pais.toLowerCase() === editedRow.N_Pais.toLowerCase());
+    const divisionExists = divisionResponse.data.some(division => division.N_Division.toLowerCase() === editedRow.N_Division.toLowerCase());
+
+    if (paisExists && divisionExists) {
+      const errorNotification = document.createElement("div");
+      errorNotification.className = "error-notification";
+      errorNotification.innerHTML = `
+        <span class="error-icon">!</span>
+        <span class="error-message">
+          El conjunto de País y División que intenta actualizar ya existe en la base de datos.
+          Por favor, ingrese un país y una división diferente.
+        </span>
+      `;
+      document.body.appendChild(errorNotification);
+
+      setTimeout(() => {
+        errorNotification.remove();
+      }, 2000);
+      return;
+    }
+
+    // Continuar con la actualización si no hay conflictos
+    const updateRow = { ...editedRow };
+
+    // Verificar si el país ya existe en la base de datos
+    const existingCountry = records.find(row => row.N_Pais.toLowerCase() === editedRow.N_Pais.toLowerCase());
+
+    if (existingCountry && existingCountry.id !== id) {
+      showNotification("El país ya está registrado");
+      return;
+    }
+
+    // Obtener el valor original del campo
+    const originalRow = records.find(row => row.id === id);
+
+    await axios.put(`http://localhost:3000/pais/${id}`, updateRow);
+
+    const editedIndex = records.findIndex(row => row.id === id) + 1;
+
+    const auditoriaData = {
+      Campo_Original: `(País)${originalRow.N_Pais}`,
+      Campo_Nuevo: `(País)${editedRow.N_Pais}`,
+      Tabla: 'Paises',
+      Accion: 2,
+      ID_Usuario: userId,
+      N: editedIndex
+    };
+
+    await axios.post('http://localhost:3000/auditoria', auditoriaData);
+
+    const updatedRecords = records.map(row =>
+      row.id === id ? { ...editedRow } : row
+    );
+
+    setRecords(updatedRecords);
+    setEditedRow(null);
+    setEditMode(null);
+
+    showNotification("País actualizado con éxito!", "success");
+  } catch (error) {
+    console.error("Error al guardar los cambios", error);
+  }
+};
