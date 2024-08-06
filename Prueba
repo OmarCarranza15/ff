@@ -1,143 +1,16 @@
-const handleEditChange = (event, field) => {
-  const { type, checked, value } = event.target;
+ const createCampoNuevo = (modalValues) => {
+          let campoNuevo = `- Rol: ${modalValues.N_Rol}¬ - Descripción Rol: ${modalValues.Des_Rol}¬`;
+          if (modalValues.Insertar) {
+            campoNuevo += ` - Permiso Insertar: ${modalValues.Insertar === true ? "Habilitado": "Deshabilitado"}¬`;
+          }
+          if (modalValues.Editar) {
+            campoNuevo += `- Permiso Editar: ${modalValues.Editar === true ? "Habilitado": "Deshabilitado"}¬`;
+          }
+          if (modalValues.Paises){
+            campoNuevo += `- Paises: ${modalValues.Paises.map(
+            (id) => pais.find((a) => a.id === id)?.N_Pais
+          ).join(",")}`;
+          }
 
-  if (field === "Paises") {
-    const selectedOptions = Array.from(
-      event.target.selectedOptions,
-      (option) => option.value
-    );
-    setEditedRow((prevState) => ({
-      ...prevState,
-      Paises: selectedOptions,
-    }));
-  } else if (type === "checkbox") {
-    setEditedRow((prevState) => ({
-      ...prevState,
-      [field]: checked,
-    }));
-  } else {
-    let newValue = type === "checkbox" ? checked : value;
-    if (field !== "Des_Rol") {
-      newValue = String(newValue).toUpperCase();
-    }
-    setEditedRow((prevState) => ({
-      ...prevState,
-      [field]: newValue,
-    }));
-  }
-};
-
-const saveChanges = async (id) => {
-  if (!editedRow.N_Rol.trim()) {
-    setErrors({ N_Rol: "El campo Roles no puede estar vacío" });
-    showNotification("El campo Roles no puede estar vacío");
-    return;
-  }
-
-  if (!editedRow.Des_Rol.trim()) {
-    setErrors({ Des_Rol: "El campo Descripcion no puede estar vacío" });
-    showNotification("El campo Descripcion no puede estar vacío");
-    return;
-  }
-
-  try {
-    const originalRow = records.find((row) => row.id === id);
-
-    // Prepare updatedFields based on changes
-    const updatedFields = {};
-    if (editedRow.N_Rol !== originalRow.N_Rol) updatedFields.N_Rol = editedRow.N_Rol;
-    if (editedRow.Des_Rol !== originalRow.Des_Rol) updatedFields.Des_Rol = editedRow.Des_Rol;
-
-    if (editedRow.Insertar !== undefined && editedRow.Insertar !== originalRow.Insertar) {
-      updatedFields.Insertar = editedRow.Insertar ? 1 : 2;
-    }
-
-    if (editedRow.Editar !== undefined && editedRow.Editar !== originalRow.Editar) {
-      updatedFields.Editar = editedRow.Editar ? 1 : 2;
-    }
-
-    if (editedRow.Paises && editedRow.Paises.join(",") !== originalRow.Paises) {
-      updatedFields.Paises = editedRow.Paises.join(",");
-    }
-
-    // Only send the request if there are updates
-    if (Object.keys(updatedFields).length > 0) {
-      await axios.put(`http://localhost:3000/rolusuario/${id}`, updatedFields);
-
-      const editedIndex = records.findIndex((row) => row.id === id) + 1;
-
-      // Build audit log data
-      const originalInsertar = originalRow.Insertar === 1 ? "Habilitado" : "Deshabilitado";
-      const originalEditar = originalRow.Editar === 1 ? "Habilitado" : "Deshabilitado";
-      const originalPais = originalRow.Paises ? originalRow.Paises.split(",").map(
-        (id) => pais.find((a) => a.id === Number(id))?.N_Pais
-      ).join(", ") : '';
-
-      const editedInsertar = editedRow.Insertar === 1 ? "Habilitado" : "Deshabilitado";
-      const editedEditar = editedRow.Editar === 1 ? "Habilitado" : "Deshabilitado";
-      const editedPais = editedRow.Paises ? editedRow.Paises.map(
-        (id) => pais.find((a) => a.id === Number(id))?.N_Pais
-      ).join(", ") : '';
-
-      const auditoriaData = {
-        Campo_Original: [
-          originalRow.N_Rol && editedRow.N_Rol !== originalRow.N_Rol ? `- Rol: ${originalRow.N_Rol}` : "",
-          originalRow.Des_Rol && editedRow.Des_Rol !== originalRow.Des_Rol ? `- Descripción: ${originalRow.Des_Rol}` : "",
-          originalRow.Insertar !== undefined && editedRow.Insertar !== originalRow.Insertar ? `- Permiso Insertar: ${originalInsertar}` : "",
-          originalRow.Editar !== undefined && editedRow.Editar !== originalRow.Editar ? `- Permiso Editar: ${originalEditar}` : "",
-          originalRow.Paises && editedRow.Paises.join(",") !== originalRow.Paises ? `- Paises: ${originalPais}` : "",
-        ]
-          .filter(Boolean)
-          .join("¬ "),
-        Campo_Nuevo: [
-          editedRow.N_Rol && editedRow.N_Rol !== originalRow.N_Rol ? `- Rol: ${editedRow.N_Rol}` : "",
-          editedRow.Des_Rol && editedRow.Des_Rol !== originalRow.Des_Rol ? `- Descripción: ${editedRow.Des_Rol}` : "",
-          editedRow.Insertar !== undefined && editedRow.Insertar !== originalRow.Insertar ? `- Permiso Insertar: ${editedInsertar}` : "",
-          editedRow.Editar !== undefined && editedRow.Editar !== originalRow.Editar ? `- Permiso Editar: ${editedEditar}` : "",
-          editedRow.Paises && editedRow.Paises.join(",") !== originalRow.Paises ? `- Paises: ${editedPais}` : "",
-        ]
-          .filter(Boolean)
-          .join("¬ "),
-        Tabla: "Roles y Permisos",
-        Accion: 2, // Modificación
-        ID_Usuario: userId,
-        N: editedIndex,
-      };
-
-      if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
-        await axios.post("http://localhost:3000/auditoria", auditoriaData);
-      }
-
-      const updatedRecords = records.map((row) =>
-        row.id === id
-          ? {
-              ...row,
-              ...updatedFields,
-              Paises: updatedFields.Paises ? updatedFields.Paises.split(",").map(
-                (id) => pais.find((a) => a.id === Number(id))?.N_Pais
-              ) : row.Paises,
-            }
-          : row
-      );
-
-      setRecords(updatedRecords);
-      setEditedRow(null);
-      setEditMode(null);
-
-      const toastElement = document.createElement("div");
-      toastElement.className = "toast-notification";
-      toastElement.innerHTML = "¡Usuario actualizado con éxito!";
-
-      document.body.appendChild(toastElement);
-
-      setTimeout(() => {
-        toastElement.remove();
-        window.location.reload(); // Recargar la página después de 1 segundo
-      }, 1000);
-    } else {
-      showNotification("No se realizaron cambios");
-    }
-  } catch (error) {
-    console.error("Error al guardar los cambios", error);
-  }
-};
+          return campoNuevo;
+        };
