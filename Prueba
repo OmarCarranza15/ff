@@ -1,6 +1,6 @@
 const handleEditChange = (event, field) => {
   const { type, checked, value } = event.target;
-  
+
   if (field === "Paises") {
     const selectedOptions = Array.from(
       event.target.selectedOptions,
@@ -56,7 +56,7 @@ const saveChanges = async (id) => {
     showNotification("El campo Roles no puede estar vacío");
     return;
   }
-  
+
   if (!editedRow.Des_Rol.trim()) {
     setErrors({ Des_Rol: "El campo Descripcion no puede estar vacío" });
     showNotification("El campo Descripcion no puede estar vacío");
@@ -64,14 +64,16 @@ const saveChanges = async (id) => {
   }
 
   try {
-    const updateRow = {
-      ...editedRow,
-      Insertar: editedRow.Insertar ? 1 : 2,
-      Editar: editedRow.Editar ? 1 : 2,
-      Paises: editedRow.Paises.join(","),
-    };
+    // Preparamos el objeto para actualizar solo los campos modificados
+    const updatedFields = {};
 
-    await axios.put(`http://localhost:3000/rolusuario/${id}`, updateRow);
+    if (editedRow.N_Rol !== undefined) updatedFields.N_Rol = editedRow.N_Rol;
+    if (editedRow.Des_Rol !== undefined) updatedFields.Des_Rol = editedRow.Des_Rol;
+    if (editedRow.Insertar !== undefined) updatedFields.Insertar = editedRow.Insertar ? 1 : 2;
+    if (editedRow.Editar !== undefined) updatedFields.Editar = editedRow.Editar ? 1 : 2;
+    if (editedRow.Paises !== undefined) updatedFields.Paises = editedRow.Paises.join(",");
+
+    await axios.put(`http://localhost:3000/rolusuario/${id}`, updatedFields);
 
     // Obtener el valor original del campo
     const originalRow = records.find((row) => row.id === id);
@@ -82,9 +84,9 @@ const saveChanges = async (id) => {
     const originalDesRol = originalRow.Des_Rol;
     const originalInsertar = originalRow.Insertar === 1 ? "Habilitado" : "Deshabilitado";
     const originalEditar = originalRow.Editar === 1 ? "Habilitado" : "Deshabilitado";
-    const originalPais = Array.isArray(originalRow.Paises) 
-        ? originalRow.Paises.join(", ") 
-        : originalRow.Paises || '';
+    const originalPais = Array.isArray(originalRow.Paises)
+      ? originalRow.Paises.join(", ")
+      : originalRow.Paises || '';
 
     const EditedRol = editedRow.N_Rol;
     const editedDesRol = editedRow.Des_Rol;
@@ -137,10 +139,10 @@ const saveChanges = async (id) => {
       row.id === id
         ? {
             ...row,
-            ...updateRow,
-            Paises: updateRow.Paises.split(",").map(
+            ...updatedFields,
+            Paises: updatedFields.Paises ? updatedFields.Paises.split(",").map(
               (id) => pais.find((a) => a.id === Number(id))?.N_Pais
-            ),
+            ) : row.Paises,
           }
         : row
     );
