@@ -1,13 +1,23 @@
 const createCampoNuevo = (modalValues) => {
-          let campoNuevo = `- Rol: ${modalValues.N_Rol}¬ - Descripción Rol: ${modalValues.Des_Rol}¬ 
-              - Paises: ${modalValues.Paises.map((id) => pais.find((a) => a.id === Number(id))?.N_Pais).join(", ")}¬`; 
+  let campoNuevo = '';
 
-          if (modalValues.Insertar) {
-            campoNuevo += ` - Permiso Insertar: ${modalValues.Insertar === true ? "Habilitado": "Deshabilitado"}¬`;
-          }
-          if (modalValues.Editar) {
-            campoNuevo += `- Permiso Editar: ${modalValues.Editar === true ? "Habilitado": "Deshabilitado"}¬`;
-          }
-          
-          return campoNuevo;
-        };
+  // Agregar cambios en Rol y Descripción del Rol
+  campoNuevo += `- Rol: ${modalValues.N_Rol}¬ - Descripción Rol: ${modalValues.Des_Rol}¬`;
+  
+  // Agregar cambios en Paises solo si hay países seleccionados
+  if (modalValues.Paises && modalValues.Paises.length > 0) {
+    campoNuevo += `- Paises: ${modalValues.Paises.map((id) => pais.find((a) => a.id === Number(id))?.N_Pais).join(", ")}¬`;
+  }
+
+  // Agregar cambios en Permiso Insertar si está definido
+  if (modalValues.Insertar !== undefined) {
+    campoNuevo += `- Permiso Insertar: ${modalValues.Insertar === 1 ? "Habilitado" : "Deshabilitado"}¬`;
+  }
+
+  // Agregar cambios en Permiso Editar si está definido
+  if (modalValues.Editar !== undefined) {
+    campoNuevo += `- Permiso Editar: ${modalValues.Editar === 1 ? "Habilitado" : "Deshabilitado"}¬`;
+  }
+
+  return campoNuevo;
+};
