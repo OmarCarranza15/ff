@@ -30,13 +30,28 @@ const YourComponent = ({ pais, records, userId }) => {
     }
   };
 
+  const showNotification = (message, type = 'error') => {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}-notification`;
+    notification.innerHTML = `
+      <span class="notification-message">${message}</span>
+    `;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.remove();
+    }, 2000); // Oculta la notificación después de 2 segundos
+  };
+
   const validateInput = (field, value) => {
     let newErrors = { ...errors };
     if (field === "N_Pais") {
       if (!value.trim()) {
         newErrors.N_Pais = "El campo País es obligatorio";
+        showNotification(newErrors.N_Pais);
       } else if (!/^[a-zA-ZÑñ\s]+$/.test(value)) {
         newErrors.N_Pais = "El campo País solo acepta letras y espacios en blanco";
+        showNotification(newErrors.N_Pais);
       } else {
         newErrors.N_Pais = "";
       }
@@ -47,6 +62,7 @@ const YourComponent = ({ pais, records, userId }) => {
   const saveChanges = async (id) => {
     if (!editedRow.N_Pais.trim()) {
       setErrors({ N_Pais: "El campo País no puede estar vacío" });
+      showNotification("El campo País no puede estar vacío");
       return;
     }
 
@@ -56,27 +72,14 @@ const YourComponent = ({ pais, records, userId }) => {
       const response = await axios.get(`http://localhost:3000/pais?N_Pais=${editedRow.N_Pais}`);
 
       if (response.data.some(pais => pais.N_Pais.toLowerCase() === editedRow.N_Pais.toLowerCase())) {
-        const errorNotification = document.createElement("div");
-        errorNotification.className = "error-notification";
-        errorNotification.innerHTML = `
-          <span class="error-icon">!</span>
-          <span class="error-message">
-            El País que intenta actualizar ya existe en la base de datos.
-            Por favor, ingrese un país diferente.
-          </span>
-        `;
-        document.body.appendChild(errorNotification);
-
-        setTimeout(() => {
-          errorNotification.remove();
-        }, 2000);
+        showNotification("El País que intenta actualizar ya existe en la base de datos.");
         return;
       }
 
       const existingCountry = records.find(row => row.N_Pais.toLowerCase() === editedRow.N_Pais.toLowerCase());
 
       if (existingCountry && existingCountry.id !== id) {
-        setErrors({ N_Pais: "El país ya está registrado" });
+        showNotification("El país ya está registrado");
         return;
       }
 
@@ -105,15 +108,7 @@ const YourComponent = ({ pais, records, userId }) => {
       setEditedRow(null);
       setEditMode(null);
 
-      const toastElement = document.createElement("div");
-      toastElement.className = "toast-notification";
-      toastElement.innerHTML = "País actualizado con éxito!";
-      document.body.appendChild(toastElement);
-
-      setTimeout(() => {
-        toastElement.remove();
-        window.location.reload();
-      }, 1000);
+      showNotification("País actualizado con éxito!", "success");
     } catch (error) {
       console.error("Error al guardar los cambios", error);
     }
