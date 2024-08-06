@@ -27,29 +27,6 @@ const handleEditChange = (event, field) => {
   }
 };
 
-const handleStaticCheckboxChange = (e, id, field) => {
-  const updatedRecords = records.map((row) => {
-    if (row.id === id) {
-      return {
-        ...row,
-        [field]: e.target.checked ? 1 : 2,
-      };
-    }
-    return row;
-  });
-
-  setRecords(updatedRecords);
-};
-
-const handleInputClick = (field) => {
-  if (editMode) {
-    setEditedRow((prevState) => ({
-      ...prevState,
-      [field]: '',
-    }));
-  }
-};
-
 const saveChanges = async (id) => {
   if (!editedRow.N_Rol.trim()) {
     setErrors({ N_Rol: "El campo Roles no puede estar vacío" });
@@ -64,103 +41,72 @@ const saveChanges = async (id) => {
   }
 
   try {
-    // Preparamos el objeto para actualizar solo los campos modificados
-    const updatedFields = {};
-
-    if (editedRow.N_Rol !== undefined) updatedFields.N_Rol = editedRow.N_Rol;
-    if (editedRow.Des_Rol !== undefined) updatedFields.Des_Rol = editedRow.Des_Rol;
-    if (editedRow.Insertar !== undefined) updatedFields.Insertar = editedRow.Insertar ? 1 : 2;
-    if (editedRow.Editar !== undefined) updatedFields.Editar = editedRow.Editar ? 1 : 2;
-    if (editedRow.Paises !== undefined) updatedFields.Paises = editedRow.Paises.join(",");
-
-    await axios.put(`http://localhost:3000/rolusuario/${id}`, updatedFields);
-
-    // Obtener el valor original del campo
     const originalRow = records.find((row) => row.id === id);
-    const editedIndex = records.findIndex((row) => row.id === id) + 1;
 
-    // Construir los valores para la auditoría
-    const originalRol = originalRow.N_Rol;
-    const originalDesRol = originalRow.Des_Rol;
-    const originalInsertar = originalRow.Insertar === 1 ? "Habilitado" : "Deshabilitado";
-    const originalEditar = originalRow.Editar === 1 ? "Habilitado" : "Deshabilitado";
-    const originalPais = Array.isArray(originalRow.Paises)
-      ? originalRow.Paises.join(", ")
-      : originalRow.Paises || '';
+    // Prepare updatedFields based on changes
+    const updatedFields = {};
+    if (editedRow.N_Rol !== originalRow.N_Rol) updatedFields.N_Rol = editedRow.N_Rol;
+    if (editedRow.Des_Rol !== originalRow.Des_Rol) updatedFields.Des_Rol = editedRow.Des_Rol;
+    if (editedRow.Insertar !== undefined && editedRow.Insertar !== originalRow.Insertar) 
+      updatedFields.Insertar = editedRow.Insertar ? 1 : 2;
+    if (editedRow.Editar !== undefined && editedRow.Editar !== originalRow.Editar) 
+      updatedFields.Editar = editedRow.Editar ? 1 : 2;
+    if (editedRow.Paises && editedRow.Paises.join(",") !== originalRow.Paises) 
+      updatedFields.Paises = editedRow.Paises.join(",");
 
-    const EditedRol = editedRow.N_Rol;
-    const editedDesRol = editedRow.Des_Rol;
-    const editedInsertar = editedRow.Insertar === 1 ? "Habilitado" : "Deshabilitado";
-    const EditedEditar = editedRow.Editar === 1 ? "Habilitado" : "Deshabilitado";
-    const EditedPais = editedRow.Paises.map(
-      (id) => pais.find((a) => a.id === id)?.N_Pais
-    ).join(", ");
+    // Only send the request if there are updates
+    if (Object.keys(updatedFields).length > 0) {
+      await axios.put(`http://localhost:3000/rolusuario/${id}`, updatedFields);
 
-    const hasRolChanged = originalRol !== EditedRol;
-    const hasDesRolChanged = originalDesRol !== editedDesRol;
-    const hasInsertarChanged = originalInsertar !== editedInsertar;
-    const hasEditarChanged = originalEditar !== EditedEditar;
-    const hasPaisChanged = originalPais !== EditedPais;
+      const editedIndex = records.findIndex((row) => row.id === id) + 1;
 
-    const auditoriaData = {
-      Campo_Original: [
-        hasRolChanged ? `- Rol: ${originalRol}` : "",
-        hasDesRolChanged ? `- Descripción: ${originalDesRol}` : "",
-        hasInsertarChanged ? `- Permiso Insertar: ${originalInsertar}` : "",
-        hasEditarChanged ? `- Permiso Editar: ${originalEditar}` : "",
-        hasPaisChanged ? `- Paises: ${originalPais}` : "",
-      ]
-        .filter(Boolean)
-        .join("¬ "),
-      Campo_Nuevo: [
-        hasRolChanged ? `- Rol: ${EditedRol}` : "",
-        hasDesRolChanged ? `- Descripción: ${editedDesRol}` : "",
-        hasInsertarChanged
-          ? `- Permiso Insertar: ${editedInsertar}`
-          : "",
-        hasEditarChanged
-          ? `- Permiso Editar: ${EditedEditar}`
-          : "",
-        hasPaisChanged ? `- Paises: ${EditedPais}` : "",
-      ]
-        .filter(Boolean)
-        .join("¬ "),
-      Tabla: "Roles y Permisos",
-      Accion: 2, // Modificación
-      ID_Usuario: userId,
-      N: editedIndex,
-    };
+      // Build audit log data
+      const auditoriaData = {
+        Campo_Original: Object.keys(updatedFields)
+          .map((key) => `- ${key}: ${originalRow[key]}`)
+          .join("¬ "),
+        Campo_Nuevo: Object.keys(updatedFields)
+          .map((key) => `- ${key}: ${updatedFields[key]}`)
+          .join("¬ "),
+        Tabla: "Roles y Permisos",
+        Accion: 2, // Modificación
+        ID_Usuario: userId,
+        N: editedIndex,
+      };
 
-    if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
-      await axios.post("http://localhost:3000/auditoria", auditoriaData);
+      if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
+        await axios.post("http://localhost:3000/auditoria", auditoriaData);
+      }
+
+      const updatedRecords = records.map((row) =>
+        row.id === id
+          ? {
+              ...row,
+              ...updatedFields,
+              Paises: updatedFields.Paises ? updatedFields.Paises.split(",").map(
+                (id) => pais.find((a) => a.id === Number(id))?.N_Pais
+              ) : row.Paises,
+            }
+          : row
+      );
+
+      setRecords(updatedRecords);
+      setEditedRow(null);
+      setEditMode(null);
+
+      const toastElement = document.createElement("div");
+      toastElement.className = "toast-notification";
+      toastElement.innerHTML = "¡Usuario actualizado con éxito!";
+
+      document.body.appendChild(toastElement);
+
+      setTimeout(() => {
+        toastElement.remove();
+        window.location.reload(); // Recargar la página después de 1 segundo
+      }, 1000);
+    } else {
+      showNotification("No se realizaron cambios");
     }
-
-    const updatedRecords = records.map((row) =>
-      row.id === id
-        ? {
-            ...row,
-            ...updatedFields,
-            Paises: updatedFields.Paises ? updatedFields.Paises.split(",").map(
-              (id) => pais.find((a) => a.id === Number(id))?.N_Pais
-            ) : row.Paises,
-          }
-        : row
-    );
-
-    setRecords(updatedRecords);
-    setEditedRow(null);
-    setEditMode(null);
-
-    const toastElement = document.createElement("div");
-    toastElement.className = "toast-notification";
-    toastElement.innerHTML = "¡Usuario actualizado con éxito!";
-
-    document.body.appendChild(toastElement);
-
-    setTimeout(() => {
-      toastElement.remove();
-      window.location.reload(); // Recargar la página después de 1 segundo
-    }, 1000);
   } catch (error) {
     console.error("Error al guardar los cambios", error);
   }
