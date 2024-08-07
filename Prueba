@@ -1,42 +1,108 @@
-Tu enfoque parece correcto para manejar los espacios en blanco al principio y al final del texto. Aquí tienes algunas sugerencias y puntos a verificar para asegurar que funcione adecuadamente:
+Para asegurar que los espacios en blanco al principio y al final del nombre del país se eliminen al editar, puedes modificar el `handleEditChange` para recortar los espacios en blanco antes de actualizar el estado. Aquí está el código modificado:
 
-1. **Recorte en la Función `handleEditChange`**:
-   En tu función `handleEditChange`, estás recortando el valor antes de actualizar el estado. Esto es bueno para evitar espacios no deseados. Asegúrate de que el campo `field` sea el que esperas para aplicar el recorte.
+```javascript
+const handleEditChange = (event, field) => {
+  const { value } = event.target;
+  const trimmedValue = value.trim(); // Elimina los espacios en blanco al principio y al final
+  setEditedRow((prevState) => ({
+    ...prevState,
+    [field]: trimmedValue,
+    ...(field === "ID_Pais" && {
+      N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais,
+    }),
+  }));
+  validateInput(field, trimmedValue); // Usa el valor recortado para la validación
+};
+```
 
-   ```javascript
-   const handleEditChange = (event, field) => {
-     const { value } = event.target;
-     setEditedRow((prevState) => ({
-       ...prevState,
-       [field]: value.trim(), // Recortar espacios en blanco aquí
-       ...(field === "ID_Pais" && {
-         N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais,
-       }),
-     }));
-     validateInput(field, value.trim()); // También recortar aquí
-   };
-   ```
+Y para el `saveChanges`, asegúrate de recortar los espacios en blanco también antes de la verificación y la actualización:
 
-2. **Validación en `saveChanges`**:
-   En tu función `saveChanges`, ya estás recortando los espacios en blanco del campo `N_Pais` antes de realizar cualquier otra acción. Asegúrate de que el recorte se aplique correctamente en todos los lugares relevantes.
+```javascript
+const saveChanges = async (id) => {
+  const trimmedPais = editedRow.N_Pais.trim(); // Elimina los espacios en blanco al principio y al final
 
-   ```javascript
-   const trimmedPais = editedRow.N_Pais.trim();
+  if (!trimmedPais) {
+    setErrors({ N_Pais: "El campo País no puede estar vacío" });
+    showNotification("El campo País no puede estar vacío");
+    return;
+  }
 
-   if (!trimmedPais) {
-     setErrors({ N_Pais: "El campo País no puede estar vacío" });
-     showNotification("El campo País no puede estar vacío");
-     return;
-   }
-   ```
+  try {
+    const updateRow = {
+      ...editedRow,
+      N_Pais: trimmedPais, // Usa el valor recortado
+    };
 
-3. **Verifica el Código de Notificaciones**:
-   La lógica para mostrar y ocultar notificaciones parece adecuada, pero asegúrate de que el estilo CSS para `.error-notification` y `.toast-notification` esté configurado correctamente para que las notificaciones se muestren y oculten como esperas.
+    if (!trimmedPais) {
+      setErrors({ N_Pais: "El campo país no puede estar vacío" });
+      return;
+    }
 
-4. **Verifica la Lógica de Comparación**:
-   En la consulta a la API y en la validación de los registros existentes, estás utilizando `toLowerCase()` para hacer comparaciones sin importar el caso. Esto es útil para asegurar que las comparaciones sean consistentes. Solo asegúrate de que este enfoque sea el que deseas para tu aplicación.
+    const response = await axios.get(`http://localhost:3000/pais?N_Pais=${trimmedPais}`);
 
-5. **Prueba y Depuración**:
-   Realiza pruebas exhaustivas para asegurar que el campo de texto acepte espacios y que el recorte se realice correctamente tanto en el campo de edición como en el momento de guardar los cambios.
+    if (response.data.some(pais => pais.N_Pais.toLowerCase() === trimmedPais.toLowerCase())) {
+      const errorNotification = document.createElement("div");
+      errorNotification.className = "error-notification";
+      errorNotification.innerHTML = `
+        <span class="error-icon">!</span>
+        <span class="error-message">
+          El País que intenta actualizar ya existe en la base de datos.
+          Por favor, ingrese una país diferente.
+        </span>
+      `;
+      document.body.appendChild(errorNotification);
 
-Si después de estas comprobaciones sigues teniendo problemas, puede ser útil revisar el código de renderizado del campo de texto para asegurarte de que no haya ningún problema relacionado con el control del campo de entrada en sí.
+      setTimeout(() => {
+        errorNotification.remove();
+      }, 2000);
+      return;
+    }
+
+    const existingCountry = records.find(row => row.N_Pais.toLowerCase() === trimmedPais.toLowerCase());
+
+    if (existingCountry && existingCountry.id !== id) {
+      setErrors({ N_Pais: "El país ya está registrado" });
+      return;
+    }
+
+    const originalRow = records.find(row => row.id === id);
+
+    await axios.put(`http://localhost:3000/pais/${id}`, updateRow);
+
+    const editedIndex = records.findIndex(row => row.id === id) + 1;
+
+    const auditoriaData = {
+      Campo_Original: `- País: ${originalRow.N_Pais}`,
+      Campo_Nuevo: `- País: ${trimmedPais}`,
+      Tabla: 'Paises',
+      Accion: 2,
+      ID_Usuario: userId,
+      N: editedIndex
+    };
+
+    await axios.post('http://localhost:3000/auditoria', auditoriaData);
+
+    const updatedRecords = records.map(row =>
+      row.id === id ? { ...updateRow } : row
+    );
+
+    setRecords(updatedRecords);
+    setEditedRow(null);
+    setEditMode(null);
+
+    const toastElement = document.createElement("div");
+    toastElement.className = "toast-notification";
+    toastElement.innerHTML = "País actualizado con éxito!";
+    document.body.appendChild(toastElement);
+
+    setTimeout(() => {
+      toastElement.remove();
+      window.location.reload();
+    }, 1000);
+  } catch (error) {
+    console.error("Error al guardar los cambios", error);
+  }
+};
+```
+
+Estos cambios asegurarán que los espacios en blanco al principio y al final del nombre del país sean eliminados antes de realizar cualquier acción de validación o actualización.
