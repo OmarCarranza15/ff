@@ -1,88 +1,34 @@
-const saveChanges = async (id) => {
-  if (!editedRow.Codigo.trim()) {
-    setErrors({ Codigo: "El campo Código no puede estar vacío" });
-    showNotification("El campo Código no puede estar vacío");
-    return;
-  } else if (!editedRow.N_Puesto.trim()) {
-    setErrors({ N_Puesto: "El campo Puesto no puede estar vacío" });
-    showNotification("El campo Puesto no puede estar vacío");
-    return;
-  }
-
-  try {
-    // Validar si el puesto ya existe
-    const response = await axios.get('http://localhost:3000/puesto');
-    const puestoExists = response.data.some((puesto) => {
-      if (puesto.ID_Pais === parseInt(editedRow.ID_Pais) && puesto.id !== id) {
-        const editedPuestoName = editedRow.N_Puesto.toLowerCase();
-        const editedCodigo = editedRow.Codigo.toString().toLowerCase();
-        return (
-          puesto.N_Puesto.toLowerCase() === editedPuestoName &&
-          puesto.Codigo.toString().toLowerCase() === editedCodigo
+if (editedRow && editedRow.Codigo) {
+        const response = await axios.get(
+          `http://localhost:3000/puesto?Codigo=${trimmedCodigo}`
         );
-      }
-      return false;
-    });
-
-    if (puestoExists) {
-      setErrors({ puesto: "El puesto ya existe." });
-      showNotification("El Puesto que intenta registrar ya existe en la base de datos para este país.");
-      return;
-    }
-
-    // Validar solo dígitos para el campo Código
-    if (/[^0-9]/.test(editedRow.Codigo)) {
-      alert("El campo Código solo acepta dígitos.");
-      return;
-    }
-
-    // Actualizar el registro
-    await axios.put(`http://localhost:3000/puesto/${id}`, editedRow);
-
-    // Auditoría de cambios
-    const originalRow = records.find((row) => row.id === id);
-    const editedIndex = records.findIndex((row) => row.id === id) + 1;
-
-    const auditoriaData = {
-      Campo_Original: [
-        originalRow.N_Pais !== editedRow.N_Pais ? `- País: ${originalRow.N_Pais}` : '',
-        originalRow.N_RSocial !== editedRow.N_RSocial ? `- Razón Social: ${originalRow.N_RSocial}` : '',
-        originalRow.N_Division !== editedRow.N_Division ? `- División: ${originalRow.N_Division}` : '',
-        originalRow.N_Departamento !== editedRow.N_Departamento ? `- Departamento: ${originalRow.N_Departamento}` : '',
-        originalRow.Nombre !== editedRow.Nombre ? `- Centro de Coste: ${originalRow.Nombre}` : '',
-        originalRow.Codigo !== editedRow.Codigo ? `- Código: ${originalRow.Codigo}` : '',
-        originalRow.N_Puesto !== editedRow.N_Puesto ? `- Puesto: ${originalRow.N_Puesto}` : ''
-      ].filter(Boolean).join('¬ '),
-      Campo_Nuevo: [
-        editedRow.N_Pais !== originalRow.N_Pais ? `- País: ${editedRow.N_Pais}` : '',
-        editedRow.N_RSocial !== originalRow.N_RSocial ? `- Razón Social: ${editedRow.N_RSocial}` : '',
-        editedRow.N_Division !== originalRow.N_Division ? `- División: ${editedRow.N_Division}` : '',
-        editedRow.N_Departamento !== originalRow.N_Departamento ? `- Departamento: ${editedRow.N_Departamento}` : '',
-        editedRow.Nombre !== originalRow.Nombre ? `- Centro de Coste: ${editedRow.Nombre}` : '',
-        editedRow.Codigo !== originalRow.Codigo ? `- Código: ${editedRow.Codigo}` : '',
-        editedRow.N_Puesto !== originalRow.N_Puesto ? `- Puesto: ${editedRow.N_Puesto}` : ''
-      ].filter(Boolean).join('¬ '),
-      Tabla: 'Puestos',
-      Accion: 2, // Modificación
-      ID_Usuario: userId,
-      N: editedIndex
-    };
-
-    if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
-      await axios.post('http://localhost:3000/auditoria', auditoriaData);
-    }
-
-    // Actualizar los registros en el estado
-    const updatedRecords = records.map((row) =>
-      row.id === id ? { ...editedRow } : row
-    );
-    setRecords(updatedRecords);
-    setEditedRow(null);
-    setEditMode(null);
-
-    // Notificación de datos actualizados
-    showNotification("¡División actualizada con éxito!");
-  } catch (error) {
-    console.error("Error al guardar los cambios", error);
-  }
-};
+  
+        if (
+          response.data.some(
+            (codigo) =>
+              codigo.Codigo.toLowerCase() ===
+              trimmedCodigo.toLowerCase()
+          )
+        ) {
+          const errorNotification = document.createElement("div");
+          errorNotification.className = "error-notification";
+          errorNotification.innerHTML = `
+            <span class="error-icon">!</span>
+            <span class="error-message">
+              El Codigo del Puesto que intenta actualizar ya existe en la base de datos.
+              Por favor, ingrese un Codigo diferente.
+            </span>
+          `;
+          document.body.appendChild(errorNotification);
+  
+          // Ocultar la notificación después de 2 segundos
+          setTimeout(() => {
+            errorNotification.remove();
+          }, 2000);
+          return;
+        }
+      } else {
+        console.error("Error: editedRow.Codigo is undefined or empty");
+        setErrors({ Codigo: "El campo Codigo no puede estar vacío" });
+        return;
+      } 
