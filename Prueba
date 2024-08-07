@@ -1,44 +1,39 @@
-Para agregar validación en la edición del país similar a la validación en el modal de inserción, necesitas hacer algunos cambios en la función `saveChanges`. Asegúrate de verificar si el país editado ya existe antes de proceder con la actualización. Aquí tienes el código modificado para lograr eso:
+Para afinar la validación al editar, puedes seguir estos pasos:
 
-1. **Añade una validación similar a la de inserción en `saveChanges`**:
-    - Verifica si el país ya existe en la base de datos antes de permitir la actualización.
+1. **Verificar existencia del país en la base de datos antes de guardar los cambios**:
+   - En el método `saveChanges`, realiza una verificación de existencia más robusta.
 
-```javascript
+2. **Mostrar mensajes de error si el país ya existe**:
+   - Actualiza la lógica de manejo de errores y notificaciones para una mejor visualización.
+
+Aquí está el código actualizado para las secciones relevantes:
+
+### 1. Actualización en `saveChanges`
+
+```jsx
 const saveChanges = async (id) => {
   if (!editedRow.N_Pais.trim()) {
     setErrors({ N_Pais: "El campo País no puede estar vacío" });
     showNotification("El campo País no puede estar vacío");
     return;
   }
-
+  
   try {
-    // Verificar si el país editado ya existe en la base de datos
+    // Verificar si el país ya existe en la base de datos
     const response = await axios.get(`http://localhost:3000/pais?N_Pais=${editedRow.N_Pais}`);
+    const existingPais = response.data.find(pais => pais.N_Pais.toLowerCase() === editedRow.N_Pais.toLowerCase());
     
-    if (response.data.some(pais => pais.N_Pais.toLowerCase() === editedRow.N_Pais.toLowerCase() && pais.id !== id)) {
-      const errorNotification = document.createElement("div");
-      errorNotification.className = "error-notification";
-      errorNotification.innerHTML = `
-        <span class="error-icon">!</span>
-        <span class="error-message">
-          El País que intenta actualizar ya existe en la base de datos.
-          Por favor, ingrese un país diferente.
-        </span>
-      `;
-      document.body.appendChild(errorNotification);
-      
-      setTimeout(() => {
-        errorNotification.remove();
-      }, 2000);
+    if (existingPais && existingPais.id !== id) {
+      // El país ya existe y no es el mismo que estamos editando
+      showNotification("El País que intenta actualizar ya existe en la base de datos. Por favor, ingrese un país diferente.", 'error');
       return;
     }
 
+    // Si no existe, continuar con la actualización
     const originalRow = records.find(row => row.id === id);
-
     await axios.put(`http://localhost:3000/pais/${id}`, editedRow);
 
     const editedIndex = records.findIndex(row => row.id === id) + 1;
-
     const auditoriaData = {
       Campo_Original: `- País: ${originalRow.N_Pais}`,
       Campo_Nuevo: `- País: ${editedRow.N_Pais}`,
@@ -47,35 +42,46 @@ const saveChanges = async (id) => {
       ID_Usuario: userId,
       N: editedIndex
     };
-
     await axios.post('http://localhost:3000/auditoria', auditoriaData);
 
+    // Actualizar la lista de países
     const updatedRecords = records.map(row =>
       row.id === id ? { ...editedRow } : row
     );
-
     setRecords(updatedRecords);
     setEditedRow(null);
     setEditMode(null);
-
-    const toastElement = document.createElement("div");
-    toastElement.className = "toast-notification";
-    toastElement.innerHTML = "País actualizado con éxito!";
-    document.body.appendChild(toastElement);
-
-    setTimeout(() => {
-      toastElement.remove();
-      window.location.reload();
-    }, 1000);
+    
+    showNotification("País actualizado con éxito!", 'success');
+    
   } catch (error) {
     console.error("Error al guardar los cambios", error);
   }
 };
 ```
 
-2. **Agrega notificaciones para los errores en la función `validateInput` si no está haciendo la validación ya**:
+### 2. Método `showNotification` actualizado
 
-```javascript
+```jsx
+const showNotification = (message, type = 'error') => {
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}-notification`;
+  notification.innerHTML = `
+    <span class="notification-message">${message}</span>
+  `;
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    notification.remove();
+  }, 2000); // Oculta la notificación después de 2 segundos
+};
+```
+
+### 3. Actualización en `validateInput`
+
+Asegúrate de que `validateInput` también esté validando correctamente:
+
+```jsx
 const validateInput = (field, value) => {
   let newErrors = { ...errors };
   if (field === "N_Pais") {
@@ -93,4 +99,4 @@ const validateInput = (field, value) => {
 };
 ```
 
-Este código se asegura de que cuando un usuario intenta editar un país, la aplicación verifica si el país ya existe (y no es el mismo que el actual). Si el país ya existe, se muestra una notificación de error y se previene la actualización.
+Con estas modificaciones, la validación al editar debería ser más precisa y debería manejar mejor los casos en los que el país ya existe en la base de datos.
