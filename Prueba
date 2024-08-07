@@ -1,94 +1,288 @@
-Claro, para asegurarte de que los espacios en blanco se eliminan en el `SaveModal` y en el manejo de cambios del modal, debes hacer lo siguiente:
+const handleEditChange = (event, field) => {
+    const { value } = event.target;
+    if (field === "ID_Pais") {
+      const filtered = rsocial.filter(
+        (item) => item.ID_Pais === parseInt(value)
+      );
+      setFilteredRsocial(filtered);
 
-1. **Recortar los espacios en blanco en `handleModalChange`:**
+      const filteredDiv = division.filter(
+        (item) => item.ID_Pais === parseInt(value)
+      );
+      setFilteredDivision(filteredDiv);
 
-   Modifica `handleModalChange` para que recorte los espacios en blanco al actualizar el estado del modal:
+      const filteredDep = departamento.filter(
+        (item) => item.ID_Pais === parseInt(value)
+      );
+      setFilteredDepartamento(filteredDep);
 
-   ```javascript
-   const handleModalChange = (event, field) => {
-     const { value } = event.target;
-     setModalValues((prevValues) => ({ ...prevValues, [field]: value.trim() }));
-   };
-   ```
+      const filteredCC = centrocosto.filter(
+        (item) => item.ID_Pais === parseInt(value)
+      );
+      setFilteredCentroCosto(filteredCC);
+    }
+    setEditedRow((prevState) => ({
+      ...prevState,
+      [field]: value.toUpperCase(),
+      ...(field === "ID_Pais" && {
+        N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais,
+      }),
+      ...(field === "ID_Puesto" && {
+        N_Puesto: puesto.find((p) => p.id === parseInt(value)).N_Puesto,
+      }),
+      ...(field === "ID_Puesto" && {
+        Codigo: puesto.find((p) => p.id === parseInt(value)).Codigo,
+      }),
+      ...(field === "ID_RSocial" && {
+        N_RSocial: filteredRsocial.find((p) => p.id === parseInt(value))
+          .N_RSocial,
+      }),
+      ...(field === "ID_Division" && {
+        N_Division: filteredDivision.find((p) => p.id === parseInt(value))
+          .N_Division,
+      }),
+      ...(field === "ID_Departamento" && {
+        N_Departamento: filteredDepartamento.find(
+          (p) => p.id === parseInt(value)
+        ).N_Departamento,
+      }),
+      ...(field === "ID_CentroCostos" && {
+        Nombre: filteredCentroCosto.find((p) => p.id === parseInt(value))
+          .Nombre,
+      }),
+    }));
+    validateInput(field, value);
+  };
 
-2. **Recortar los espacios en blanco en `SaveModal`:**
+  const handleInputClick = (field) => {
+    if (editMode) {
+      setEditedRow((prevState) => ({
+        ...prevState,
+        [field]: '',
+      }));
+    }
+  };
 
-   Asegúrate de que `modalValues.pais` esté recortado antes de realizar cualquier operación, especialmente antes de verificar si el país ya existe o al insertar el nuevo país. Aquí está el código modificado:
+  const validateInput = (field, value) => {
+    let newErrors = { ...errors };
+    if (field === "ID_Pais") {
+      if (!value.trim()) {
+        newErrors.ID_Pais = "El campo País es obligatorio";
+      } else {
+        newErrors.ID_Pais = "";
+      }
+    } else if (field === "ID_RSocial") {
+      if (!value.trim()) {
+        newErrors.ID_RSocial = "El campo Razin social es obligatorio";
+      } else {
+        newErrors.ID_RSocial = "";
+      }
+    } else if (field === "ID_Division") {
+      if (!value.trim()) {
+        newErrors.ID_Division = "El campo Division es obligatorio";
+      } else {
+        newErrors.ID_Division = "";
+      }
+    } else if (field === "ID_Departamento") {
+      if (!value.trim()) {
+        newErrors.ID_Departamento = "El campo Departamento es obligatorio";
+      } else {
+        newErrors.ID_Departamento = "";
+      }
+    } else if (field === "ID_CentroCostos") {
+      if (!value.trim()) {
+        newErrors.ID_CentroCostos = "El campo Centro de Costos es obligatorio";
+      } else {
+        newErrors.ID_CentroCostos = "";
+      }
+    } else if (field === "Codigo") {
+      if (!value.trim()) {
+        newErrors.Codigo = "El campo Código es obligatorio";
+      } else if (!/^\d+$/.test(value)) {
+        newErrors.Codigo = "Solo se aceptan Digitos";
+      } else {
+        newErrors.Codigo = "";
+      }
+    } else if (field === "Nombre") {
+      if (!value.trim()) {
+        newErrors.Nombre = "El campo Nombre es obligatorio";
+      } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+        newErrors.Nombre =
+          "El campo Nombre solo acepta letras y espacios en blanco";
+      } else {
+        newErrors.Nombre = "";
+      }
+    }
+    setErrors(newErrors);
+  };
 
-   ```javascript
-   const SaveModal = async () => {
-     const trimmedPais = modalValues.pais.trim(); // Elimina los espacios en blanco al principio y al final
-     const newErrors = { pais: "" };
+  const saveChanges = async (id) => {
+    if (!editedRow.Codigo.trim()) {
+      setErrors({ Codigo: "El campo Codigo no puede estar vacío" });
+      showNotification("El campo Codigo no puede estar vacío");
+      return;
+    }else if (!editedRow.N_Puesto.trim()) {
+      setErrors({ N_Puesto: "El campo Puesto no puede estar vacío" });
+      showNotification("El campo Puesto no puede estar vacío");
+      return;
+    } 
+    try {
+      const updateRow = {
+        ...editedRow,
+      };
 
-     if (!trimmedPais) {
-       newErrors.pais = "El campo País es obligatorio";
-     } else if (!/^[a-zA-ZÑñ\s]+$/.test(trimmedPais)) {
-       newErrors.pais = "El campo País solo acepta letras y espacios en blanco";
-     }
-     setErrors(newErrors);
+      if (editedRow && editedRow.Codigo && editedRow.N_Puesto) {
+        const response = await axios.get(`http://localhost:3000/puesto`);
+        console.log("Response:", response.data);
 
-     if (Object.values(newErrors).every((error) => error === "")) {
-       try {
-         // Verificar si el país ya existe en la base de datos
-         const response = await axios.get(
-           `http://localhost:3000/pais?N_Pais=${trimmedPais}`
-         );
-         if (
-           response.data.some(
-             (pais) =>
-               pais.N_Pais.toLowerCase() === trimmedPais.toLowerCase()
-           )
-         ) {
-           setErrors({ pais: "El país ya existe" });
-           return;
-         }
+        const puestoExists = response.data.some((puesto) => {
+          if (
+            puesto.ID_Pais === parseInt(editedRow.ID_Pais) &&
+            puesto.id !== id
+          ) {
+            const editedPuestoName = editedRow.N_Puesto
+              ? editedRow.N_Puesto.toLowerCase()
+              : "";
+            let editedCodigo = "";
+            if (typeof editedRow.Codigo === "string") {
+              editedCodigo = editedRow.Codigo.toLowerCase();
+            } else {
+              editedCodigo = editedRow.Codigo.toString();
+            }
+            return (
+              puesto.N_Puesto.toLowerCase() === editedPuestoName &&
+              puesto.Codigo.toString() === editedCodigo
+            );
+          }
+          return false;
+        });
 
-         // Insertar un nuevo país
-         const newPais = { N_Pais: trimmedPais };
-         const insertResponse = await axios.post(
-           `http://localhost:3000/pais`,
-           newPais
-         );
+        if (puestoExists) {
+          setErrors({ puesto: "El puesto ya existe." });
 
-         // Obtener el índice del nuevo país (último índice + 1)
-         const newIndex = records.length + 1;
+          const errorNotification = document.createElement("div");
+          errorNotification.className = "error-notification";
+          errorNotification.innerHTML = `
+            <span class="error-icon">!</span>
+            <span class="error-message">
+              El Puesto que intenta registrar ya existe en la base de datos para este país.
+              Por favor, ingrese un puesto diferente.
+            </span>
+          `;
 
-         // Guardar el campo nuevo en la auditoría
-         const auditoriaData = {
-           Campo_Nuevo: `- País: ${trimmedPais}`, // Usar el índice generado
-           Tabla: 'Paises',
-           Accion: 1,
-           ID_Usuario: userId,
-           N: newIndex
-         };
-         await axios.post('http://localhost:3000/auditoria', auditoriaData);
+          document.body.appendChild(errorNotification);
 
-         // Actualizar la lista de países con el nuevo país
-         const updatedRecords = [
-           ...records,
-           { id: insertResponse.data.id, N_Pais: trimmedPais },
-         ];
-         setRecords(updatedRecords);
-         setShowModal(false); // Ocultar el modal después de guardar
-         setModalValues({ pais: "" }); // Limpiar los valores del modal
+          // Ocultar la notificación después de 2 segundos
+          setTimeout(() => {
+            errorNotification.remove();
+          }, 2000);
+          return;
+        }
+      } else {
+        console.error(
+          "Error: editedRow.division or editedRow.ID_Pais is undefined or empty"
+        );
+        setErrors({
+          division: "El campo División o País no puede estar vacío",
+        });
+        return;
+      }
+      // Check if the Codigo field contains only digits
+      if (/[^0-9]/.test(editedRow.Codigo)) {
+        // Display an error message
+        alert("El campo Código solo acepta digitos.");
+        return;
+      }
 
-         // Estilo de notificación
-         const toastElement = document.createElement("div");
-         toastElement.className = "toast-success";
-         toastElement.innerHTML = "¡País insertado correctamente!";
+      await axios.put(`http://localhost:3000/puesto/${id}`, updateRow);
 
-         document.body.appendChild(toastElement);
+/////////////////////////////////////////////////////////////////////////////////////
+         // Obtener el valor original del campo
+    const originalRow = records.find((row) => row.id === id);
 
-         // Ocultar la notificación luego de 1 segundo
-         setTimeout(() => {
-           toastElement.remove();
-           window.location.reload(); // Recargar la página después de 1 segundo
-         }, 1000);
-       } catch (error) {
-         console.error("Error al insertar el nuevo País:", error);
-       }
-     }
-   };
-   ```
+    const editedIndex = records.findIndex((row) => row.id === id) + 1;
 
-Con estas modificaciones, el valor del campo de país se limpiará de espacios en blanco antes de realizar las validaciones y las solicitudes, asegurando que los datos sean precisos y consistentes.
+    // Construir los valores para la auditoría
+    const originalCountry = originalRow.N_Pais;
+    const originalRSocial = originalRow.N_RSocial;
+    const originalDivision = originalRow.N_Division;
+    const originalDepartamento = originalRow.N_Departamento;
+    const originalCentroCoste = originalRow.Nombre;
+    const originalCodigo = originalRow.Codigo;
+    const originalPuesto = originalRow.N_Puesto;
+
+    
+    const editedCountry = editedRow.N_Pais;
+    const editedRSocial = editedRow.N_RSocial;
+    const editedDivision = editedRow.N_Division;
+    const editedDepartamento = editedRow.N_Departamento;
+    const editedCentroCoste = editedRow.Nombre;
+    const editedCodigo = editedRow.Codigo;
+    const editedPuesto = editedRow.N_Puesto;
+
+    const hasCountryChanged = originalCountry !== editedCountry;
+    const hasPuestoChanged = originalPuesto !== editedPuesto;
+    const hasRSocialChanged = originalRSocial !== editedRSocial;
+    const hasDivisionChanged = originalDivision !== editedDivision;
+    const hasDepartamentoChanged  = originalDepartamento !== editedDepartamento;
+    const hasCentroCosteChanged  = originalCentroCoste !== editedCentroCoste;
+    const hasCodigoChanged = originalCodigo !== editedCodigo;
+   
+
+    const auditoriaData = {
+      Campo_Original: [
+        hasCountryChanged ? `- País: ${originalCountry}` : '',
+        hasRSocialChanged ? `- Razón Social: ${originalRSocial}` : '',
+        hasDivisionChanged ? `- Division: ${originalDivision}` : '',
+        hasDepartamentoChanged  ? `- Departamento: ${originalDepartamento}` : '',
+        hasCentroCosteChanged  ? `- Centro de Coste: ${originalCentroCoste}` : '',
+        hasCodigoChanged ? `- Código: ${originalCodigo}` : '',
+        hasPuestoChanged ? `- Puesto: ${originalPuesto}` : ''
+      ].filter(Boolean).join('¬ '),
+      Campo_Nuevo: [
+        hasCountryChanged ? `- País: ${editedCountry}` : '',
+        hasRSocialChanged ? `- Razón Social: ${editedRSocial}` : '',
+        hasDivisionChanged ? `- Division: ${editedDivision}` : '',
+        hasDepartamentoChanged  ? `- Departamento: ${editedDepartamento}` : '',
+        hasCentroCosteChanged  ? `- Centro de Coste: ${editedCentroCoste}` : '',
+        hasCodigoChanged ? `- Código: ${editedCodigo}` : '',
+        hasPuestoChanged ? `- Puesto: ${editedPuesto}` : ''
+      ].filter(Boolean).join('¬ '),
+      Tabla: 'Puestos',
+      Accion: 2, // Modificación
+      ID_Usuario: userId,
+      N: editedIndex
+    };
+
+    if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
+      await axios.post('http://localhost:3000/auditoria', auditoriaData);
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+
+      const updatedRecords = records.map((row) =>
+        row.id === id ? { ...editedRow } : row
+      );
+
+      //setRecords(updatedRecordsPuesto);
+      setRecords(updatedRecords);
+      setEditedRow(null);
+      setEditMode(null);
+
+      // Notificación de datos actualizados
+      const toastElement = document.createElement("div");
+      toastElement.className = "toast-notification";
+      toastElement.innerHTML = "¡División actualizada con éxito!";
+
+      document.body.appendChild(toastElement);
+
+      // Ocultar la notificación después de 1 segundo
+      setTimeout(() => {
+        toastElement.remove();
+        window.location.reload(); // Recargar la pagina despues de 1 segundo
+      }, 1000);
+    } catch (error) {
+      console.error("Error al guardar los cambios", error);
+    }
+  };
