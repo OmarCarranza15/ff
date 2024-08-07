@@ -1,25 +1,5 @@
-Para asegurar que los espacios en blanco al principio y al final del nombre del país se eliminen al editar, puedes modificar el `handleEditChange` para recortar los espacios en blanco antes de actualizar el estado. Aquí está el código modificado:
-
-```javascript
-const handleEditChange = (event, field) => {
-  const { value } = event.target;
-  const trimmedValue = value.trim(); // Elimina los espacios en blanco al principio y al final
-  setEditedRow((prevState) => ({
-    ...prevState,
-    [field]: trimmedValue,
-    ...(field === "ID_Pais" && {
-      N_Pais: pais.find((p) => p.id === parseInt(value)).N_Pais,
-    }),
-  }));
-  validateInput(field, trimmedValue); // Usa el valor recortado para la validación
-};
-```
-
-Y para el `saveChanges`, asegúrate de recortar los espacios en blanco también antes de la verificación y la actualización:
-
-```javascript
-const saveChanges = async (id) => {
-  const trimmedPais = editedRow.N_Pais.trim(); // Elimina los espacios en blanco al principio y al final
+const handleSave = async () => {
+  const trimmedPais = newRecord.N_Pais.trim(); // Elimina los espacios en blanco al principio y al final
 
   if (!trimmedPais) {
     setErrors({ N_Pais: "El campo País no puede estar vacío" });
@@ -28,16 +8,6 @@ const saveChanges = async (id) => {
   }
 
   try {
-    const updateRow = {
-      ...editedRow,
-      N_Pais: trimmedPais, // Usa el valor recortado
-    };
-
-    if (!trimmedPais) {
-      setErrors({ N_Pais: "El campo país no puede estar vacío" });
-      return;
-    }
-
     const response = await axios.get(`http://localhost:3000/pais?N_Pais=${trimmedPais}`);
 
     if (response.data.some(pais => pais.N_Pais.toLowerCase() === trimmedPais.toLowerCase())) {
@@ -46,8 +16,8 @@ const saveChanges = async (id) => {
       errorNotification.innerHTML = `
         <span class="error-icon">!</span>
         <span class="error-message">
-          El País que intenta actualizar ya existe en la base de datos.
-          Por favor, ingrese una país diferente.
+          El País que intenta agregar ya existe en la base de datos.
+          Por favor, ingrese un país diferente.
         </span>
       `;
       document.body.appendChild(errorNotification);
@@ -60,49 +30,34 @@ const saveChanges = async (id) => {
 
     const existingCountry = records.find(row => row.N_Pais.toLowerCase() === trimmedPais.toLowerCase());
 
-    if (existingCountry && existingCountry.id !== id) {
+    if (existingCountry) {
       setErrors({ N_Pais: "El país ya está registrado" });
       return;
     }
 
-    const originalRow = records.find(row => row.id === id);
+    const saveData = {
+      ...newRecord,
+      N_Pais: trimmedPais, // Usa el valor recortado
+    };
 
-    await axios.put(`http://localhost:3000/pais/${id}`, updateRow);
-
-    const editedIndex = records.findIndex(row => row.id === id) + 1;
+    await axios.post('http://localhost:3000/pais', saveData);
 
     const auditoriaData = {
-      Campo_Original: `- País: ${originalRow.N_Pais}`,
+      Campo_Original: "- País: No asignado",
       Campo_Nuevo: `- País: ${trimmedPais}`,
       Tabla: 'Paises',
-      Accion: 2,
+      Accion: 1,
       ID_Usuario: userId,
-      N: editedIndex
+      N: records.length + 1
     };
 
     await axios.post('http://localhost:3000/auditoria', auditoriaData);
 
-    const updatedRecords = records.map(row =>
-      row.id === id ? { ...updateRow } : row
-    );
-
-    setRecords(updatedRecords);
-    setEditedRow(null);
-    setEditMode(null);
-
-    const toastElement = document.createElement("div");
-    toastElement.className = "toast-notification";
-    toastElement.innerHTML = "País actualizado con éxito!";
-    document.body.appendChild(toastElement);
-
-    setTimeout(() => {
-      toastElement.remove();
-      window.location.reload();
-    }, 1000);
+    setRecords([...records, saveData]);
+    setNewRecord({ N_Pais: "" });
+    showNotification("País agregado con éxito!");
+    window.location.reload();
   } catch (error) {
-    console.error("Error al guardar los cambios", error);
+    console.error("Error al guardar el nuevo país", error);
   }
 };
-```
-
-Estos cambios asegurarán que los espacios en blanco al principio y al final del nombre del país sean eliminados antes de realizar cualquier acción de validación o actualización.
