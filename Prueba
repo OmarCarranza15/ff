@@ -189,7 +189,7 @@ const saveChanges = async (id) => {
       ////////////////////////////////////////////////////////////////////////////////////////
 
       const updatedRecords = records.map((row) =>
-        row.id === id ? { ...editedRow } : row
+        row.id === id ? { ...editedRow} : row
       );
       //setRecords(updatedRecordsPuesto);
       setRecords(updatedRecords);
