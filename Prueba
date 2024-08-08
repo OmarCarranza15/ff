@@ -2,579 +2,206 @@ const saveChanges = async (id) => {
     const trimmedRol = editedRow.Rol.trim();
     const trimmedPuestoJefe = editedRow.Puesto_Jefe.trim();
     const trimmedTicket = editedRow.Ticket;
+
     if (!trimmedRol) {
-      setErrors({ Rol: "El campo Rol no puede estar vacío" });
-      showNotification("El campo Rol no puede estar vacío");
-      return;
+        setErrors({ Rol: "El campo Rol no puede estar vacío" });
+        showNotification("El campo Rol no puede estar vacío");
+        return;
     } else if (!trimmedPuestoJefe) {
-      setErrors({ Puesto_Jefe: "El campo Jefe Inmediato no puede estar vacío" });
-      showNotification("El campo Jefe Inmediato no puede estar vacío");
-      return;
+        setErrors({ Puesto_Jefe: "El campo Jefe Inmediato no puede estar vacío" });
+        showNotification("El campo Jefe Inmediato no puede estar vacío");
+        return;
     } else if (trimmedTicket === '') {
-      setErrors({ Ticket: "El campo Ticket no puede estar vacío" });
-      showNotification("El campo Ticket no puede estar vacío");
-      return;
+        setErrors({ Ticket: "El campo Ticket no puede estar vacío" });
+        showNotification("El campo Ticket no puede estar vacío");
+        return;
     } 
 
     try {
-      const updateRow = {
-        ...editedRow,
-        Estado_Perfil: editedRow.Estado_Perfil === "En Servicio" ? 1 : 2,
-        Rol: trimmedRol,
-        Puesto_Jefe: trimmedPuestoJefe,
-        Ticket: trimmedTicket,
-      };
+        const updateRow = {
+            ...editedRow,
+            Estado_Perfil: editedRow.Estado_Perfil === "En Servicio" ? 2 : 
+                           editedRow.Estado_Perfil === "Suspendido" ? 1 : 
+                           editedRow.Estado_Perfil, // Manejamos el estado existente si no es "En Servicio" o "Suspendido"
+            Rol: trimmedRol,
+            Puesto_Jefe: trimmedPuestoJefe,
+            Ticket: trimmedTicket,
+        };
 
-      // Validate the input before saving
-      validateInput("Rol", editedRow.Rol);
-      validateInput("Puesto_Jefe", editedRow.Puesto_Jefe);
+        // Validar la entrada antes de guardar
+        validateInput("Rol", editedRow.Rol);
+        validateInput("Puesto_Jefe", editedRow.Puesto_Jefe);
 
-      if (editedRow && editedRow.ID_Pais && editedRow.Rol && editedRow.Puesto_Jefe && editedRow.ID_Puesto && editedRow.ID_Aplicaciones) {
-        const response = await axios.get(`http://localhost:3000/perfil`);
-        const perfilExists = response.data.some((perfil) => {
-            return (
-                perfil.ID_Pais === parseInt(editedRow.ID_Pais) &&
-                perfil.Rol.toLowerCase() === trimmedRol.toLowerCase() &&
-                perfil.Puesto_Jefe.toLowerCase() === trimmedPuestoJefe.toLowerCase() &&
-                perfil.ID_Puesto === parseInt(editedRow.ID_Puesto) &&
-                perfil.ID_Aplicaciones === parseInt(editedRow.ID_Aplicaciones) &&
-                perfil.id !== id
-            );
-        });
+        if (editedRow && editedRow.ID_Pais && editedRow.Rol && editedRow.Puesto_Jefe && editedRow.ID_Puesto && editedRow.ID_Aplicaciones) {
+            const response = await axios.get(`http://localhost:3000/perfil`);
+            const perfilExists = response.data.some((perfil) => {
+                return (
+                    perfil.ID_Pais === parseInt(editedRow.ID_Pais) &&
+                    perfil.Rol.toLowerCase() === trimmedRol.toLowerCase() &&
+                    perfil.Puesto_Jefe.toLowerCase() === trimmedPuestoJefe.toLowerCase() &&
+                    perfil.ID_Puesto === parseInt(editedRow.ID_Puesto) &&
+                    perfil.ID_Aplicaciones === parseInt(editedRow.ID_Aplicaciones) &&
+                    perfil.id !== id
+                );
+            });
 
-        if (perfilExists) {
-            setErrors({ Rol: "El perfil con los datos ingresados ya existe en la base de datos" });
+            if (perfilExists) {
+                setErrors({ Rol: "El perfil con los datos ingresados ya existe en la base de datos" });
 
-            const errorNotification = document.createElement("div");
-            errorNotification.className = "error-notification";
-            errorNotification.innerHTML = `
-                <span class="error-icon">!</span>
-                <span class="error-message">
-                    El Perfil que intenta registrar ya existe en la base de datos con los datos ingresados.
-                    Por favor, ingrese un Perfil diferente.
-                </span>
-            `;
+                const errorNotification = document.createElement("div");
+                errorNotification.className = "error-notification";
+                errorNotification.innerHTML = `
+                    <span class="error-icon">!</span>
+                    <span class="error-message">
+                        El Perfil que intenta registrar ya existe en la base de datos con los datos ingresados.
+                        Por favor, ingrese un Perfil diferente.
+                    </span>
+                `;
 
-            document.body.appendChild(errorNotification);
+                document.body.appendChild(errorNotification);
 
-            // Ocultar la notificación después de 2 segundos
-            setTimeout(() => {
-                errorNotification.remove();
-            }, 2000);
+                // Ocultar la notificación después de 2 segundos
+                setTimeout(() => {
+                    errorNotification.remove();
+                }, 2000);
+                return;
+            }
+        } else {
+            console.error("Error: editedRow.N_RSocial or editedRow.ID_Pais is undefined or empty");
+            setErrors({
+                perfil: "El campo Razón Social o País no puede estar vacío",
+            });
             return;
         }
-    } else {
-        console.error("Error: editedRow.N_RSocial or editedRow.ID_Pais is undefined or empty");
-        setErrors({
-            perfil: "El campo Razón Social o País no puede estar vacío",
-        });
-        return;
-    }
 
-      await axios.put(`http://localhost:3000/perfil/${id}`, updateRow);
+        await axios.put(`http://localhost:3000/perfil/${id}`, updateRow);
 
-      if (
-        editedRow.ID_Ambiente !==
-        records.find((row) => row.id === id).ID_Ambiente
-      ) {
-        await axios.put(
-          `http://localhost:3000/aplicacion/${editedRow.ID_Aplicaciones}`,
-          {
-            ID_Ambiente: editedRow.ID_Ambiente,
-          }
-        );
-      }
-
-      if (
-        editedRow.ID_RSocial !== records.find((row) => row.id === id).ID_RSocial
-      ) {
-        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
-          ID_RSocial: editedRow.ID_RSocial,
-        });
-      }
-
-      if (
-        editedRow.ID_Division !==
-        records.find((row) => row.id === id).ID_Division
-      ) {
-        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
-          ID_Division: editedRow.ID_Division,
-        });
-      }
-
-      if (
-        editedRow.ID_Departamento !==
-        records.find((row) => row.id === id).ID_Departamento
-      ) {
-        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
-          ID_Departamento: editedRow.ID_Departamento,
-        });
-      }
-
-      if (
-        editedRow.ID_CentroCostos !==
-        records.find((row) => row.id === id).ID_CentroCostos
-      ) {
-        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
-          ID_CentroCostos: editedRow.ID_CentroCostos,
-        });
-      }
-
-      /////////////////////////////////////////////////////////////////////////////////////
-      // Obtener el valor original del campo
-      const originalRow = records.find((row) => row.id === id);
-
-      const editedIndex = records.findIndex((row) => row.id === id) + 1;
-
-      // Construir los valores para la auditoría
-      const originalPuesto = originalRow.Puesto;
-      const originalRol = originalRow.Rol;
-      const originalAplicacion = originalRow.N_Aplicaciones;
-      const originalPuestoJefe = originalRow.Puesto_Jefe;
-      const originalTicket = originalRow.Ticket;
-      const originalObservacion = originalRow.Observaciones;
-      const originalEstado = originalRow.Estado_Perfil;
-
-      const editedPuesto = editedRow.Puesto;
-      const editedRol = trimmedRol;
-      const editedAplicacion = editedRow.N_Aplicaciones;
-      const editedPuestoJefe = trimmedPuestoJefe;
-      const editedTicket = trimmedTicket;
-      const editedObservacion = editedRow.Observaciones;
-      const editedEstado = editedRow.Estado_Perfil;
-
-      const hasPuestoChanged = originalPuesto !== editedPuesto;
-      const hasRolChanged = originalRol !== editedRol;
-      const hasAplicacionChanged = originalAplicacion !== editedAplicacion;
-      const hasPuestoJefeChanged = originalPuestoJefe !== editedPuestoJefe;
-      const hasTicketChanged = originalTicket !== editedTicket;
-      const hasObservacionChanged = originalObservacion !== editedObservacion;
-      const hasEstadoChanged = originalEstado !== editedEstado;
-
-      const auditoriaData = {
-        Campo_Original: [
-          hasPuestoChanged ? `- Puesto: ${originalPuesto}` : "",
-          hasRolChanged ? `- Rol: ${originalRol}` : "",
-          hasAplicacionChanged ? `- Aplicación: ${originalAplicacion}` : "",
-          hasPuestoJefeChanged ? `- Jefe Inmediato: ${originalPuestoJefe}` : "",
-          hasTicketChanged ? `- Ticket: ${originalTicket}` : "",
-          hasObservacionChanged
-            ? `- Observaciones: ${originalObservacion}`
-            : "",
-          hasEstadoChanged ? `- Estado: ${originalEstado}` : "",
-        ]
-          .filter(Boolean)
-          .join("¬ "),
-        Campo_Nuevo: [
-          hasPuestoChanged ? `- Puesto: ${editedPuesto}` : "",
-          hasRolChanged ? `- Rol: ${editedRol}` : "",
-          hasAplicacionChanged ? `- Aplicación: ${editedAplicacion}` : "",
-          hasPuestoJefeChanged ? `- Jefe Inmediato: ${editedPuestoJefe}` : "",
-          hasTicketChanged ? `- Ticket: ${editedTicket}` : "",
-          hasObservacionChanged ? `- Código: ${editedObservacion}` : "",
-          hasEstadoChanged ? `- Estado: ${editedEstado}` : "",
-        ]
-          .filter(Boolean)
-          .join("¬ "),
-        Tabla: `Matriz de perfiles ${selectedCountry}`,
-        Accion: 2, // Modificación
-        ID_Usuario: userId,
-        N: editedIndex,
-      };
-
-      if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
-        await axios.post("http://localhost:3000/auditoria", auditoriaData);
-      }
-
-      ////////////////////////////////////////////////////////////////////////////////////////
-
-      const updatedRecords = records.map((row) =>
-        row.id === id ? { ...editedRow} : row
-      );
-      //setRecords(updatedRecordsPuesto);
-      setRecords(updatedRecords);
-      setEditedRow(null);
-      setEditMode(null);
-
-      console.log("Cambios guardados correctamente");
-      window.location.reload();
-    } catch (error) {
-      console.error("Error al guardar los cambios", error);
-    }
-  };
-
-  const cancelEdit = () => {
-    setEditedRow(null);
-    setEditMode(null);
-  };
-
-  const filtered = records.filter((row) => {
-    const isActive = filters.Estado_Perfil.toLowerCase() === "activo";
-
-    return (
-      (filters.N_RSocial === "" ||
-        row.N_RSocial.toLowerCase().includes(
-          filters.N_RSocial.toLowerCase()
-        )) &&
-      (filters.N_Departamento === "" ||
-        row.N_Departamento.toLowerCase().includes(
-          filters.N_Departamento.toLowerCase()
-        )) &&
-      (filters.Rol === "" ||
-        row.Rol.toLowerCase().includes(filters.Rol.toLowerCase())) &&
-      (filters.Nombre === "" ||
-        row.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase())) &&
-      (filters.N_Puesto === "" ||
-        row.N_Puesto.toLowerCase().includes(filters.N_Puesto.toLowerCase())) &&
-      (filters.Observaciones === "" ||
-        row.Observaciones.toLowerCase().includes(
-          filters.Observaciones.toLowerCase()
-        )) &&
-      (filters.N_Aplicaciones === "" ||
-        row.N_Aplicaciones.toLowerCase().includes(
-          filters.N_Aplicaciones.toLowerCase()
-        )) &&
-      (filters.Ticket === "" ||
-        (row.Ticket
-          ? row.Ticket.toString().includes(filters.Ticket.toString())
-          : false)) &&
-      /*(filters.N_Ambiente === "" || row.N_Ambiente.toLowerCase().includes(filters.N_Ambiente.toLowerCase())) &&*/
-      (filters.Puesto_Jefe === "" ||
-        row.Puesto_Jefe.toLowerCase().includes(
-          filters.Puesto_Jefe.toLowerCase()
-        )) &&
-      (filters.Estado_Perfil === "" ||
-        row.Estado_Perfil.toLowerCase().includes(
-          filters.Estado_Perfil.toLowerCase()
-        )) &&
-      (isActive ? row.Estado_Perfil.toLowerCase() === "activo" : true)
-    );
-  });
-
-  const deleteRow = (id) => {
-    axios
-      .get(`/Datosdependientes/${id}`)
-      .then((response) => {
-        if (response.data.hasDependencies) {
-          alert(
-            "No se puede eliminar este registro porque tiene dependencias en otros registros."
-          );
-        } else {
-          axios
-            .delete(`/delete/${id}`)
-            .then((response) => {
-              // Actualiza la lista de filas después de eliminar una fila
-              setRows(rows.filter((row) => row.id !== id));
-            })
-            .catch((error) => console.error(error));
-        }
-      })
-      .catch((error) => console.error(error));
-  };
-
-  const columns = [
-    {
-      name: "N°",
-      selector: (row, index) => (currentPage - 1) * rowsPerPage + index + 1,
-      minWidth: "50px",
-      maxWidth: "100px",
-    },
-    {
-      name: "Razon Social",
-      selector: (row) => row.N_RSocial,
-      omit: !showColumns,
-      minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-          <div style={{ color: "red" }}>{row.N_RSocial}</div>
-        ) : (
-          <div>{row.N_RSocial}</div>
-        ),
-    },
-    /*{
-      name: "División",
-      selector: (row) => row.N_Division,
-      
-      minWidth: "230px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) => 
-        editMode && editedRow?.id === row.id ? (
-          <div style={{color: "red"}}>{row.N_Division}</div>
-        ):(
-            <div>{row.N_Division}</div>
-          )
-    },*/
-    {
-      name: "Departamento",
-      selector: (row) => row.N_Departamento,
-
-      omit: !showColumns,
-      minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-          <div style={{ color: "red" }}>{row.N_Departamento}</div>
-        ) : (
-          <div>{row.N_Departamento}</div>
-        ),
-    },
-    {
-      name: "Centro de Coste",
-      selector: (row) => row.Nombre,
-
-      omit: !showColumns,
-      minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-          <div style={{ color: "red" }}>{row.Nombre}</div>
-        ) : (
-          <div>{row.Nombre}</div>
-        ),
-    },
-    {
-      name: "Puesto",
-      selector: (row) => row.N_Puesto,
-
-      minWidth: "400px", // Adjust the minimum width as needed
-      maxWidth: "800px", // Adjust the maximum width as needed
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-          <StyledSelect
-            type="select"
-            value={editedRow.ID_Puesto}
-            onChange={(e) => handleEditChange(e, "ID_Puesto")}
-          >
-            {puestos.map((puesto) => (
-              <option key={puesto.id} value={puesto.id}>
-                {puesto.N_Puesto}
-              </option>
-            ))}
-          </StyledSelect>
-        ) : (
-          <div>{row.N_Puesto}</div>
-        ),
-    },
-
-    {
-      name: "Aplicación",
-      selector: (row) => {
-        const aplicacionText = row.N_Aplicaciones || "";
-        // No necesitas mostrar Cod_Menu aquí
-        return aplicacionText;
-      },
-
-      minWidth: "350px",
-      maxWidth: "1000px",
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-          <>
-            <StyledSelect
-              value={editedRow.ID_Aplicaciones}
-              onChange={(e) => handleEditChange(e, "ID_Aplicaciones")}
-            >
-              {aplicacion.map((aplicacion) => (
-                <option key={aplicacion.id} value={aplicacion.id}>
-                  {aplicacion.N_Aplicaciones}
-                </option>
-              ))}
-            </StyledSelect>
-            {/* La entrada para Cod_Menu ya no se muestra en la columna de Aplicación */}
-          </>
-        ) : (
-          <div>{row.N_Aplicaciones}</div>
-        ),
-    },
-    {
-      name: "Rol",
-      selector: (row) => {
-        const rolText = row.Rol || "";
-        const codMenuText = row.Cod_Menu || "";
-        return (
-          rolText +
-          (row.N_Aplicaciones === "T24" && codMenuText
-            ? ` - ${codMenuText}`
-            : "")
-        );
-      },
-
-      minWidth: "370px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-          <>
-            <StyledInput
-              type="text"
-              value={editedRow.Rol}
-              onChange={(e) => handleEditChange(e, "Rol")}
-              onClick={() => handleInputClick("Rol")}
-            />
-            {editedRow.N_Aplicaciones === "T24" && (
-              <StyledInput
-                type="text"
-                value={editedRow.Cod_Menu}
-                onChange={(e) => handleEditChange(e, "Cod_Menu")}
-                onClick={() => handleInputClick("Cod_Menu")}
-                onKeyPress={(e) => {
-                  if (!/\d/.test(e.key)) {
-                    e.preventDefault();
-                  }
-                }}
-              />
-            )}
-          </>
-        ) : (
-          <div>
-            {row.Rol}
-            {row.N_Aplicaciones === "T24" && row.Cod_Menu && (
-              <span style={{ fontWeight: "bold" }}> - {row.Cod_Menu}</span>
-            )}
-          </div>
-        ),
-    },
-
-    /*{
-      name: "Ambiente",
-      selector: (row) => row.N_Ambiente,
-      
-      minWidth: "150px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) => 
-      editMode && editedRow?.id === row.id ? (
-        <div style={{color: "red"}}>{row.N_Ambiente}</div>
-      ):(
-          <div>{row.N_Ambiente}</div>
-        )
-    },*/
-    {
-      name: "Jefe Inmediato",
-      selector: (row) => row.Puesto_Jefe,
-      minWidth: "200px",
-      maxWidth: "800px",
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-          <StyledInput
-            type="text"
-            value={editedRow.Puesto_Jefe}
-            onChange={(e) => handleEditChange(e, "Puesto_Jefe")}
-            onClick={() => handleInputClick("Puesto_Jefe")}
-            onKeyPress={(e) => {
-              if (!/^[a-zA-ZñáéíóúÁÉÍÓÚ\s]$/i.test(e.key)) {
-                e.preventDefault();
-              }
-            }}
-          />
-        ) : (
-          <div>{row.Puesto_Jefe}</div>
-        ),
-    },
-    {
-      name: "Ticket",
-      selector: (row) => row.Ticket,
-
-      omit: !showColumns,
-      minWidth: "100px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "100px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-          <StyledInput
-            type="text"
-            value={editedRow.Ticket}
-            onChange={(e) => handleEditChange(e, "Ticket")}
-            onClick={() => handleInputClick("Ticket")}
-            onKeyPress={(e) => {
-              if (!/\d/.test(e.key)) {
-                e.preventDefault();
-              }
-            }}
-          />
-        ) : (
-          <div>{row.Ticket}</div>
-        ),
-    },
-    {
-      name: "Observación",
-      selector: (row) => row.Observaciones,
-
-      omit: !showColumns,
-      minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
-      cell: (row) =>
-        editMode && editedRow?.id === row.id ? (
-          <StyledInput
-            type="text"
-            value={editedRow.Observaciones}
-            onChange={(e) => handleEditChange(e, "Observaciones")}
-            onClick={() => handleInputClick("Observaciones")}
-          />
-        ) : (
-          <div>{row.Observaciones}</div>
-        ),
-    },
-    {
-      name: "Estado",
-      selector: (row) =>
-        editMode === row.id ? (
-          <StyledSelect
-            value={editedRow.Estado_Perfil}
-            onChange={(e) => handleEditChange(e, "Estado_Perfil")}
-          >
-            <option value={"En Servicio"}>En Servicio</option>
-            <option value={"Suspendido"}>Suspendido</option>
-          </StyledSelect>
-        ) : (
-          <div>{row.Estado_Perfil}</div>
-        ),
-    },
-    {
-      name: "Acciones",
-      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
-      maxWidth: "200px", // Ajusta el tamaño máximo según sea necesario
-      omit: !permissions.edit,
-      cell: (row) =>
-        editMode === row.id ? (
-          <ButtonGroup>
-            <Button
-              type="button"
-              className="btn btn-outline-success"
-              onClick={() => saveChanges(row.id)}
-            >
-              Guardar
-            </Button>
-            <Button
-              type="button"
-              className="btn btn-outline-danger"
-              onClick={cancelEdit}
-            >
-              Cancelar
-            </Button>
-          </ButtonGroup>
-        ) : (
-          <ButtonGroup>
-            <Button
-              type="button"
-              className="btn btn-outline-primary"
-              onClick={() => startEdit(row)}
-            >
-              Editar
-            </Button>
-            <Button
-              type="button"
-              className="btn btn-outline-danger"
-              onClick={() => {
-                if (
-                  window.confirm(
-                    "¿Estás seguro que deseas eliminar este registro?"
-                  )
-                ) {
-                  deleteRow(row.id);
+        if (
+            editedRow.ID_Ambiente !==
+            records.find((row) => row.id === id).ID_Ambiente
+        ) {
+            await axios.put(
+                `http://localhost:3000/aplicacion/${editedRow.ID_Aplicaciones}`,
+                {
+                    ID_Ambiente: editedRow.ID_Ambiente,
                 }
-              }}
-            >
-              Eliminar
-            </Button>
-          </ButtonGroup>
-        ),
-    },
-  ];
+            );
+        }
+
+        if (
+            editedRow.ID_RSocial !== records.find((row) => row.id === id).ID_RSocial
+        ) {
+            await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
+                ID_RSocial: editedRow.ID_RSocial,
+            });
+        }
+
+        if (
+            editedRow.ID_Division !==
+            records.find((row) => row.id === id).ID_Division
+        ) {
+            await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
+                ID_Division: editedRow.ID_Division,
+            });
+        }
+
+        if (
+            editedRow.ID_Departamento !==
+            records.find((row) => row.id === id).ID_Departamento
+        ) {
+            await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
+                ID_Departamento: editedRow.ID_Departamento,
+            });
+        }
+
+        if (
+            editedRow.ID_CentroCostos !==
+            records.find((row) => row.id === id).ID_CentroCostos
+        ) {
+            await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
+                ID_CentroCostos: editedRow.ID_CentroCostos,
+            });
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////////
+        // Obtener el valor original del campo
+        const originalRow = records.find((row) => row.id === id);
+
+        const editedIndex = records.findIndex((row) => row.id === id) + 1;
+
+        // Construir los valores para la auditoría
+        const originalPuesto = originalRow.Puesto;
+        const originalRol = originalRow.Rol;
+        const originalAplicacion = originalRow.N_Aplicaciones;
+        const originalPuestoJefe = originalRow.Puesto_Jefe;
+        const originalTicket = originalRow.Ticket;
+        const originalObservacion = originalRow.Observaciones;
+        const originalEstado = originalRow.Estado_Perfil;
+
+        const editedPuesto = editedRow.Puesto;
+        const editedRol = trimmedRol;
+        const editedAplicacion = editedRow.N_Aplicaciones;
+        const editedPuestoJefe = trimmedPuestoJefe;
+        const editedTicket = trimmedTicket;
+        const editedObservacion = editedRow.Observaciones;
+        const editedEstado = editedRow.Estado_Perfil;
+
+        const hasPuestoChanged = originalPuesto !== editedPuesto;
+        const hasRolChanged = originalRol !== editedRol;
+        const hasAplicacionChanged = originalAplicacion !== editedAplicacion;
+        const hasPuestoJefeChanged = originalPuestoJefe !== editedPuestoJefe;
+        const hasTicketChanged = originalTicket !== editedTicket;
+        const hasObservacionChanged = originalObservacion !== editedObservacion;
+        const hasEstadoChanged = originalEstado !== editedEstado;
+
+        const auditoriaData = {
+            Campo_Original: [
+                hasPuestoChanged ? `- Puesto: ${originalPuesto}` : "",
+                hasRolChanged ? `- Rol: ${originalRol}` : "",
+                hasAplicacionChanged ? `- Aplicación: ${originalAplicacion}` : "",
+                hasPuestoJefeChanged ? `- Jefe Inmediato: ${originalPuestoJefe}` : "",
+                hasTicketChanged ? `- Ticket: ${originalTicket}` : "",
+                hasObservacionChanged
+                    ? `- Observaciones: ${originalObservacion}`
+                    : "",
+                hasEstadoChanged ? `- Estado: ${originalEstado}` : "",
+            ]
+                .filter(Boolean)
+                .join("¬ "),
+            Campo_Nuevo: [
+                hasPuestoChanged ? `- Puesto: ${editedPuesto}` : "",
+                hasRolChanged ? `- Rol: ${editedRol}` : "",
+                hasAplicacionChanged ? `- Aplicación: ${editedAplicacion}` : "",
+                hasPuestoJefeChanged ? `- Jefe Inmediato: ${editedPuestoJefe}` : "",
+                hasTicketChanged ? `- Ticket: ${editedTicket}` : "",
+                hasObservacionChanged ? `- Código: ${editedObservacion}` : "",
+                hasEstadoChanged ? `- Estado: ${editedEstado}` : "",
+            ]
+                .filter(Boolean)
+                .join("¬ "),
+            Tabla: `Matriz de perfiles ${selectedCountry}`,
+            Accion: 2, // Modificación
+            ID_Usuario: userId,
+            N: editedIndex,
+        };
+
+        if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
+            await axios.post("http://localhost:3000/auditoria", auditoriaData);
+        }
+
+        ////////////////////////////////////////////////////////////////////////////////////////
+
+        const updatedRecords = records.map((row) =>
+            row.id === id ? { ...editedRow} : row
+        );
+        //setRecords(updatedRecordsPuesto);
+        setRecords(updatedRecords);
+        setEditedRow(null);
+        setEditMode(null);
+
+        console.log("Cambios guardados correctamente");
+        window.location.reload();
+    } catch (error) {
+        console.error("Error al guardar los cambios", error);
+    }
+};
