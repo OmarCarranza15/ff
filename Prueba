@@ -202,3 +202,379 @@ const saveChanges = async (id) => {
       console.error("Error al guardar los cambios", error);
     }
   };
+
+  const cancelEdit = () => {
+    setEditedRow(null);
+    setEditMode(null);
+  };
+
+  const filtered = records.filter((row) => {
+    const isActive = filters.Estado_Perfil.toLowerCase() === "activo";
+
+    return (
+      (filters.N_RSocial === "" ||
+        row.N_RSocial.toLowerCase().includes(
+          filters.N_RSocial.toLowerCase()
+        )) &&
+      (filters.N_Departamento === "" ||
+        row.N_Departamento.toLowerCase().includes(
+          filters.N_Departamento.toLowerCase()
+        )) &&
+      (filters.Rol === "" ||
+        row.Rol.toLowerCase().includes(filters.Rol.toLowerCase())) &&
+      (filters.Nombre === "" ||
+        row.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase())) &&
+      (filters.N_Puesto === "" ||
+        row.N_Puesto.toLowerCase().includes(filters.N_Puesto.toLowerCase())) &&
+      (filters.Observaciones === "" ||
+        row.Observaciones.toLowerCase().includes(
+          filters.Observaciones.toLowerCase()
+        )) &&
+      (filters.N_Aplicaciones === "" ||
+        row.N_Aplicaciones.toLowerCase().includes(
+          filters.N_Aplicaciones.toLowerCase()
+        )) &&
+      (filters.Ticket === "" ||
+        (row.Ticket
+          ? row.Ticket.toString().includes(filters.Ticket.toString())
+          : false)) &&
+      /*(filters.N_Ambiente === "" || row.N_Ambiente.toLowerCase().includes(filters.N_Ambiente.toLowerCase())) &&*/
+      (filters.Puesto_Jefe === "" ||
+        row.Puesto_Jefe.toLowerCase().includes(
+          filters.Puesto_Jefe.toLowerCase()
+        )) &&
+      (filters.Estado_Perfil === "" ||
+        row.Estado_Perfil.toLowerCase().includes(
+          filters.Estado_Perfil.toLowerCase()
+        )) &&
+      (isActive ? row.Estado_Perfil.toLowerCase() === "activo" : true)
+    );
+  });
+
+  const deleteRow = (id) => {
+    axios
+      .get(`/Datosdependientes/${id}`)
+      .then((response) => {
+        if (response.data.hasDependencies) {
+          alert(
+            "No se puede eliminar este registro porque tiene dependencias en otros registros."
+          );
+        } else {
+          axios
+            .delete(`/delete/${id}`)
+            .then((response) => {
+              // Actualiza la lista de filas después de eliminar una fila
+              setRows(rows.filter((row) => row.id !== id));
+            })
+            .catch((error) => console.error(error));
+        }
+      })
+      .catch((error) => console.error(error));
+  };
+
+  const columns = [
+    {
+      name: "N°",
+      selector: (row, index) => (currentPage - 1) * rowsPerPage + index + 1,
+      minWidth: "50px",
+      maxWidth: "100px",
+    },
+    {
+      name: "Razon Social",
+      selector: (row) => row.N_RSocial,
+      omit: !showColumns,
+      minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <div style={{ color: "red" }}>{row.N_RSocial}</div>
+        ) : (
+          <div>{row.N_RSocial}</div>
+        ),
+    },
+    /*{
+      name: "División",
+      selector: (row) => row.N_Division,
+      
+      minWidth: "230px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+        editMode && editedRow?.id === row.id ? (
+          <div style={{color: "red"}}>{row.N_Division}</div>
+        ):(
+            <div>{row.N_Division}</div>
+          )
+    },*/
+    {
+      name: "Departamento",
+      selector: (row) => row.N_Departamento,
+
+      omit: !showColumns,
+      minWidth: "250px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <div style={{ color: "red" }}>{row.N_Departamento}</div>
+        ) : (
+          <div>{row.N_Departamento}</div>
+        ),
+    },
+    {
+      name: "Centro de Coste",
+      selector: (row) => row.Nombre,
+
+      omit: !showColumns,
+      minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <div style={{ color: "red" }}>{row.Nombre}</div>
+        ) : (
+          <div>{row.Nombre}</div>
+        ),
+    },
+    {
+      name: "Puesto",
+      selector: (row) => row.N_Puesto,
+
+      minWidth: "400px", // Adjust the minimum width as needed
+      maxWidth: "800px", // Adjust the maximum width as needed
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <StyledSelect
+            type="select"
+            value={editedRow.ID_Puesto}
+            onChange={(e) => handleEditChange(e, "ID_Puesto")}
+          >
+            {puestos.map((puesto) => (
+              <option key={puesto.id} value={puesto.id}>
+                {puesto.N_Puesto}
+              </option>
+            ))}
+          </StyledSelect>
+        ) : (
+          <div>{row.N_Puesto}</div>
+        ),
+    },
+
+    {
+      name: "Aplicación",
+      selector: (row) => {
+        const aplicacionText = row.N_Aplicaciones || "";
+        // No necesitas mostrar Cod_Menu aquí
+        return aplicacionText;
+      },
+
+      minWidth: "350px",
+      maxWidth: "1000px",
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <>
+            <StyledSelect
+              value={editedRow.ID_Aplicaciones}
+              onChange={(e) => handleEditChange(e, "ID_Aplicaciones")}
+            >
+              {aplicacion.map((aplicacion) => (
+                <option key={aplicacion.id} value={aplicacion.id}>
+                  {aplicacion.N_Aplicaciones}
+                </option>
+              ))}
+            </StyledSelect>
+            {/* La entrada para Cod_Menu ya no se muestra en la columna de Aplicación */}
+          </>
+        ) : (
+          <div>{row.N_Aplicaciones}</div>
+        ),
+    },
+    {
+      name: "Rol",
+      selector: (row) => {
+        const rolText = row.Rol || "";
+        const codMenuText = row.Cod_Menu || "";
+        return (
+          rolText +
+          (row.N_Aplicaciones === "T24" && codMenuText
+            ? ` - ${codMenuText}`
+            : "")
+        );
+      },
+
+      minWidth: "370px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <>
+            <StyledInput
+              type="text"
+              value={editedRow.Rol}
+              onChange={(e) => handleEditChange(e, "Rol")}
+              onClick={() => handleInputClick("Rol")}
+            />
+            {editedRow.N_Aplicaciones === "T24" && (
+              <StyledInput
+                type="text"
+                value={editedRow.Cod_Menu}
+                onChange={(e) => handleEditChange(e, "Cod_Menu")}
+                onClick={() => handleInputClick("Cod_Menu")}
+                onKeyPress={(e) => {
+                  if (!/\d/.test(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+              />
+            )}
+          </>
+        ) : (
+          <div>
+            {row.Rol}
+            {row.N_Aplicaciones === "T24" && row.Cod_Menu && (
+              <span style={{ fontWeight: "bold" }}> - {row.Cod_Menu}</span>
+            )}
+          </div>
+        ),
+    },
+
+    /*{
+      name: "Ambiente",
+      selector: (row) => row.N_Ambiente,
+      
+      minWidth: "150px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => 
+      editMode && editedRow?.id === row.id ? (
+        <div style={{color: "red"}}>{row.N_Ambiente}</div>
+      ):(
+          <div>{row.N_Ambiente}</div>
+        )
+    },*/
+    {
+      name: "Jefe Inmediato",
+      selector: (row) => row.Puesto_Jefe,
+      minWidth: "200px",
+      maxWidth: "800px",
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <StyledInput
+            type="text"
+            value={editedRow.Puesto_Jefe}
+            onChange={(e) => handleEditChange(e, "Puesto_Jefe")}
+            onClick={() => handleInputClick("Puesto_Jefe")}
+            onKeyPress={(e) => {
+              if (!/^[a-zA-ZñáéíóúÁÉÍÓÚ\s]$/i.test(e.key)) {
+                e.preventDefault();
+              }
+            }}
+          />
+        ) : (
+          <div>{row.Puesto_Jefe}</div>
+        ),
+    },
+    {
+      name: "Ticket",
+      selector: (row) => row.Ticket,
+
+      omit: !showColumns,
+      minWidth: "100px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "100px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <StyledInput
+            type="text"
+            value={editedRow.Ticket}
+            onChange={(e) => handleEditChange(e, "Ticket")}
+            onClick={() => handleInputClick("Ticket")}
+            onKeyPress={(e) => {
+              if (!/\d/.test(e.key)) {
+                e.preventDefault();
+              }
+            }}
+          />
+        ) : (
+          <div>{row.Ticket}</div>
+        ),
+    },
+    {
+      name: "Observación",
+      selector: (row) => row.Observaciones,
+
+      omit: !showColumns,
+      minWidth: "350px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "800px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <StyledInput
+            type="text"
+            value={editedRow.Observaciones}
+            onChange={(e) => handleEditChange(e, "Observaciones")}
+            onClick={() => handleInputClick("Observaciones")}
+          />
+        ) : (
+          <div>{row.Observaciones}</div>
+        ),
+    },
+    {
+      name: "Estado",
+      selector: (row) =>
+        editMode === row.id ? (
+          <StyledSelect
+            value={editedRow.Estado_Perfil}
+            onChange={(e) => handleEditChange(e, "Estado_Perfil")}
+          >
+            <option value={"En Servicio"}>En Servicio</option>
+            <option value={"Suspendido"}>Suspendido</option>
+          </StyledSelect>
+        ) : (
+          <div>{row.Estado_Perfil}</div>
+        ),
+    },
+    {
+      name: "Acciones",
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "200px", // Ajusta el tamaño máximo según sea necesario
+      omit: !permissions.edit,
+      cell: (row) =>
+        editMode === row.id ? (
+          <ButtonGroup>
+            <Button
+              type="button"
+              className="btn btn-outline-success"
+              onClick={() => saveChanges(row.id)}
+            >
+              Guardar
+            </Button>
+            <Button
+              type="button"
+              className="btn btn-outline-danger"
+              onClick={cancelEdit}
+            >
+              Cancelar
+            </Button>
+          </ButtonGroup>
+        ) : (
+          <ButtonGroup>
+            <Button
+              type="button"
+              className="btn btn-outline-primary"
+              onClick={() => startEdit(row)}
+            >
+              Editar
+            </Button>
+            <Button
+              type="button"
+              className="btn btn-outline-danger"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "¿Estás seguro que deseas eliminar este registro?"
+                  )
+                ) {
+                  deleteRow(row.id);
+                }
+              }}
+            >
+              Eliminar
+            </Button>
+          </ButtonGroup>
+        ),
+    },
+  ];
