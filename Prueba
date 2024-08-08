@@ -1,9 +1,11 @@
 const saveChanges = async (id) => {
-  if (!editedRow.Usuario.trim()) {
+  const trimmedUsuario = editedRow.Usuario;
+    const trimmedNombre = editedRow.Nombre.trim();
+  if (!trimmedUsuario) {
     setErrors({ Usuario: "El campo Usuario no puede estar vacío" });
     showNotification("El campo Usuario no puede estar vacío");
     return;
-  } else if (!editedRow.Nombre.trim()) {
+  } else if (!trimmedNombre) {
     setErrors({ Nombre: "El campo Nombre no puede estar vacío" });
     showNotification("El campo Nombre no puede estar vacío");
     return;
@@ -18,42 +20,46 @@ const saveChanges = async (id) => {
       // Prepara los datos sin modificar el estado
       const updateRow = {
         ...editedRow,
-        Estado: currentRow.Estado // Mantén el estado original
+        Estado: currentRow.Estado, // Mantén el estado original
+        Usuario: trimmedUsuario,
+        Nombre: trimmedNombre,
       };
 
-      // Verificar si el Usuario ya existe en la base de datos
-      const response = await axios.get(`http://localhost:3000/usuarios`);
-      const usuarios = response.data;
-
-      const usuarioExistente = usuarios.some(
-        (usuario) =>
-          usuario.Usuario.toLowerCase() === editedRow.Usuario.toLowerCase() &&
-          usuario.id !== id
-      );
-
-      if (usuarioExistente) {
-        setErrors({
-          usuario: "El usuario ya existe.",
-        });
-
-        const errorNotification = document.createElement("div");
-        errorNotification.className = "error-notification";
-        errorNotification.innerHTML = `
-          <span class="error-icon">!</span>
-          <span class="error-message">
-            El código de usuario que intenta actualizar ya existe en la base de datos.
-            Por favor, ingrese un usuario diferente.
-          </span>
-        `;
-
-        document.body.appendChild(errorNotification);
-
-        // Ocultar la notificación después de 2 segundos
-        setTimeout(() => {
-          errorNotification.remove();
-        }, 2000);
+      //Verifica si el usuario existe
+      if (editedRow && editedRow.Usuario) {
+        const response = await axios.get(
+          `http://localhost:3000/usuarios?Usuario=${trimmedUsuario}`
+        );
+  
+        if (
+          response.data.some(
+            (usuario) =>
+              usuario.Usuario.toLowerCase() ===
+              trimmedUsuario.toLowerCase() && usuario.id !== id
+          )
+        ) {
+          const errorNotification = document.createElement("div");
+          errorNotification.className = "error-notification";
+          errorNotification.innerHTML = `
+            <span class="error-icon">!</span>
+            <span class="error-message">
+              El Usuario que intenta actualizar ya existe en la base de datos.
+              Por favor, ingrese un Usuario diferente.
+            </span>
+          `;
+          document.body.appendChild(errorNotification);
+  
+          // Ocultar la notificación después de 2 segundos
+          setTimeout(() => {
+            errorNotification.remove();
+          }, 2000);
+          return;
+        }
+      } else {
+        console.error("Error: editedRow.Usuario is undefined or empty");
+        setErrors({ Codigo: "El campo Usuario no puede estar vacío" });
         return;
-      }
+      } 
 
       await axios.put(`http://localhost:3000/usuarios/${id}`, updateRow);
 
@@ -111,31 +117,28 @@ const saveChanges = async (id) => {
             : currentRow.Estado,
       };
 
-      // Verificar si el Usuario ya existe en la base de datos
-      const response = await axios.get(`http://localhost:3000/usuarios`);
-      const usuarios = response.data;
-
-      const usuarioExistente = usuarios.some(
-        (usuario) =>
-          usuario.Usuario.toLowerCase() === editedRow.Usuario.toLowerCase() &&
-          usuario.id !== id
+     //Verifica si el usuario existe
+     if (editedRow && editedRow.Usuario) {
+      const response = await axios.get(
+        `http://localhost:3000/usuarios?Usuario=${trimmedUsuario}`
       );
 
-      if (usuarioExistente) {
-        setErrors({
-          usuario: "El usuario ya existe.",
-        });
-
+      if (
+        response.data.some(
+          (usuario) =>
+            usuario.Usuario.toLowerCase() ===
+            trimmedUsuario.toLowerCase() && usuario.id !== id
+        )
+      ) {
         const errorNotification = document.createElement("div");
         errorNotification.className = "error-notification";
         errorNotification.innerHTML = `
           <span class="error-icon">!</span>
           <span class="error-message">
-            El código de usuario que intenta actualizar ya existe en la base de datos.
-            Por favor, ingrese un usuario diferente.
+            El Usuario que intenta actualizar ya existe en la base de datos.
+            Por favor, ingrese un Usuario diferente.
           </span>
         `;
-
         document.body.appendChild(errorNotification);
 
         // Ocultar la notificación después de 2 segundos
@@ -144,30 +147,33 @@ const saveChanges = async (id) => {
         }, 2000);
         return;
       }
+    } else {
+      console.error("Error: editedRow.Usuario is undefined or empty");
+      setErrors({ Codigo: "El campo Usuario no puede estar vacío" });
+      return;
+    } 
 
-      await axios.put(`http://localhost:3000/usuarios/${id}`, updateRow);
+    await axios.put(`http://localhost:3000/usuarios/${id}`, updateRow);
 
-      // Construir los valores para la auditoría
-      const auditoriaData = {
-        Campo_Original: [
-          `- Usuario: ${currentRow.Usuario}`,
-          `- Nombre: ${currentRow.Nombre}`,
-          `- Estado: ${currentRow.Estado}`,
-        ].join("¬ "),
-        Campo_Nuevo: [
-          `- Usuario: ${editedRow.Usuario}`,
-          `- Nombre: ${editedRow.Nombre}`,
-          `- Estado: ${updateRow.Estado}`,
-        ].join("¬ "),
-        Tabla: "Usuarios",
-        Accion: 2, // Modificación
-        ID_Usuario: userId,
-        N: records.findIndex((row) => row.id === id) + 1,
-      };
+    // Construir los valores para la auditoría
+    const auditoriaData = {
+      Campo_Original: [
+        `- Usuario: ${currentRow.Usuario}`,
+        `- Nombre: ${currentRow.Nombre}`,
+      ].join("¬ "),
+      Campo_Nuevo: [
+        `- Usuario: ${editedRow.Usuario}`,
+        `- Nombre: ${editedRow.Nombre}`,
+      ].join("¬ "),
+      Tabla: "Usuarios",
+      Accion: 2, // Modificación
+      ID_Usuario: userId,
+      N: records.findIndex((row) => row.id === id) + 1,
+    };
 
-      if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
-        await axios.post("http://localhost:3000/auditoria", auditoriaData);
-      }
+    if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
+      await axios.post("http://localhost:3000/auditoria", auditoriaData);
+    }
 
       const updatedRecords = records.map((row) =>
         row.id === id ? { ...editedRow, Estado: updateRow.Estado } : row
