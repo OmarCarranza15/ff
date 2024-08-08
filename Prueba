@@ -2,208 +2,203 @@ const saveChanges = async (id) => {
     const trimmedRol = editedRow.Rol.trim();
     const trimmedPuestoJefe = editedRow.Puesto_Jefe.trim();
     const trimmedTicket = editedRow.Ticket;
-
     if (!trimmedRol) {
-        setErrors({ Rol: "El campo Rol no puede estar vacío" });
-        showNotification("El campo Rol no puede estar vacío");
-        return;
+      setErrors({ Rol: "El campo Rol no puede estar vacío" });
+      showNotification("El campo Rol no puede estar vacío");
+      return;
     } else if (!trimmedPuestoJefe) {
-        setErrors({ Puesto_Jefe: "El campo Jefe Inmediato no puede estar vacío" });
-        showNotification("El campo Jefe Inmediato no puede estar vacío");
-        return;
+      setErrors({ Puesto_Jefe: "El campo Jefe Inmediato no puede estar vacío" });
+      showNotification("El campo Jefe Inmediato no puede estar vacío");
+      return;
     } else if (trimmedTicket === '') {
-        setErrors({ Ticket: "El campo Ticket no puede estar vacío" });
-        showNotification("El campo Ticket no puede estar vacío");
-        return;
+      setErrors({ Ticket: "El campo Ticket no puede estar vacío" });
+      showNotification("El campo Ticket no puede estar vacío");
+      return;
     } 
 
     try {
-        const currentEstado = records.find((row) => row.id === id).Estado_Perfil;
-        const newEstado = editedRow.Estado_Perfil === "En Servicio" ? 2 : 
-                           editedRow.Estado_Perfil === "Suspendido" ? 1 : 
-                           currentEstado; // Mantén el estado actual si no es "En Servicio" o "Suspendido"
+      const updateRow = {
+        ...editedRow,
+        Estado_Perfil: editedRow.Estado_Perfil === "En Servicio" ? 1 : 2,
+        Rol: trimmedRol,
+        Puesto_Jefe: trimmedPuestoJefe,
+        Ticket: trimmedTicket,
+      };
 
-        const updateRow = {
-            ...editedRow,
-            Estado_Perfil: newEstado,
-            Rol: trimmedRol,
-            Puesto_Jefe: trimmedPuestoJefe,
-            Ticket: trimmedTicket,
-        };
+      // Validate the input before saving
+      validateInput("Rol", editedRow.Rol);
+      validateInput("Puesto_Jefe", editedRow.Puesto_Jefe);
 
-        // Validar la entrada antes de guardar
-        validateInput("Rol", editedRow.Rol);
-        validateInput("Puesto_Jefe", editedRow.Puesto_Jefe);
+      if (editedRow && editedRow.ID_Pais && editedRow.Rol && editedRow.Puesto_Jefe && editedRow.ID_Puesto && editedRow.ID_Aplicaciones) {
+        const response = await axios.get(`http://localhost:3000/perfil`);
+        const perfilExists = response.data.some((perfil) => {
+            return (
+                perfil.ID_Pais === parseInt(editedRow.ID_Pais) &&
+                perfil.Rol.toLowerCase() === trimmedRol.toLowerCase() &&
+                perfil.Puesto_Jefe.toLowerCase() === trimmedPuestoJefe.toLowerCase() &&
+                perfil.ID_Puesto === parseInt(editedRow.ID_Puesto) &&
+                perfil.ID_Aplicaciones === parseInt(editedRow.ID_Aplicaciones) &&
+                perfil.id !== id
+            );
+        });
 
-        if (editedRow && editedRow.ID_Pais && editedRow.Rol && editedRow.Puesto_Jefe && editedRow.ID_Puesto && editedRow.ID_Aplicaciones) {
-            const response = await axios.get(`http://localhost:3000/perfil`);
-            const perfilExists = response.data.some((perfil) => {
-                return (
-                    perfil.ID_Pais === parseInt(editedRow.ID_Pais) &&
-                    perfil.Rol.toLowerCase() === trimmedRol.toLowerCase() &&
-                    perfil.Puesto_Jefe.toLowerCase() === trimmedPuestoJefe.toLowerCase() &&
-                    perfil.ID_Puesto === parseInt(editedRow.ID_Puesto) &&
-                    perfil.ID_Aplicaciones === parseInt(editedRow.ID_Aplicaciones) &&
-                    perfil.id !== id
-                );
-            });
+        if (perfilExists) {
+            setErrors({ Rol: "El perfil con los datos ingresados ya existe en la base de datos" });
 
-            if (perfilExists) {
-                setErrors({ Rol: "El perfil con los datos ingresados ya existe en la base de datos" });
+            const errorNotification = document.createElement("div");
+            errorNotification.className = "error-notification";
+            errorNotification.innerHTML = `
+                <span class="error-icon">!</span>
+                <span class="error-message">
+                    El Perfil que intenta registrar ya existe en la base de datos con los datos ingresados.
+                    Por favor, ingrese un Perfil diferente.
+                </span>
+            `;
 
-                const errorNotification = document.createElement("div");
-                errorNotification.className = "error-notification";
-                errorNotification.innerHTML = `
-                    <span class="error-icon">!</span>
-                    <span class="error-message">
-                        El Perfil que intenta registrar ya existe en la base de datos con los datos ingresados.
-                        Por favor, ingrese un Perfil diferente.
-                    </span>
-                `;
+            document.body.appendChild(errorNotification);
 
-                document.body.appendChild(errorNotification);
-
-                // Ocultar la notificación después de 2 segundos
-                setTimeout(() => {
-                    errorNotification.remove();
-                }, 2000);
-                return;
-            }
-        } else {
-            console.error("Error: editedRow.N_RSocial or editedRow.ID_Pais is undefined or empty");
-            setErrors({
-                perfil: "El campo Razón Social o País no puede estar vacío",
-            });
+            // Ocultar la notificación después de 2 segundos
+            setTimeout(() => {
+                errorNotification.remove();
+            }, 2000);
             return;
         }
-
-        await axios.put(`http://localhost:3000/perfil/${id}`, updateRow);
-
-        if (
-            editedRow.ID_Ambiente !==
-            records.find((row) => row.id === id).ID_Ambiente
-        ) {
-            await axios.put(
-                `http://localhost:3000/aplicacion/${editedRow.ID_Aplicaciones}`,
-                {
-                    ID_Ambiente: editedRow.ID_Ambiente,
-                }
-            );
-        }
-
-        if (
-            editedRow.ID_RSocial !== records.find((row) => row.id === id).ID_RSocial
-        ) {
-            await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
-                ID_RSocial: editedRow.ID_RSocial,
-            });
-        }
-
-        if (
-            editedRow.ID_Division !==
-            records.find((row) => row.id === id).ID_Division
-        ) {
-            await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
-                ID_Division: editedRow.ID_Division,
-            });
-        }
-
-        if (
-            editedRow.ID_Departamento !==
-            records.find((row) => row.id === id).ID_Departamento
-        ) {
-            await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
-                ID_Departamento: editedRow.ID_Departamento,
-            });
-        }
-
-        if (
-            editedRow.ID_CentroCostos !==
-            records.find((row) => row.id === id).ID_CentroCostos
-        ) {
-            await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
-                ID_CentroCostos: editedRow.ID_CentroCostos,
-            });
-        }
-
-        /////////////////////////////////////////////////////////////////////////////////////
-        // Obtener el valor original del campo
-        const originalRow = records.find((row) => row.id === id);
-
-        const editedIndex = records.findIndex((row) => row.id === id) + 1;
-
-        // Construir los valores para la auditoría
-        const originalPuesto = originalRow.Puesto;
-        const originalRol = originalRow.Rol;
-        const originalAplicacion = originalRow.N_Aplicaciones;
-        const originalPuestoJefe = originalRow.Puesto_Jefe;
-        const originalTicket = originalRow.Ticket;
-        const originalObservacion = originalRow.Observaciones;
-        const originalEstado = originalRow.Estado_Perfil;
-
-        const editedPuesto = editedRow.Puesto;
-        const editedRol = trimmedRol;
-        const editedAplicacion = editedRow.N_Aplicaciones;
-        const editedPuestoJefe = trimmedPuestoJefe;
-        const editedTicket = trimmedTicket;
-        const editedObservacion = editedRow.Observaciones;
-        const editedEstado = newEstado;
-
-        const hasPuestoChanged = originalPuesto !== editedPuesto;
-        const hasRolChanged = originalRol !== editedRol;
-        const hasAplicacionChanged = originalAplicacion !== editedAplicacion;
-        const hasPuestoJefeChanged = originalPuestoJefe !== editedPuestoJefe;
-        const hasTicketChanged = originalTicket !== editedTicket;
-        const hasObservacionChanged = originalObservacion !== editedObservacion;
-        const hasEstadoChanged = originalEstado !== editedEstado;
-
-        const auditoriaData = {
-            Campo_Original: [
-                hasPuestoChanged ? `- Puesto: ${originalPuesto}` : "",
-                hasRolChanged ? `- Rol: ${originalRol}` : "",
-                hasAplicacionChanged ? `- Aplicación: ${originalAplicacion}` : "",
-                hasPuestoJefeChanged ? `- Jefe Inmediato: ${originalPuestoJefe}` : "",
-                hasTicketChanged ? `- Ticket: ${originalTicket}` : "",
-                hasObservacionChanged
-                    ? `- Observaciones: ${originalObservacion}`
-                    : "",
-                hasEstadoChanged ? `- Estado: ${originalEstado}` : "",
-            ]
-                .filter(Boolean)
-                .join("¬ "),
-            Campo_Nuevo: [
-                hasPuestoChanged ? `- Puesto: ${editedPuesto}` : "",
-                hasRolChanged ? `- Rol: ${editedRol}` : "",
-                hasAplicacionChanged ? `- Aplicación: ${editedAplicacion}` : "",
-                hasPuestoJefeChanged ? `- Jefe Inmediato: ${editedPuestoJefe}` : "",
-                hasTicketChanged ? `- Ticket: ${editedTicket}` : "",
-                hasObservacionChanged ? `- Código: ${editedObservacion}` : "",
-                hasEstadoChanged ? `- Estado: ${editedEstado}` : "",
-            ]
-                .filter(Boolean)
-                .join("¬ "),
-            Tabla: `Matriz de perfiles ${selectedCountry}`,
-            Accion: 2, // Modificación
-            ID_Usuario: userId,
-            N: editedIndex,
-        };
-
-        if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
-            await axios.post("http://localhost:3000/auditoria", auditoriaData);
-        }
-
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        const updatedRecords = records.map((row) =>
-            row.id === id ? { ...editedRow, Estado_Perfil: newEstado } : row
-        );
-        setRecords(updatedRecords);
-        setEditedRow(null);
-        setEditMode(null);
-
-        console.log("Cambios guardados correctamente");
-        window.location.reload();
-    } catch (error) {
-        console.error("Error al guardar los cambios", error);
+    } else {
+        console.error("Error: editedRow.N_RSocial or editedRow.ID_Pais is undefined or empty");
+        setErrors({
+            perfil: "El campo Razón Social o País no puede estar vacío",
+        });
+        return;
     }
-};
+
+      await axios.put(`http://localhost:3000/perfil/${id}`, updateRow);
+
+      if (
+        editedRow.ID_Ambiente !==
+        records.find((row) => row.id === id).ID_Ambiente
+      ) {
+        await axios.put(
+          `http://localhost:3000/aplicacion/${editedRow.ID_Aplicaciones}`,
+          {
+            ID_Ambiente: editedRow.ID_Ambiente,
+          }
+        );
+      }
+
+      if (
+        editedRow.ID_RSocial !== records.find((row) => row.id === id).ID_RSocial
+      ) {
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
+          ID_RSocial: editedRow.ID_RSocial,
+        });
+      }
+
+      if (
+        editedRow.ID_Division !==
+        records.find((row) => row.id === id).ID_Division
+      ) {
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
+          ID_Division: editedRow.ID_Division,
+        });
+      }
+
+      if (
+        editedRow.ID_Departamento !==
+        records.find((row) => row.id === id).ID_Departamento
+      ) {
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
+          ID_Departamento: editedRow.ID_Departamento,
+        });
+      }
+
+      if (
+        editedRow.ID_CentroCostos !==
+        records.find((row) => row.id === id).ID_CentroCostos
+      ) {
+        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
+          ID_CentroCostos: editedRow.ID_CentroCostos,
+        });
+      }
+
+      /////////////////////////////////////////////////////////////////////////////////////
+      // Obtener el valor original del campo
+      const originalRow = records.find((row) => row.id === id);
+
+      const editedIndex = records.findIndex((row) => row.id === id) + 1;
+
+      // Construir los valores para la auditoría
+      const originalPuesto = originalRow.Puesto;
+      const originalRol = originalRow.Rol;
+      const originalAplicacion = originalRow.N_Aplicaciones;
+      const originalPuestoJefe = originalRow.Puesto_Jefe;
+      const originalTicket = originalRow.Ticket;
+      const originalObservacion = originalRow.Observaciones;
+      const originalEstado = originalRow.Estado_Perfil;
+
+      const editedPuesto = editedRow.Puesto;
+      const editedRol = trimmedRol;
+      const editedAplicacion = editedRow.N_Aplicaciones;
+      const editedPuestoJefe = trimmedPuestoJefe;
+      const editedTicket = trimmedTicket;
+      const editedObservacion = editedRow.Observaciones;
+      const editedEstado = editedRow.Estado_Perfil;
+
+      const hasPuestoChanged = originalPuesto !== editedPuesto;
+      const hasRolChanged = originalRol !== editedRol;
+      const hasAplicacionChanged = originalAplicacion !== editedAplicacion;
+      const hasPuestoJefeChanged = originalPuestoJefe !== editedPuestoJefe;
+      const hasTicketChanged = originalTicket !== editedTicket;
+      const hasObservacionChanged = originalObservacion !== editedObservacion;
+      const hasEstadoChanged = originalEstado !== editedEstado;
+
+      const auditoriaData = {
+        Campo_Original: [
+          hasPuestoChanged ? `- Puesto: ${originalPuesto}` : "",
+          hasRolChanged ? `- Rol: ${originalRol}` : "",
+          hasAplicacionChanged ? `- Aplicación: ${originalAplicacion}` : "",
+          hasPuestoJefeChanged ? `- Jefe Inmediato: ${originalPuestoJefe}` : "",
+          hasTicketChanged ? `- Ticket: ${originalTicket}` : "",
+          hasObservacionChanged
+            ? `- Observaciones: ${originalObservacion}`
+            : "",
+          hasEstadoChanged ? `- Estado: ${originalEstado}` : "",
+        ]
+          .filter(Boolean)
+          .join("¬ "),
+        Campo_Nuevo: [
+          hasPuestoChanged ? `- Puesto: ${editedPuesto}` : "",
+          hasRolChanged ? `- Rol: ${editedRol}` : "",
+          hasAplicacionChanged ? `- Aplicación: ${editedAplicacion}` : "",
+          hasPuestoJefeChanged ? `- Jefe Inmediato: ${editedPuestoJefe}` : "",
+          hasTicketChanged ? `- Ticket: ${editedTicket}` : "",
+          hasObservacionChanged ? `- Código: ${editedObservacion}` : "",
+          hasEstadoChanged ? `- Estado: ${editedEstado}` : "",
+        ]
+          .filter(Boolean)
+          .join("¬ "),
+        Tabla: `Matriz de perfiles ${selectedCountry}`,
+        Accion: 2, // Modificación
+        ID_Usuario: userId,
+        N: editedIndex,
+      };
+
+      if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
+        await axios.post("http://localhost:3000/auditoria", auditoriaData);
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////////////
+
+      const updatedRecords = records.map((row) =>
+        row.id === id ? { ...editedRow} : row
+      );
+      //setRecords(updatedRecordsPuesto);
+      setRecords(updatedRecords);
+      setEditedRow(null);
+      setEditMode(null);
+
+      console.log("Cambios guardados correctamente");
+      window.location.reload();
+    } catch (error) {
+      console.error("Error al guardar los cambios", error);
+    }
+  };
