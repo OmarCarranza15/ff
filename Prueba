@@ -1,6 +1,7 @@
 const saveChanges = async (id) => {
-  const trimmedUsuario = editedRow.Usuario;
-    const trimmedNombre = editedRow.Nombre.trim();
+  const trimmedUsuario = editedRow.Usuario.trim();
+  const trimmedNombre = editedRow.Nombre.trim();
+
   if (!trimmedUsuario) {
     setErrors({ Usuario: "El campo Usuario no puede estar vacío" });
     showNotification("El campo Usuario no puede estar vacío");
@@ -14,122 +15,17 @@ const saveChanges = async (id) => {
   try {
     // Obtén la fila actual
     const currentRow = records.find((row) => row.id === id);
-    
-    // No permitir modificaciones si el estado es "Nuevo"
-    if (currentRow.Estado === "NUEVO") {
-      // Prepara los datos sin modificar el estado
-      const updateRow = {
-        ...editedRow,
-        Estado: currentRow.Estado, // Mantén el estado original
-        Usuario: trimmedUsuario,
-        Nombre: trimmedNombre,
-      };
 
-      //Verifica si el usuario existe
-      if (editedRow && editedRow.Usuario) {
-        const response = await axios.get(
-          `http://localhost:3000/usuarios?Usuario=${trimmedUsuario}`
-        );
-  
-        if (
-          response.data.some(
-            (usuario) =>
-              usuario.Usuario.toLowerCase() ===
-              trimmedUsuario.toLowerCase() && usuario.id !== id
-          )
-        ) {
-          const errorNotification = document.createElement("div");
-          errorNotification.className = "error-notification";
-          errorNotification.innerHTML = `
-            <span class="error-icon">!</span>
-            <span class="error-message">
-              El Usuario que intenta actualizar ya existe en la base de datos.
-              Por favor, ingrese un Usuario diferente.
-            </span>
-          `;
-          document.body.appendChild(errorNotification);
-  
-          // Ocultar la notificación después de 2 segundos
-          setTimeout(() => {
-            errorNotification.remove();
-          }, 2000);
-          return;
-        }
-      } else {
-        console.error("Error: editedRow.Usuario is undefined or empty");
-        setErrors({ Codigo: "El campo Usuario no puede estar vacío" });
-        return;
-      } 
+    // Prepara los datos para la actualización
+    const updateRow = {
+      ...editedRow,
+      Estado: currentRow.Estado // Mantén el estado original si es "Nuevo"
+    };
 
-      await axios.put(`http://localhost:3000/usuarios/${id}`, updateRow);
-
-      // Construir los valores para la auditoría
-      const auditoriaData = {
-        Campo_Original: [
-          `- Usuario: ${currentRow.Usuario}`,
-          `- Nombre: ${currentRow.Nombre}`,
-        ].join("¬ "),
-        Campo_Nuevo: [
-          `- Usuario: ${editedRow.Usuario}`,
-          `- Nombre: ${editedRow.Nombre}`,
-        ].join("¬ "),
-        Tabla: "Usuarios",
-        Accion: 2, // Modificación
-        ID_Usuario: userId,
-        N: records.findIndex((row) => row.id === id) + 1,
-      };
-
-      if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
-        await axios.post("http://localhost:3000/auditoria", auditoriaData);
-      }
-
-      const updatedRecords = records.map((row) =>
-        row.id === id ? { ...editedRow, Estado: currentRow.Estado } : row
-      );
-
-      setRecords(updatedRecords);
-      setEditedRow(null);
-      setEditMode(null);
-
-      // Notificación de datos actualizados
-      const toastElement = document.createElement("div");
-      toastElement.className = "toast-notification";
-      toastElement.innerHTML = "¡Usuario actualizado con éxito!";
-
-      document.body.appendChild(toastElement);
-
-      // Ocultar la notificación después de 1 segundo
-      setTimeout(() => {
-        toastElement.remove();
-        window.location.reload(); // Recargar la página después de 1 segundo
-      }, 1000);
-    } else {
-      // Lógica para casos donde el estado no es "Nuevo"
-      const updateRow = {
-        ...editedRow,
-        Estado:
-          editedRow.Estado === "NUEVO"
-            ? 1
-            : editedRow.Estado === "EN SERVICIO"
-            ? 2
-            : editedRow.Estado === "EXPIRADO"
-            ? 3
-            : currentRow.Estado,
-      };
-
-     //Verifica si el usuario existe
-     if (editedRow && editedRow.Usuario) {
-      const response = await axios.get(
-        `http://localhost:3000/usuarios?Usuario=${trimmedUsuario}`
-      );
-
-      if (
-        response.data.some(
-          (usuario) =>
-            usuario.Usuario.toLowerCase() ===
-            trimmedUsuario.toLowerCase() && usuario.id !== id
-        )
-      ) {
+    // Verifica si el usuario existe
+    if (editedRow && trimmedUsuario) {
+      const response = await axios.get(`http://localhost:3000/usuarios?Usuario=${trimmedUsuario}`);
+      if (response.data.some(usuario => usuario.Usuario.toLowerCase() === trimmedUsuario.toLowerCase() && usuario.id !== id)) {
         const errorNotification = document.createElement("div");
         errorNotification.className = "error-notification";
         errorNotification.innerHTML = `
@@ -149,10 +45,22 @@ const saveChanges = async (id) => {
       }
     } else {
       console.error("Error: editedRow.Usuario is undefined or empty");
-      setErrors({ Codigo: "El campo Usuario no puede estar vacío" });
+      setErrors({ Usuario: "El campo Usuario no puede estar vacío" });
       return;
-    } 
+    }
 
+    // Si el estado no es "Nuevo", actualiza el estado como corresponde
+    if (currentRow.Estado !== "NUEVO") {
+      updateRow.Estado = editedRow.Estado === "NUEVO"
+        ? 1
+        : editedRow.Estado === "EN SERVICIO"
+        ? 2
+        : editedRow.Estado === "EXPIRADO"
+        ? 3
+        : currentRow.Estado;
+    }
+
+    // Actualiza el usuario
     await axios.put(`http://localhost:3000/usuarios/${id}`, updateRow);
 
     // Construir los valores para la auditoría
@@ -175,27 +83,27 @@ const saveChanges = async (id) => {
       await axios.post("http://localhost:3000/auditoria", auditoriaData);
     }
 
-      const updatedRecords = records.map((row) =>
-        row.id === id ? { ...editedRow, Estado: updateRow.Estado } : row
-      );
+    // Actualiza los registros en el estado local
+    const updatedRecords = records.map((row) =>
+      row.id === id ? { ...editedRow, Estado: updateRow.Estado } : row
+    );
 
-      setRecords(updatedRecords);
-      setEditedRow(null);
-      setEditMode(null);
+    setRecords(updatedRecords);
+    setEditedRow(null);
+    setEditMode(null);
 
-      // Notificación de datos actualizados
-      const toastElement = document.createElement("div");
-      toastElement.className = "toast-notification";
-      toastElement.innerHTML = "¡Usuario actualizado con éxito!";
+    // Notificación de datos actualizados
+    const toastElement = document.createElement("div");
+    toastElement.className = "toast-notification";
+    toastElement.innerHTML = "¡Usuario actualizado con éxito!";
 
-      document.body.appendChild(toastElement);
+    document.body.appendChild(toastElement);
 
-      // Ocultar la notificación después de 1 segundo
-      setTimeout(() => {
-        toastElement.remove();
-        window.location.reload(); // Recargar la página después de 1 segundo
-      }, 1000);
-    }
+    // Ocultar la notificación después de 1 segundo
+    setTimeout(() => {
+      toastElement.remove();
+      window.location.reload(); // Recargar la página después de 1 segundo
+    }, 1000);
   } catch (error) {
     console.error("Error al guardar los cambios", error);
   }
