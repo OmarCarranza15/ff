@@ -1,2 +1,122 @@
-index.js:1191  Error al guardar los cambios TypeError: PuestoResponse.data.some is not a function
-    at saveChanges (matrizPais.jsx:692:1)
+const saveChanges = async (id) => {
+  const trimmedRol = editedRow.Rol.trim();
+  const trimmedPuestoJefe = editedRow.Puesto_Jefe.trim();
+  const trimmedTicket = editedRow.Ticket.trim();
+  
+  if (!trimmedRol) {
+    setErrors({ Rol: "El campo Rol no puede estar vacío" });
+    showNotification("El campo Rol no puede estar vacío");
+    return;
+  } else if (!trimmedPuestoJefe) {
+    setErrors({ Puesto_Jefe: "El campo Jefe Inmediato no puede estar vacío" });
+    showNotification("El campo Jefe Inmediato no puede estar vacío");
+    return;
+  } 
+
+  try {
+    const updateRow = {
+      ...editedRow,
+      Estado_Perfil: editedRow.Estado_Perfil === "En Servicio" ? 1 : 2,
+      Rol: trimmedRol,
+      Puesto_Jefe: trimmedPuestoJefe,
+      Ticket: trimmedTicket,
+    };
+
+    // Validate the input before saving
+    validateInput("Rol", editedRow.Rol);
+    validateInput("Puesto_Jefe", editedRow.Puesto_Jefe);
+
+    if (editedRow && editedRow.Puesto_Jefe && editedRow.Rol && editedRow.ID_Pais && editedRow.ID_Puesto && editedRow.ID_Aplicaciones) {
+      const [PuestoResponse, RolResponse, paisResponse, PueResponse, AplicacionResponse] = await Promise.all([
+        axios.get(`http://localhost:3000/rolusuario/Puesto_Jefe=${editedRow.Puesto_Jefe}`),
+        axios.get(`http://localhost:3000/rolusuario/Rol=${editedRow.Rol}`),
+        axios.get(`http://localhost:3000/rolusuario/ID_Pais=${editedRow.ID_Pais}`),
+        axios.get(`http://localhost:3000/rolusuario/ID_Puesto=${editedRow.ID_Puesto}`),
+        axios.get(`http://localhost:3000/rolusuario/ID_Aplicaciones=${editedRow.ID_Aplicaciones}`)
+      ]);
+
+      // Asegúrate de que las respuestas son arrays
+      const isArray = (data) => Array.isArray(data);
+      
+      const validateResponses = [
+        { response: PuestoResponse.data, name: 'PuestoResponse' },
+        { response: RolResponse.data, name: 'RolResponse' },
+        { response: paisResponse.data, name: 'paisResponse' },
+        { response: PueResponse.data, name: 'PueResponse' },
+        { response: AplicacionResponse.data, name: 'AplicacionResponse' },
+      ];
+
+      for (const { response, name } of validateResponses) {
+        if (!isArray(response)) {
+          throw new Error(`Expected array but got ${name}`);
+        }
+      }
+
+      if (
+        PuestoResponse.data.some(
+          (puesto) =>
+            puesto.Puesto_Jefe.toLowerCase() ===
+            trimmedPuestoJefe.toLowerCase() && puesto.id !== id
+        ) &&
+        RolResponse.data.some(
+          (rol) =>
+            rol.Puesto_Jefe.toLowerCase() ===
+            trimmedRol.toLowerCase() && rol.id !== id
+        ) &&
+        paisResponse.data.some(
+          (pais) =>
+            pais.ID_Pais === parseInt(editedRow.ID_Pais) &&
+            pais.id !== id
+        ) &&
+        PueResponse.data.some(
+          (puesto) =>
+            puesto.ID_Puesto === parseInt(editedRow.ID_Puesto) &&
+            puesto.id !== id
+        ) &&
+        AplicacionResponse.data.some(
+          (aplicacion) =>
+            aplicacion.ID_Aplicaciones === parseInt(editedRow.ID_Aplicaciones) &&
+          aplicacion.id !== id
+        )
+      ) {
+        const errorNotification = document.createElement("div");
+        errorNotification.className = "error-notification";
+        errorNotification.innerHTML = `
+          <span class="error-icon">!</span>
+          <span class="error-message">
+            El Codigo de Centro de Coste que intenta actualizar ya existe en la base de datos.
+            Por favor, ingrese un Codigo diferente.
+          </span>
+        `;
+        document.body.appendChild(errorNotification);
+
+        // Ocultar la notificación después de 2 segundos
+        setTimeout(() => {
+          errorNotification.remove();
+        }, 2000);
+        return;
+      }
+    } else {
+      console.error("Error: editedRow.N_RSocial or editedRow.ID_Pais is undefined or empty");
+      setErrors({
+        rsocial: "El campo Razón Social o País no puede estar vacío",
+      });
+      return;
+    }
+
+    await axios.put(`http://localhost:3000/perfil/${id}`, updateRow);
+
+    if (
+      editedRow.ID_Ambiente !==
+      records.find((row) => row.id === id).ID_Ambiente
+    ) {
+      await axios.put(
+        `http://localhost:3000/aplicacion/${editedRow.ID_Aplicaciones}`,
+        {
+          ID_Ambiente: editedRow.ID_Ambiente,
+        }
+      );
+    }
+
+    if (
+      editedRow.ID_R​⬤
