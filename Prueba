@@ -18,11 +18,14 @@ const saveChanges = async (id) => {
     } 
 
     try {
+        const currentEstado = records.find((row) => row.id === id).Estado_Perfil;
+        const newEstado = editedRow.Estado_Perfil === "En Servicio" ? 2 : 
+                           editedRow.Estado_Perfil === "Suspendido" ? 1 : 
+                           currentEstado; // Mantén el estado actual si no es "En Servicio" o "Suspendido"
+
         const updateRow = {
             ...editedRow,
-            Estado_Perfil: editedRow.Estado_Perfil === "En Servicio" ? 2 : 
-                           editedRow.Estado_Perfil === "Suspendido" ? 1 : 
-                           editedRow.Estado_Perfil, // Manejamos el estado existente si no es "En Servicio" o "Suspendido"
+            Estado_Perfil: newEstado,
             Rol: trimmedRol,
             Puesto_Jefe: trimmedPuestoJefe,
             Ticket: trimmedTicket,
@@ -144,7 +147,7 @@ const saveChanges = async (id) => {
         const editedPuestoJefe = trimmedPuestoJefe;
         const editedTicket = trimmedTicket;
         const editedObservacion = editedRow.Observaciones;
-        const editedEstado = editedRow.Estado_Perfil;
+        const editedEstado = newEstado;
 
         const hasPuestoChanged = originalPuesto !== editedPuesto;
         const hasRolChanged = originalRol !== editedRol;
@@ -192,9 +195,8 @@ const saveChanges = async (id) => {
         ////////////////////////////////////////////////////////////////////////////////////////
 
         const updatedRecords = records.map((row) =>
-            row.id === id ? { ...editedRow} : row
+            row.id === id ? { ...editedRow, Estado_Perfil: newEstado } : row
         );
-        //setRecords(updatedRecordsPuesto);
         setRecords(updatedRecords);
         setEditedRow(null);
         setEditMode(null);
