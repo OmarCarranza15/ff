@@ -1,7 +1,7 @@
-const saveChanges = async (id) => {
-  const trimmedUsuario = editedRow.Usuario.trim();
-  const trimmedNombre = editedRow.Nombre.trim();
 
+const saveChanges = async (id) => {
+  const trimmedUsuario = editedRow.Usuario;
+    const trimmedNombre = editedRow.Nombre.trim();
   if (!trimmedUsuario) {
     setErrors({ Usuario: "El campo Usuario no puede estar vacío" });
     showNotification("El campo Usuario no puede estar vacío");
@@ -15,17 +15,122 @@ const saveChanges = async (id) => {
   try {
     // Obtén la fila actual
     const currentRow = records.find((row) => row.id === id);
+    
+    // No permitir modificaciones si el estado es "Nuevo"
+    if (currentRow.Estado === "NUEVO") {
+      // Prepara los datos sin modificar el estado
+      const updateRow = {
+        ...editedRow,
+        Estado: currentRow.Estado, // Mantén el estado original
+        Usuario: trimmedUsuario,
+        Nombre: trimmedNombre,
+      };
 
-    // Prepara los datos para la actualización
-    const updateRow = {
-      ...editedRow,
-      Estado: currentRow.Estado // Mantén el estado original si es "Nuevo"
-    };
+      //Verifica si el usuario existe
+      if (editedRow && editedRow.Usuario) {
+        const response = await axios.get(
+          `http://localhost:3000/usuarios?Usuario=${trimmedUsuario}`
+        );
+  
+        if (
+          response.data.some(
+            (usuario) =>
+              usuario.Usuario.toLowerCase() ===
+              trimmedUsuario.toLowerCase() && usuario.id !== id
+          )
+        ) {
+          const errorNotification = document.createElement("div");
+          errorNotification.className = "error-notification";
+          errorNotification.innerHTML = `
+            <span class="error-icon">!</span>
+            <span class="error-message">
+              El Usuario que intenta actualizar ya existe en la base de datos.
+              Por favor, ingrese un Usuario diferente.
+            </span>
+          `;
+          document.body.appendChild(errorNotification);
+  
+          // Ocultar la notificación después de 2 segundos
+          setTimeout(() => {
+            errorNotification.remove();
+          }, 2000);
+          return;
+        }
+      } else {
+        console.error("Error: editedRow.Usuario is undefined or empty");
+        setErrors({ Codigo: "El campo Usuario no puede estar vacío" });
+        return;
+      } 
 
-    // Verifica si el usuario existe
-    if (editedRow && trimmedUsuario) {
-      const response = await axios.get(`http://localhost:3000/usuarios?Usuario=${trimmedUsuario}`);
-      if (response.data.some(usuario => usuario.Usuario.toLowerCase() === trimmedUsuario.toLowerCase() && usuario.id !== id)) {
+      await axios.put(`http://localhost:3000/usuarios/${id}`, updateRow);
+
+      // Construir los valores para la auditoría
+      const auditoriaData = {
+        Campo_Original: [
+          `- Usuario: ${currentRow.Usuario}`,
+          `- Nombre: ${currentRow.Nombre}`,
+        ].join("¬ "),
+        Campo_Nuevo: [
+          `- Usuario: ${editedRow.Usuario}`,
+          `- Nombre: ${editedRow.Nombre}`,
+        ].join("¬ "),
+        Tabla: "Usuarios",
+        Accion: 2, // Modificación
+        ID_Usuario: userId,
+        N: records.findIndex((row) => row.id === id) + 1,
+      };
+
+      if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
+        await axios.post("http://localhost:3000/auditoria", auditoriaData);
+      }
+
+      const updatedRecords = records.map((row) =>
+        row.id === id ? { ...editedRow, Estado: currentRow.Estado } : row
+      );
+
+      setRecords(updatedRecords);
+      setEditedRow(null);
+      setEditMode(null);
+
+      // Notificación de datos actualizados
+      const toastElement = document.createElement("div");
+      toastElement.className = "toast-notification";
+      toastElement.innerHTML = "¡Usuario actualizado con éxito!";
+
+      document.body.appendChild(toastElement);
+
+      // Ocultar la notificación después de 1 segundo
+      setTimeout(() => {
+        toastElement.remove();
+        window.location.reload(); // Recargar la página después de 1 segundo
+      }, 1000);
+    } else {
+      // Lógica para casos donde el estado no es "Nuevo"
+      const updateRow = {
+        ...editedRow,
+        Estado:
+          editedRow.Estado === "NUEVO"
+            ? 1
+            : editedRow.Estado === "EN SERVICIO"
+            ? 2
+            : editedRow.Estado === "EXPIRADO"
+            ? 3
+            : currentRow.Estado,
+      };
+
+     //Verifica si el usuario existe
+     if (editedRow && editedRow.Usuario) {
+      const response = await axios.get(
+        `http://localhost:3000/usuarios?Usuario=${trimmedUsuario}`
+      );
+
+      if (
+        response.data.some(
+          (usuario) =>
+            usuario.Usuario.toLowerCase() ===
+            trimmedUsuario.toLowerCase() && usuario.id !== id
+        )
+      ) {
         const errorNotification = document.createElement("div");
         errorNotification.className = "error-notification";
         errorNotification.innerHTML = `
@@ -45,22 +150,10 @@ const saveChanges = async (id) => {
       }
     } else {
       console.error("Error: editedRow.Usuario is undefined or empty");
-      setErrors({ Usuario: "El campo Usuario no puede estar vacío" });
+      setErrors({ Codigo: "El campo Usuario no puede estar vacío" });
       return;
-    }
+    } 
 
-    // Si el estado no es "Nuevo", actualiza el estado como corresponde
-    if (currentRow.Estado !== "NUEVO") {
-      updateRow.Estado = editedRow.Estado === "NUEVO"
-        ? 1
-        : editedRow.Estado === "EN SERVICIO"
-        ? 2
-        : editedRow.Estado === "EXPIRADO"
-        ? 3
-        : currentRow.Estado;
-    }
-
-    // Actualiza el usuario
     await axios.put(`http://localhost:3000/usuarios/${id}`, updateRow);
 
     // Construir los valores para la auditoría
@@ -83,28 +176,334 @@ const saveChanges = async (id) => {
       await axios.post("http://localhost:3000/auditoria", auditoriaData);
     }
 
-    // Actualiza los registros en el estado local
-    const updatedRecords = records.map((row) =>
-      row.id === id ? { ...editedRow, Estado: updateRow.Estado } : row
-    );
+      const updatedRecords = records.map((row) =>
+        row.id === id ? { ...editedRow, Estado: updateRow.Estado } : row
+      );
 
-    setRecords(updatedRecords);
-    setEditedRow(null);
-    setEditMode(null);
+      setRecords(updatedRecords);
+      setEditedRow(null);
+      setEditMode(null);
 
-    // Notificación de datos actualizados
-    const toastElement = document.createElement("div");
-    toastElement.className = "toast-notification";
-    toastElement.innerHTML = "¡Usuario actualizado con éxito!";
+      // Notificación de datos actualizados
+      const toastElement = document.createElement("div");
+      toastElement.className = "toast-notification";
+      toastElement.innerHTML = "¡Usuario actualizado con éxito!";
 
-    document.body.appendChild(toastElement);
+      document.body.appendChild(toastElement);
 
-    // Ocultar la notificación después de 1 segundo
-    setTimeout(() => {
-      toastElement.remove();
-      window.location.reload(); // Recargar la página después de 1 segundo
-    }, 1000);
+      // Ocultar la notificación después de 1 segundo
+      setTimeout(() => {
+        toastElement.remove();
+        window.location.reload(); // Recargar la página después de 1 segundo
+      }, 1000);
+    }
   } catch (error) {
     console.error("Error al guardar los cambios", error);
   }
 };
+
+
+  const cancelEdit = () => {
+    setEditedRow(null);
+    setEditMode(null);
+  };
+
+  const filteredData = records.filter((row) => {
+    return (
+      (filters.N_PuestoIn === "" ||
+        row.N_PuestoIn.toLowerCase().includes(
+          filters.N_PuestoIn.toLowerCase()
+        )) &&
+      (filters.N_Rol === "" ||
+        row.N_Rol.toLowerCase().includes(filters.N_Rol.toLowerCase())) &&
+      (filters.Usuario === "" ||
+        row.Usuario.toLowerCase().includes(filters.Usuario.toLowerCase())) &&
+      (filters.Nombre === "" ||
+        row.Nombre.toLowerCase().includes(filters.Nombre.toLowerCase())) &&
+      (filters.Fec_Creacion === "" ||
+        row.Fec_Creacion.toLowerCase().includes(
+          filters.Fec_Creacion.toLowerCase()
+        )) &&
+      (filters.Fec_Ult_Conexion === "" ||
+        row.Fec_Ult_Conexion.toLowerCase().includes(
+          filters.Fec_Ult_Conexion.toLowerCase()
+        )) &&
+      (filters.Fec_Exp_Acceso === "" ||
+        row.Fec_Exp_Acceso.toLowerCase().includes(
+          filters.Fec_Exp_Acceso.toLowerCase()
+        )) &&
+      (filters.Estado === "" ||
+        row.Estado.toLowerCase().includes(filters.Estado.toLowerCase()))
+    );
+  });
+
+  const resetPassword = async (userId) => {
+    try {
+      const newPassword = generateRandomPassword();
+      // Actualizar el usuario con la nueva contraseña y estado "nuevo"
+      await axios.put(`http://localhost:3000/usuarios/${userId}`, {
+        Contrasenia: newPassword,
+        Estado: 1, // Cambia el estado a "nuevo"
+      });
+
+      // Notificación de éxito
+      const toastElement = document.createElement("div");
+      toastElement.className = "toast-success";
+      toastElement.innerHTML = "¡Contraseña restablecida correctamente!";
+      document.body.appendChild(toastElement);
+      setTimeout(() => {
+        toastElement.remove();
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error("Error al restablecer la contraseña:", error);
+    }
+  };
+
+  const columns = [
+    {
+      name: "N°",
+      selector: (row, index) => (currentPage - 1) * rowsPerPage + index + 1,
+      minWidth: "60px",
+      maxWidth: "60px",
+    },
+    {
+      name: "Puesto Interno",
+      selector: (row) => row.N_PuestoIn,
+      minWidth: "370px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "500px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <StyledSelect
+            value={editedRow.ID_PuestoIn}
+            onChange={(e) => handleEditChange(e, "ID_PuestoIn")}
+          >
+            {puestoin.map((puestoin) => (
+              <option key={puestoin.id} value={puestoin.id}>
+                {puestoin.N_PuestoIn}
+              </option>
+            ))}
+          </StyledSelect>
+        ) : (
+          <div>{row.N_PuestoIn}</div>
+        ),
+    },
+    {
+      name: "Rol del Usuario",
+      selector: (row) => row.N_Rol,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "250px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <StyledSelect
+            value={editedRow.ID_RolUsuario}
+            onChange={(e) => handleEditChange(e, "ID_RolUsuario")}
+          >
+            {rolusuario.map((rolusuario) => (
+              <option key={rolusuario.id} value={rolusuario.id}>
+                {rolusuario.N_Rol}
+              </option>
+            ))}
+          </StyledSelect>
+        ) : (
+          <div>{row.N_Rol}</div>
+        ),
+    },
+    {
+      name: "Usuario",
+      selector: (row) => row.Usuario,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "250px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <StyledInput
+            type="text"
+            value={editedRow.Usuario}
+            onChange={(e) => handleEditChange(e, "Usuario")}
+            onClick={() => handleInputClick("Usuario")}
+            onKeyPress={(e) => {
+              const regex = /^[a-zA-Z0-9]$/;
+              if (!regex.test(e.key)) {
+                e.preventDefault();
+              }
+            }}
+            onInput={(e) => {
+              const value = e.target.value;
+              const newValue = value
+                .toLowerCase()
+                .replace(/(^\w|\s\w)/g, (match) => match.toUpperCase());
+              e.target.value = newValue;
+              handleModalChange(e, "Usuario"); // <--- Cambié "pais" por "Usuario"
+            }}
+          />
+        ) : (
+          <div>{row.Usuario}</div>
+        ),
+    },
+    {
+      name: "Nombre",
+      selector: (row) => row.Nombre,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "250px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <StyledInput
+            type="text"
+            value={editedRow.Nombre}
+            onChange={(e) => handleEditChange(e, "Nombre")}
+            onClick={() => handleInputClick("Nombre")}
+            onKeyPress={(e) => {
+              const regex = /^[a-zA-ZáéíóúñÁÉÍÓÚÑ\s-]$/;
+              if (!regex.test(e.key)) {
+                e.preventDefault();
+              }
+              // Verificar si el usuario está intentando ingresar un guion seguido
+              if (e.key === '-' && e.target.value.endsWith('-')) {
+                e.preventDefault();
+              }
+            }}
+            onInput={(e) => {
+              const value = e.target.value;
+              const newValue = value
+                .toLowerCase()
+                .replace(/(^\w|\s\w)/g, (match) => match.toUpperCase());
+              e.target.value = newValue;
+              handleModalChange(e, "Nombre");
+            }}
+          />
+        ) : (
+          <div>{row.Nombre}</div>
+        ),
+    },
+    {
+      name: "Contraseña",
+      selector: (row) => row.Contrasenia,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "200px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => {
+        if (row.Estado === "NUEVO") {
+          return (
+            <div style={{ display: "flex", justifyContent: "space-between",alignItems: "center" }}>
+              <span style={{ flexGrow: 1, marginRight: "8px", minWidth: "150px", textAlign:"left" }}>{row.Contrasenia}</span>
+              <FaRegCopy
+                style={{
+                  fontSize: "18px",
+                  color: "#337ab7", // Azul claro
+                  cursor: "pointer",
+                   // Agrega un margen derecho de 4px
+                }}
+                onClick={() => {
+                  navigator.clipboard.writeText(row.Contrasenia);
+                }}
+              />
+            </div>
+          );
+        } else {
+          return <div>*********</div>;
+        }
+      },
+    },
+    {
+      name: "Fecha de Creacion",
+      selector: (row) => row.Fec_Creacion,
+      omit: !showColumns,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "300px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => <div>{row.Fec_Creacion}</div>,
+    },
+    {
+      name: "Fecha de Ultima Conexion",
+      selector: (row) => row.Fec_Ult_Conexion,
+      omit: !showColumns,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "300px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) => <div>{row.Fec_Ult_Conexion}</div>,
+    },
+    {
+      name: "Fecha de Expiracion",
+      selector: (row) => row.Fec_Exp_Acceso,
+      omit: !showColumns,
+      minWidth: "200px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "300px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode && editedRow?.id === row.id ? (
+          <StyledInput
+            type="date"
+            value={editedRow.Fec_Exp_Acceso}
+            onChange={(e) => handleEditChange(e, "Fec_Exp_Acceso")}
+          />
+        ) : (
+          <div>{row.Fec_Exp_Acceso}</div>
+        ),
+    },
+    {
+      name: "Estado",
+      minWidth: "120px",
+      maxWidth: "120px",
+      selector: (row) =>
+        editMode === row.id ? (
+          row.Estado === "NUEVO" ? (
+            <div>{row.Estado}</div> // Mostrar texto si el estado es "Nuevo"
+          ) : (
+            <StyledSelect
+              value={editedRow.Estado}
+              onChange={(e) => handleEditChange(e, "Estado")}
+            >
+              <option value={"EN SERVICIO"}>EN SERVICIO</option>
+              <option value={"EXPIRADO"}>EXPIRADO</option>
+            </StyledSelect>
+          )
+        ) : (
+          <div>{row.Estado}</div>
+        ),
+    },
+    {
+      name: "Acciones",
+      minWidth: "180px", // Ajusta el tamaño mínimo según sea necesario
+      maxWidth: "200px", // Ajusta el tamaño máximo según sea necesario
+      cell: (row) =>
+        editMode === row.id ? (
+          <ButtonGroup>
+            <Button
+              type="button"
+              className="btn btn-outline-success"
+              onClick={() => saveChanges(row.id)}
+            >
+              Guardar
+            </Button>
+            <Button
+              type="button"
+              className="btn btn-outline-danger"
+              onClick={cancelEdit}
+            >
+              Cancelar
+            </Button>
+          </ButtonGroup>
+        ) : (
+          <ButtonGroup>
+            <Button
+              type="button"
+              className="btn btn-outline-primary"
+              onClick={() => startEdit(row)}
+            >
+              Editar
+            </Button>
+            <Button
+              type="button"
+              className="btn btn-outline-danger"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "¿Estás seguro que deseas restablecer la contraseña de este Usuario?"
+                  )
+                ) {
+                  resetPassword(row.id); // Llama a la función para restablecer la contraseña
+                }
+              }}
+            >
+              Restablecer
+            </Button>
+          </ButtonGroup>
+        ),
+    },
+  ];
