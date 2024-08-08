@@ -1,31 +1,45 @@
-matrizPais.jsx:686 
-        
-        
-        GET http://localhost:3000/rolusuario/Rol=/GFF%20Honduras/HN%20-%20Nivel%2004/HN%20-%20Banco%20-%20Nivel%204.1 404 (Not Found)
-dispatchXhrRequest @ xhr.js:169
-xhr @ xhr.js:13
-dispatchRequest @ dispatchRequest.js:43
-_request @ Axios.js:148
-request @ Axios.js:39
-Axios.<computed> @ Axios.js:170
-wrap @ bind.js:5
-saveChanges @ matrizPais.jsx:686
-onClick @ matrizPais.jsx:1230
-callCallback @ react-dom.development.js:3724
-invokeGuardedCallbackDev @ react-dom.development.js:3768
-invokeGuardedCallback @ react-dom.development.js:3825
-invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:3839
-executeDispatch @ react-dom.development.js:7982
-processDispatchQueueItemsInOrder @ react-dom.development.js:8008
-processDispatchQueue @ react-dom.development.js:8019
-dispatchEventsForPlugins @ react-dom.development.js:8028
-(anónimo) @ react-dom.development.js:8188
-batchedUpdates$1 @ react-dom.development.js:22611
-batchedUpdates @ react-dom.development.js:3572
-dispatchEventForPluginEventSystem @ react-dom.development.js:8187
-dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ react-dom.development.js:5694
-dispatchEvent @ react-dom.development.js:5688
-dispatchDiscreteEvent @ react-dom.development.js:5665
-Mostrar 22 más cuadros
-Mostrar menos
-matrizPais.jsx:891  Error al guardar los cambios AxiosError {message: 'Request failed with status code 404', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+if (editedRow && editedRow.ID_Pais && editedRow.Rol && editedRow.Puesto_Jefe && editedRow.ID_Puesto && editedRow.ID_Aplicaciones) {
+        const response = await axios.get(`http://localhost:3000/perfil`);
+
+        const perfilExists = response.data.some((perfil) => {
+          if (
+            perfil.ID_Pais === parseInt(editedRow.ID_Pais) &&
+            perfil.id !== id
+          ) {
+            const editedRolName = trimmedRol
+              ? trimmedRol.toLowerCase()
+              : "";
+            return perfil.Rol.toLowerCase() === editedRolName 
+          }
+          return false;
+        });
+
+
+        if (perfilExists) {
+            setErrors({ Rol: "La razón social ya existe en este país" });
+
+            const errorNotification = document.createElement("div");
+            errorNotification.className = "error-notification";
+            errorNotification.innerHTML = `
+                <span class="error-icon">!</span>
+                <span class="error-message">
+                    El Perfil que intenta registrar ya existe en la base de datos para este país.
+                    Por favor, ingrese un Perfil diferente.
+                </span>
+            `;
+
+            document.body.appendChild(errorNotification);
+
+            // Ocultar la notificación después de 2 segundos
+            setTimeout(() => {
+                errorNotification.remove();
+            }, 2000);
+            return;
+        }
+    } else {
+        console.error("Error: editedRow.N_RSocial or editedRow.ID_Pais is undefined or empty");
+        setErrors({
+            rsocial: "El campo Razón Social o País no puede estar vacío",
+        });
+        return;
+    }
