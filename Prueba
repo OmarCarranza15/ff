@@ -1,6 +1,8 @@
 import pandas as pd
 from tkinter import Tk, filedialog, simpledialog, messagebox
 from tkinter import Button, Label, ttk
+from openpyxl import load_workbook
+from openpyxl.styles import Alignment, Font
 
 class ExcelApp:
     def __init__(self, root):
@@ -51,10 +53,27 @@ class ExcelApp:
 
         file_path = f"{file_name}.xlsx"
         try:
+            # Exportar datos a Excel
             self.df.to_excel(file_path, index=False)
+
+            # Aplicar estilos usando openpyxl
+            self.apply_styles(file_path)
+
             messagebox.showinfo("Éxito", f"Archivo exportado como {file_path}.")
         except Exception as e:
             messagebox.showerror("Error", f"Error al exportar el archivo: {e}")
+
+    def apply_styles(self, file_path):
+        wb = load_workbook(file_path)
+        ws = wb.active
+
+        # Aplicar estilo a la primera fila (títulos)
+        for cell in ws[1]:
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center')
+
+        # Guardar el archivo con los estilos aplicados
+        wb.save(file_path)
 
 if __name__ == "__main__":
     root = Tk()
