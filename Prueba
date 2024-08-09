@@ -1,204 +1,94 @@
-const saveChanges = async (id) => {
-    const trimmedRol = editedRow.Rol.trim();
-    const trimmedPuestoJefe = editedRow.Puesto_Jefe.trim();
-    const trimmedTicket = editedRow.Ticket;
-    if (!trimmedRol) {
-      setErrors({ Rol: "El campo Rol no puede estar vacío" });
-      showNotification("El campo Rol no puede estar vacío");
-      return;
-    } else if (!trimmedPuestoJefe) {
-      setErrors({ Puesto_Jefe: "El campo Jefe Inmediato no puede estar vacío" });
-      showNotification("El campo Jefe Inmediato no puede estar vacío");
-      return;
-    } else if (trimmedTicket === '') {
-      setErrors({ Ticket: "El campo Ticket no puede estar vacío" });
-      showNotification("El campo Ticket no puede estar vacío");
-      return;
-    } 
+import React, { useState } from 'react';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+import { api } from '../services/api'; // Asegúrate de configurar la URL de tu API
 
-    try {
-      const updateRow = {
-        ...editedRow,
-        Estado_Perfil: editedRow.Estado_Perfil === "En Servicio" ? 1 : 2,
-        Rol: trimmedRol,
-        Puesto_Jefe: trimmedPuestoJefe,
-        Ticket: trimmedTicket,
-      };
+const ExcelImport = () => {
+  const [fileData, setFileData] = useState([]);
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-      // Validate the input before saving
-      validateInput("Rol", editedRow.Rol);
-      validateInput("Puesto_Jefe", editedRow.Puesto_Jefe);
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-      if (editedRow && editedRow.ID_Pais && editedRow.Rol && editedRow.Puesto_Jefe && editedRow.ID_Puesto && editedRow.ID_Aplicaciones) {
-        const response = await axios.get(`http://localhost:3000/perfil`);
-        const perfilExists = response.data.some((perfil) => {
-            return (
-                perfil.ID_Pais === parseInt(editedRow.ID_Pais) &&
-                perfil.Rol.toLowerCase() === trimmedRol.toLowerCase() &&
-                perfil.Puesto_Jefe.toLowerCase() === trimmedPuestoJefe.toLowerCase() &&
-                perfil.ID_Puesto === parseInt(editedRow.ID_Puesto) &&
-                perfil.ID_Aplicaciones === parseInt(editedRow.ID_Aplicaciones) &&
-                perfil.id !== id
-            );
-        });
-
-        if (perfilExists) {
-            setErrors({ Rol: "El perfil con los datos ingresados ya existe en la base de datos" });
-
-            const errorNotification = document.createElement("div");
-            errorNotification.className = "error-notification";
-            errorNotification.innerHTML = `
-                <span class="error-icon">!</span>
-                <span class="error-message">
-                    El Perfil que intenta registrar ya existe en la base de datos con los datos ingresados.
-                    Por favor, ingrese un Perfil diferente.
-                </span>
-            `;
-
-            document.body.appendChild(errorNotification);
-
-            // Ocultar la notificación después de 2 segundos
-            setTimeout(() => {
-                errorNotification.remove();
-            }, 2000);
-            return;
-        }
-    } else {
-        console.error("Error: editedRow.N_RSocial or editedRow.ID_Pais is undefined or empty");
-        setErrors({
-            perfil: "El campo Razón Social o País no puede estar vacío",
-        });
-        return;
-    }
-
-      await axios.put(`http://localhost:3000/perfil/${id}`, updateRow);
-
-      if (
-        editedRow.ID_Ambiente !==
-        records.find((row) => row.id === id).ID_Ambiente
-      ) {
-        await axios.put(
-          `http://localhost:3000/aplicacion/${editedRow.ID_Aplicaciones}`,
-          {
-            ID_Ambiente: editedRow.ID_Ambiente,
-          }
-        );
-      }
-
-      if (
-        editedRow.ID_RSocial !== records.find((row) => row.id === id).ID_RSocial
-      ) {
-        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
-          ID_RSocial: editedRow.ID_RSocial,
-        });
-      }
-
-      if (
-        editedRow.ID_Division !==
-        records.find((row) => row.id === id).ID_Division
-      ) {
-        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
-          ID_Division: editedRow.ID_Division,
-        });
-      }
-
-      if (
-        editedRow.ID_Departamento !==
-        records.find((row) => row.id === id).ID_Departamento
-      ) {
-        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
-          ID_Departamento: editedRow.ID_Departamento,
-        });
-      }
-
-      if (
-        editedRow.ID_CentroCostos !==
-        records.find((row) => row.id === id).ID_CentroCostos
-      ) {
-        await axios.put(`http://localhost:3000/puesto/${editedRow.ID_Puesto}`, {
-          ID_CentroCostos: editedRow.ID_CentroCostos,
-        });
-      }
-
-      /////////////////////////////////////////////////////////////////////////////////////
-      // Obtener el valor original del campo
-      const originalRow = records.find((row) => row.id === id);
-
-      const editedIndex = records.findIndex((row) => row.id === id) + 1;
-
-      // Construir los valores para la auditoría
-      const originalPuesto = originalRow.Puesto;
-      const originalRol = originalRow.Rol;
-      const originalAplicacion = originalRow.N_Aplicaciones;
-      const originalPuestoJefe = originalRow.Puesto_Jefe;
-      const originalTicket = originalRow.Ticket;
-      const originalObservacion = originalRow.Observaciones;
-      const originalEstado = originalRow.Estado_Perfil;
-
-      const editedPuesto = editedRow.Puesto;
-      const editedRol = trimmedRol;
-      const editedAplicacion = editedRow.N_Aplicaciones;
-      const editedPuestoJefe = trimmedPuestoJefe;
-      const editedTicket = trimmedTicket;
-      const editedObservacion = editedRow.Observaciones;
-      const editedEstado = editedRow.Estado_Perfil;
-
-      const hasPuestoChanged = originalPuesto !== editedPuesto;
-      const hasRolChanged = originalRol !== editedRol;
-      const hasAplicacionChanged = originalAplicacion !== editedAplicacion;
-      const hasPuestoJefeChanged = originalPuestoJefe !== editedPuestoJefe;
-      const hasTicketChanged = originalTicket !== editedTicket;
-      const hasObservacionChanged = originalObservacion !== editedObservacion;
-      const hasEstadoChanged = originalEstado !== editedEstado;
-
-      const auditoriaData = {
-        Campo_Original: [
-          hasPuestoChanged ? `- Puesto: ${originalPuesto}` : "",
-          hasRolChanged ? `- Rol: ${originalRol}` : "",
-          hasAplicacionChanged ? `- Aplicación: ${originalAplicacion}` : "",
-          hasPuestoJefeChanged ? `- Jefe Inmediato: ${originalPuestoJefe}` : "",
-          hasTicketChanged ? `- Ticket: ${originalTicket}` : "",
-          hasObservacionChanged
-            ? `- Observaciones: ${originalObservacion}`
-            : "",
-          hasEstadoChanged ? `- Estado: ${originalEstado}` : "",
-        ]
-          .filter(Boolean)
-          .join("¬ "),
-        Campo_Nuevo: [
-          hasPuestoChanged ? `- Puesto: ${editedPuesto}` : "",
-          hasRolChanged ? `- Rol: ${editedRol}` : "",
-          hasAplicacionChanged ? `- Aplicación: ${editedAplicacion}` : "",
-          hasPuestoJefeChanged ? `- Jefe Inmediato: ${editedPuestoJefe}` : "",
-          hasTicketChanged ? `- Ticket: ${editedTicket}` : "",
-          hasObservacionChanged ? `- Código: ${editedObservacion}` : "",
-          hasEstadoChanged ? `- Estado: ${editedEstado}` : "",
-        ]
-          .filter(Boolean)
-          .join("¬ "),
-        Tabla: `Matriz de perfiles ${selectedCountry}`,
-        Accion: 2, // Modificación
-        ID_Usuario: userId,
-        N: editedIndex,
-      };
-
-      if (auditoriaData.Campo_Original || auditoriaData.Campo_Nuevo) {
-        await axios.post("http://localhost:3000/auditoria", auditoriaData);
-      }
-
-      ////////////////////////////////////////////////////////////////////////////////////////
-
-      const updatedRecords = records.map((row) =>
-        row.id === id ? { ...editedRow} : row
-      );
-      //setRecords(updatedRecordsPuesto);
-      setRecords(updatedRecords);
-      setEditedRow(null);
-      setEditMode(null);
-
-      console.log("Cambios guardados correctamente");
-      window.location.reload();
-    } catch (error) {
-      console.error("Error al guardar los cambios", error);
-    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const data = new Uint8Array(event.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(sheet);
+      setFileData(jsonData);
+    };
+    reader.readAsArrayBuffer(file);
   };
+
+  const compareData = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get('/puestos'); // Cambia la ruta según tu API
+      const puestos = response.data;
+
+      const results = fileData.map((item) => {
+        const matchingPuesto = puestos.find(puesto => puesto.Codigo === item.Codigo); // Cambia 'Codigo' según el nombre de la columna en el Excel
+        if (!matchingPuesto) {
+          return { ...item, status: 'No encontrado' };
+        } else if (matchingPuesto.N_Puesto !== item.N_Puesto) {
+          return { ...item, status: 'Nombre diferente' };
+        } else {
+          return { ...item, status: 'Correcto' };
+        }
+      });
+
+      setResults(results);
+    } catch (error) {
+      console.error('Error comparing data', error);
+    }
+    setLoading(false);
+  };
+
+  const downloadResults = () => {
+    const worksheet = XLSX.utils.json_to_sheet(results);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Resultados');
+    const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([wbout], { type: 'application/octet-stream' }), 'resultados.xlsx');
+  };
+
+  return (
+    <div>
+      <h2>Importar y Comparar Datos</h2>
+      <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
+      <button onClick={compareData} disabled={loading}>
+        {loading ? 'Comparando...' : 'Comparar Datos'}
+      </button>
+      {results.length > 0 && (
+        <div>
+          <h3>Resultados</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {results.map((result, index) => (
+                <tr key={index}>
+                  <td>{result.Codigo}</td>
+                  <td>{result.N_Puesto}</td>
+                  <td>{result.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button onClick={downloadResults}>Descargar Resultados</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ExcelImport;
