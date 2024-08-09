@@ -25,27 +25,15 @@ class ExcelApp:
         if not file_paths:
             return
 
-        expected_columns = set()
         data_frames = []
 
         for file in file_paths:
             try:
                 df = pd.read_excel(file)
                 data_frames.append(df)
-                expected_columns.update(df.columns)
             except Exception as e:
                 messagebox.showerror("Error", f"Error al importar archivo {file}: {e}")
                 return
-
-        # Crear un DataFrame con las columnas estándar
-        standard_columns = list(expected_columns)
-        for i in range(len(data_frames)):
-            df = data_frames[i]
-            for col in standard_columns:
-                if col not in df.columns:
-                    df[col] = pd.NA  # Añadir columna faltante con valores NaN
-            df = df[standard_columns]  # Reordenar columnas según el estándar
-            data_frames[i] = df
 
         # Concatenar DataFrames
         self.df = pd.concat(data_frames, ignore_index=True)
