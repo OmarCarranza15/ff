@@ -1,13 +1,13 @@
-
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver'; 
-import axios from "axios";
+import { saveAs } from 'file-saver';
+import axios from 'axios';
 
 const ExcelImport = () => {
   const [fileData, setFileData] = useState([]);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [puestos, setPuestos] = useState([]);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -28,11 +28,12 @@ const ExcelImport = () => {
   const compareData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:3000/puesto/'); 
-      const puestos = response.data;
+      const response = await axios.get('http://localhost:3000/puesto/');
+      const puestosData = response.data;
+      setPuestos(puestosData);
 
       const results = fileData.map((item) => {
-        const matchingPuesto = puestos.find(puesto => puesto.Codigo === item.Codigo); // Cambia 'Codigo' según el nombre de la columna en el Excel
+        const matchingPuesto = puestosData.find(puesto => puesto.Codigo === item.Codigo);
         if (!matchingPuesto) {
           return { ...item, status: 'No encontrado' };
         } else if (matchingPuesto.N_Puesto !== item.N_Puesto) {
@@ -57,6 +58,20 @@ const ExcelImport = () => {
     saveAs(new Blob([wbout], { type: 'application/octet-stream' }), 'resultados.xlsx');
   };
 
+  const downloadPuestos = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/puesto/');
+      const puestosData = response.data;
+      const worksheet = XLSX.utils.json_to_sheet(puestosData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Puestos');
+      const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      saveAs(new Blob([wbout], { type: 'application/octet-stream' }), 'puestos.xlsx');
+    } catch (error) {
+      console.error('Error downloading Puestos data', error);
+    }
+  };
+
   return (
     <div>
       <h2>Importar y Comparar Datos</h2>
@@ -64,6 +79,7 @@ const ExcelImport = () => {
       <button onClick={compareData} disabled={loading}>
         {loading ? 'Comparando...' : 'Comparar Datos'}
       </button>
+      <button onClick={downloadPuestos}>Descargar Puestos</button>
       {results.length > 0 && (
         <div>
           <h3>Resultados</h3>
