@@ -7,7 +7,7 @@ const ExcelImport = () => {
   const [fileData, setFileData] = useState([]);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [puestos, setPuestos] = useState([]);
+  const [puestos, setPuestos] = useState([]); // Inicializa el estado de puestos
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -30,7 +30,7 @@ const ExcelImport = () => {
     try {
       const response = await axios.get('http://localhost:3000/puesto/');
       const puestosData = response.data;
-      setPuestos(puestosData);
+      setPuestos(puestosData); // Actualiza el estado con los datos de puestos
 
       const results = fileData.map((item) => {
         const matchingPuesto = puestosData.find(puesto => puesto.Codigo === item.Codigo);
