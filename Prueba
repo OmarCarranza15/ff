@@ -26,31 +26,17 @@ class ExcelApp:
             return
 
         data_frames = []
-        all_columns = set()
 
         for file in file_paths:
             try:
                 df = pd.read_excel(file)
                 data_frames.append(df)
-                all_columns.update(df.columns)
             except Exception as e:
                 messagebox.showerror("Error", f"Error al importar archivo {file}: {e}")
                 return
 
-        # Crear un DataFrame con todas las columnas posibles
-        standard_columns = list(all_columns)
-        for i in range(len(data_frames)):
-            df = data_frames[i]
-            # Añadir columnas faltantes
-            for col in standard_columns:
-                if col not in df.columns:
-                    df[col] = pd.NA
-            # Reordenar columnas
-            df = df[standard_columns]
-            data_frames[i] = df
-
-        # Concatenar DataFrames
-        self.df = pd.concat(data_frames, ignore_index=True)
+        # Concatenar DataFrames verticalmente
+        self.df = pd.concat(data_frames, ignore_index=True, sort=False)
 
         messagebox.showinfo("Éxito", f"Se importaron {len(file_paths)} archivos exitosamente.")
 
