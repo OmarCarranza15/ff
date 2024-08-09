@@ -3,27 +3,28 @@ from tkinter import Tk, filedialog, simpledialog, messagebox
 from tkinter import Button, Label, ttk
 from openpyxl import load_workbook
 from openpyxl.styles import Alignment, Font
+import os
 
 class ExcelApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Aplicación de Importación y Exportación de Excel")
+        self.root.title("Aplicación de Importación y Exportación de Datos")
         self.root.geometry("400x300")
         self.root.configure(bg='lightblue')
 
         self.df = None
 
-        self.title_label = Label(root, text="Aplicación de Excel", font=("Helvetica", 16), bg='lightblue')
+        self.title_label = Label(root, text="Aplicación de Datos", font=("Helvetica", 16), bg='lightblue')
         self.title_label.pack(pady=20)
 
-        self.import_button = ttk.Button(root, text="Importar Archivos Excel", command=self.import_files)
+        self.import_button = ttk.Button(root, text="Importar Archivos", command=self.import_files)
         self.import_button.pack(pady=10)
 
-        self.export_button = ttk.Button(root, text="Exportar Excel Resultante", command=self.export_file)
+        self.export_button = ttk.Button(root, text="Exportar Archivo Resultante", command=self.export_file)
         self.export_button.pack(pady=10)
 
     def import_files(self):
-        file_paths = filedialog.askopenfilenames(filetypes=[("Archivos Excel", "*.xlsx;*.xls")])
+        file_paths = filedialog.askopenfilenames(filetypes=[("Archivos Excel", "*.xlsx;*.xls"), ("Archivos CSV", "*.csv")])
         if not file_paths:
             return
 
@@ -31,7 +32,10 @@ class ExcelApp:
 
         for file in file_paths:
             try:
-                df = pd.read_excel(file)
+                if file.endswith('.csv'):
+                    df = pd.read_csv(file)
+                else:
+                    df = pd.read_excel(file)
                 data_frames.append(df)
             except Exception as e:
                 messagebox.showerror("Error", f"Error al importar archivo {file}: {e}")
