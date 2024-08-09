@@ -1,44 +1,72 @@
 import pandas as pd
 from tkinter import Tk, filedialog, simpledialog, messagebox
-from tkinter import Button, Label
+from tkinter import Button, Label, ttk
 
 class ExcelApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Excel Import and Export App")
-        self.root.geometry("400x200")
-
-        self.import_button = Button(root, text="Import Excel Files", command=self.import_files)
-        self.import_button.pack(pady=20)
-
-        self.export_button = Button(root, text="Export Resulting Excel", command=self.export_file)
-        self.export_button.pack(pady=20)
+        self.root.title("Aplicación de Importación y Exportación de Excel")
+        self.root.geometry("400x300")
+        self.root.configure(bg='lightblue')
 
         self.df = None
 
+        self.title_label = Label(root, text="Aplicación de Excel", font=("Helvetica", 16), bg='lightblue')
+        self.title_label.pack(pady=20)
+
+        self.import_button = ttk.Button(root, text="Importar Archivos Excel", command=self.import_files)
+        self.import_button.pack(pady=10)
+
+        self.export_button = ttk.Button(root, text="Exportar Excel Resultante", command=self.export_file)
+        self.export_button.pack(pady=10)
+
     def import_files(self):
-        file_paths = filedialog.askopenfilenames(filetypes=[("Excel files", "*.xlsx;*.xls")])
+        file_paths = filedialog.askopenfilenames(filetypes=[("Archivos Excel", "*.xlsx;*.xls")])
         if not file_paths:
             return
 
-        data_frames = [pd.read_excel(file) for file in file_paths]
+        expected_columns = set()
+        data_frames = []
+
+        for file in file_paths:
+            try:
+                df = pd.read_excel(file)
+                data_frames.append(df)
+                expected_columns.update(df.columns)
+            except Exception as e:
+                messagebox.showerror("Error", f"Error al importar archivo {file}: {e}")
+                return
+
+        # Crear un DataFrame con las columnas estándar
+        standard_columns = list(expected_columns)
+        for i in range(len(data_frames)):
+            df = data_frames[i]
+            for col in standard_columns:
+                if col not in df.columns:
+                    df[col] = pd.NA  # Añadir columna faltante con valores NaN
+            df = df[standard_columns]  # Reordenar columnas según el estándar
+            data_frames[i] = df
+
+        # Concatenar DataFrames
         self.df = pd.concat(data_frames, ignore_index=True)
 
-        messagebox.showinfo("Info", f"Imported {len(file_paths)} files successfully.")
+        messagebox.showinfo("Éxito", f"Se importaron {len(file_paths)} archivos exitosamente.")
 
     def export_file(self):
         if self.df is None:
-            messagebox.showerror("Error", "No data to export. Please import files first.")
+            messagebox.showerror("Error", "No hay datos para exportar. Primero importe los archivos.")
             return
 
-        file_name = simpledialog.askstring("Input", "Enter the name for the output file (without extension):")
+        file_name = simpledialog.askstring("Entrada", "Ingrese el nombre para el archivo de salida (sin extensión):")
         if not file_name:
             return
 
         file_path = f"{file_name}.xlsx"
-        self.df.to_excel(file_path, index=False)
-
-        messagebox.showinfo("Info", f"File exported as {file_path}.")
+        try:
+            self.df.to_excel(file_path, index=False)
+            messagebox.showinfo("Éxito", f"Archivo exportado como {file_path}.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al exportar el archivo: {e}")
 
 if __name__ == "__main__":
     root = Tk()
