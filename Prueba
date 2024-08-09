@@ -35,11 +35,11 @@ const ExcelImport = () => {
       const results = fileData.map((item) => {
         const matchingPuesto = puestosData.find(puesto => puesto.Codigo === item.Codigo);
         if (!matchingPuesto) {
-          return { ...item, status: 'No encontrado' };
+          return { ...item, status: 'No encontrado', details: 'El registro no se encuentra en la base de datos' };
         } else if (matchingPuesto.N_Puesto !== item.N_Puesto) {
-          return { ...item, status: 'Nombre diferente' };
+          return { ...item, status: 'Nombre diferente', details: `Nombre en Excel: ${item.N_Puesto}, Nombre en Base de Datos: ${matchingPuesto.N_Puesto}` };
         } else {
-          return { ...item, status: 'Correcto' };
+          return { ...item, status: 'Correcto', details: '' };
         }
       });
 
@@ -89,6 +89,7 @@ const ExcelImport = () => {
                 <th>Código</th>
                 <th>Nombre</th>
                 <th>Estado</th>
+                <th>Detalles</th>
               </tr>
             </thead>
             <tbody>
@@ -97,6 +98,7 @@ const ExcelImport = () => {
                   <td>{result.Codigo}</td>
                   <td>{result.N_Puesto}</td>
                   <td>{result.status}</td>
+                  <td>{result.details}</td>
                 </tr>
               ))}
             </tbody>
