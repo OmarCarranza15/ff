@@ -28,10 +28,12 @@ const ExcelImport = () => {
   const compareData = async () => {
     setLoading(true);
     try {
+      // Obtener los datos de puestos desde el backend
       const response = await axios.get('http://localhost:3000/puesto/');
       const puestosData = response.data;
-      setPuestos(puestosData); // Actualiza el estado con los datos de puestos
+      setPuestos(puestosData); // Actualizar el estado con los datos obtenidos
 
+      // Comparar los datos del archivo con los datos del backend
       const results = fileData.map((item) => {
         const matchingPuesto = puestosData.find(puesto => puesto.Codigo === item.Codigo);
         if (!matchingPuesto) {
