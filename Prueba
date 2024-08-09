@@ -35,7 +35,7 @@ class ExcelApp:
                 messagebox.showerror("Error", f"Error al importar archivo {file}: {e}")
                 return
 
-        # Concatenar DataFrames verticalmente
+        # Concatenar DataFrames verticalmente con columnas consistentes
         self.df = pd.concat(data_frames, ignore_index=True, sort=False)
 
         messagebox.showinfo("Éxito", f"Se importaron {len(file_paths)} archivos exitosamente.")
